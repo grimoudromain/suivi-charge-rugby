@@ -50,7 +50,14 @@
     <div class="card"><h2>Historique récent</h2><p class="muted small">Dernières séances enregistrées (RPE et Hooper).</p><div id="historyList" class="small"></div></div>
   </div>
 <script>
-const firebaseConfig={apiKey:"AIzaSyCNPIL-mVXk4kbqiH5XRcTBjTSdwH3Kn0",authDomain:"xvcorsaire-perf.firebaseapp.com",projectId:"xvcorsaire-perf",storageBucket:"xvcorsaire-perf.appspot.com",messagingSenderId:"56741046153",appId:"1:56741046153:web:9cf7401a2b0a89587e5a888"};
+const firebaseConfig = {
+  apiKey: "AIzaSyAqydtSfdYTxKkcmm5cYXg3aZ_3MvJGmsI",
+  authDomain: "suivi-charge-rugby-734c5.firebaseapp.com",
+  projectId: "suivi-charge-rugby-734c5",
+  storageBucket: "suivi-charge-rugby-734c5.firebasestorage.app",
+  messagingSenderId: "666633039168",
+  appId: "1:666633039168:web:68368a8ebbbaab75e51ea5"
+};
 firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); let currentPlayer=null;
 function setToday(id){const el=document.getElementById(id); if(el) el.value=new Date().toISOString().slice(0,10)}
 function resetRpeForm(){setToday('rpeDate'); document.getElementById('rpeType').value='Mardi'; document.getElementById('rpeStatus').value='Présent'; document.getElementById('rpeValue').value=''; document.getElementById('rpeDuration').value=''; const m=document.getElementById('rpeStatusMsg'); m.textContent=''; m.className='status'}
