@@ -17,12 +17,16 @@
 <body>
   <div class="shell">
     <div class="card">
-      <div class="header-row">
-        <div class="logo" style="width:40px;height:40px;border-radius:12px;"><img src="logo-club.png" alt="Logo du club" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;"></div>
-        <div><h1>Suivi charge – Joueur</h1><p class="muted small">Entre ton RPE séance et ton Hooper bien-être.</p></div>
-        <button id="logoutBtn" class="btn small">Se déconnecter</button>
-      </div>
-      <p class="muted small">Joueur sélectionné : <span id="currentPlayerName">(aucun)</span></p>
+     <div class="header-row">
+  <div class="logo" style="width:40px;height:40px;border-radius:12px;">
+    <img src="logo-club.png" alt="Logo du club" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;">
+  </div>
+  <div>
+    <h1>Suivi charge – Joueur</h1>
+    <p class="muted small">Choisis ton nom puis entre ton RPE séance et ton Hooper bien-être.</p>
+  </div>
+</div>
+<p class="muted small">Joueur sélectionné : <span id="currentPlayerName">(aucun)</span></p>
     </div>
     <div class="card">
       <h2>Joueur</h2><p class="muted small">Choisis ton nom dans la liste.</p>
@@ -58,15 +62,256 @@ const firebaseConfig = {
   messagingSenderId: "666633039168",
   appId: "1:666633039168:web:68368a8ebbbaab75e51ea5"
 };
-firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); let currentPlayer=null;
-function setToday(id){const el=document.getElementById(id); if(el) el.value=new Date().toISOString().slice(0,10)}
-function resetRpeForm(){setToday('rpeDate'); document.getElementById('rpeType').value='Mardi'; document.getElementById('rpeStatus').value='Présent'; document.getElementById('rpeValue').value=''; document.getElementById('rpeDuration').value=''; const m=document.getElementById('rpeStatusMsg'); m.textContent=''; m.className='status'}
-function resetHooperForm(){setToday('hooperDate'); ['sleep','mood','energy','soreness','wellbeing'].forEach(id=>document.getElementById(id).value=''); const m=document.getElementById('hooperStatusMsg'); m.textContent=''; m.className='status'}
-async function fillPlayerSelectFromFirestore(){const select=document.getElementById('playerSelect'); const statusEl=document.getElementById('playerSelectStatus'); const nameEl=document.getElementById('currentPlayerName'); statusEl.textContent='Chargement des joueurs...'; try{const snap=await db.collection('players').orderBy('lastName').get(); let options='<option value="">Choisis ton nom</option>'; snap.forEach(doc=>{const d=doc.data(); const label=`${(d.lastName||'').toUpperCase()} ${d.firstName||''}`; options+=`<option value="${doc.id}">${label}</option>`}); select.innerHTML=options; statusEl.textContent=''; select.addEventListener('change',()=>{const playerId=select.value; const label=select.selectedOptions[0]?.text||'(aucun)'; if(!playerId){currentPlayer=null; nameEl.textContent='(aucun)'; document.getElementById('historyList').innerHTML='<div>Aucun historique pour l\'instant.</div>';} else {currentPlayer={id:playerId,fullName:label}; nameEl.textContent=label; loadHistory(playerId);}})}catch(err){console.error(err); statusEl.textContent='Erreur lors du chargement de la liste des joueurs.'; statusEl.className='status err'}}
-async function saveRpe(){const msgEl=document.getElementById('rpeStatusMsg'); if(!currentPlayer){msgEl.textContent='Choisis ton nom dans la liste avant d\'enregistrer.'; msgEl.className='status err'; return;} const date=document.getElementById('rpeDate').value; const type=document.getElementById('rpeType').value; const status=document.getElementById('rpeStatus').value; const rpe=Number(document.getElementById('rpeValue').value||0); const duration=Number(document.getElementById('rpeDuration').value||0); const load=rpe*duration; try{await db.collection('rpeEntries').add({playerId:currentPlayer.id,playerName:currentPlayer.fullName,date,type,status,rpe,duration,load,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); msgEl.textContent='RPE enregistré.'; msgEl.className='status ok'; resetRpeForm(); loadHistory(currentPlayer.id);}catch(err){console.error(err); msgEl.textContent='Erreur lors de l\'enregistrement.'; msgEl.className='status err'}}
-async function saveHooper(){const msgEl=document.getElementById('hooperStatusMsg'); if(!currentPlayer){msgEl.textContent='Choisis ton nom dans la liste avant d\'enregistrer.'; msgEl.className='status err'; return;} const date=document.getElementById('hooperDate').value; const sleep=Number(document.getElementById('sleep').value||1); const mood=Number(document.getElementById('mood').value||1); const energy=Number(document.getElementById('energy').value||1); const soreness=Number(document.getElementById('soreness').value||1); const wellbeing=Number(document.getElementById('wellbeing').value||1); const total=sleep+mood+energy+soreness+wellbeing; try{await db.collection('hooperEntries').add({playerId:currentPlayer.id,playerName:currentPlayer.fullName,date,sleep,mood,energy,soreness,wellbeing,total,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); msgEl.textContent='Hooper enregistré.'; msgEl.className='status ok'; resetHooperForm(); loadHistory(currentPlayer.id);}catch(err){console.error(err); msgEl.textContent='Erreur lors de l\'enregistrement.'; msgEl.className='status err'}}
-async function loadHistory(playerId){if(!playerId) return; const historyEl=document.getElementById('historyList'); historyEl.textContent='Chargement...'; try{const rpeSnap=await db.collection('rpeEntries').where('playerId','==',playerId).orderBy('date','desc').limit(5).get(); const hooperSnap=await db.collection('hooperEntries').where('playerId','==',playerId).orderBy('date','desc').limit(5).get(); let html='<div><strong>RPE</strong></div>'; rpeSnap.forEach(doc=>{const d=doc.data(); html+=`<div>- ${d.date} : ${d.type}, statut ${d.status}, RPE ${d.rpe}, durée ${d.duration} min</div>`}); html+='<div style="margin-top:6px"><strong>Hooper</strong></div>'; hooperSnap.forEach(doc=>{const d=doc.data(); html+=`<div>- ${d.date} : sommeil ${d.sleep}, humeur ${d.mood}, énergie ${d.energy}, courbatures ${d.soreness}, bien-être ${d.wellbeing}, total ${d.total}</div>`}); historyEl.innerHTML=html||'<div>Aucun historique pour l\'instant.</div>';}catch(err){console.error(err); historyEl.textContent='Erreur de chargement de l\'historique.'}}
-function initUI(){setToday('rpeDate'); setToday('hooperDate'); document.getElementById('saveRpeBtn').addEventListener('click',saveRpe); document.getElementById('resetRpeBtn').addEventListener('click',resetRpeForm); document.getElementById('saveHooperBtn').addEventListener('click',saveHooper); document.getElementById('resetHooperBtn').addEventListener('click',resetHooperForm); document.getElementById('logoutBtn').addEventListener('click',()=>{window.location.href='index.html'}); fillPlayerSelectFromFirestore()}
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let currentPlayer = null;
+
+function setToday(id) {
+  const el = document.getElementById(id);
+  if (el) el.value = new Date().toISOString().slice(0, 10);
+}
+
+function resetRpeForm() {
+  setToday("rpeDate");
+  document.getElementById("rpeType").value = "Mardi";
+  document.getElementById("rpeStatus").value = "Présent";
+  document.getElementById("rpeValue").value = "";
+  document.getElementById("rpeDuration").value = "";
+  const msg = document.getElementById("rpeStatusMsg");
+  msg.textContent = "";
+  msg.className = "status";
+}
+
+function resetHooperForm() {
+  setToday("hooperDate");
+  ["sleep", "mood", "energy", "soreness", "wellbeing"].forEach((id) => {
+    document.getElementById(id).value = "";
+  });
+  const msg = document.getElementById("hooperStatusMsg");
+  msg.textContent = "";
+  msg.className = "status";
+}
+
+function clearHistory() {
+  document.getElementById("historyList").innerHTML = "<div>Aucun historique pour l'instant.</div>";
+}
+
+async function fillPlayerSelectFromFirestore() {
+  const select = document.getElementById("playerSelect");
+  const statusEl = document.getElementById("playerSelectStatus");
+  const nameEl = document.getElementById("currentPlayerName");
+
+  statusEl.textContent = "Chargement des joueurs...";
+  statusEl.className = "status";
+  select.innerHTML = `<option value="">Choisis ton nom</option>`;
+
+  try {
+    const snap = await db.collection("players").get();
+    const players = [];
+
+    snap.forEach((doc) => {
+      const d = doc.data();
+      players.push({
+        id: doc.id,
+        firstName: d.firstName || "",
+        lastName: d.lastName || ""
+      });
+    });
+
+    players.sort((a, b) =>
+      `${a.lastName} ${a.firstName}`.localeCompare(
+        `${b.lastName} ${b.firstName}`,
+        "fr",
+        { sensitivity: "base" }
+      )
+    );
+
+    players.forEach((player) => {
+      const option = document.createElement("option");
+      option.value = player.id;
+      option.textContent = `${player.lastName.toUpperCase()} ${player.firstName}`;
+      select.appendChild(option);
+    });
+
+    statusEl.textContent = players.length
+      ? ""
+      : "Aucun joueur disponible pour le moment.";
+    nameEl.textContent = "(aucun)";
+    currentPlayer = null;
+    clearHistory();
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = "Erreur lors du chargement de la liste des joueurs.";
+    statusEl.className = "status err";
+  }
+}
+
+async function saveRpe() {
+  const msgEl = document.getElementById("rpeStatusMsg");
+
+  if (!currentPlayer) {
+    msgEl.textContent = "Choisis ton nom dans la liste avant d'enregistrer.";
+    msgEl.className = "status err";
+    return;
+  }
+
+  const date = document.getElementById("rpeDate").value;
+  const type = document.getElementById("rpeType").value;
+  const status = document.getElementById("rpeStatus").value;
+  const rpe = Number(document.getElementById("rpeValue").value || 0);
+  const duration = Number(document.getElementById("rpeDuration").value || 0);
+  const load = rpe * duration;
+
+  try {
+    await db.collection("rpeEntries").add({
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.fullName,
+      date,
+      type,
+      status,
+      rpe,
+      duration,
+      load,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    msgEl.textContent = "RPE enregistré.";
+    msgEl.className = "status ok";
+    resetRpeForm();
+    loadHistory(currentPlayer.id);
+  } catch (err) {
+    console.error(err);
+    msgEl.textContent = "Erreur lors de l'enregistrement.";
+    msgEl.className = "status err";
+  }
+}
+
+async function saveHooper() {
+  const msgEl = document.getElementById("hooperStatusMsg");
+
+  if (!currentPlayer) {
+    msgEl.textContent = "Choisis ton nom dans la liste avant d'enregistrer.";
+    msgEl.className = "status err";
+    return;
+  }
+
+  const date = document.getElementById("hooperDate").value;
+  const sleep = Number(document.getElementById("sleep").value || 1);
+  const mood = Number(document.getElementById("mood").value || 1);
+  const energy = Number(document.getElementById("energy").value || 1);
+  const soreness = Number(document.getElementById("soreness").value || 1);
+  const wellbeing = Number(document.getElementById("wellbeing").value || 1);
+  const total = sleep + mood + energy + soreness + wellbeing;
+
+  try {
+    await db.collection("hooperEntries").add({
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.fullName,
+      date,
+      sleep,
+      mood,
+      energy,
+      soreness,
+      wellbeing,
+      total,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    msgEl.textContent = "Hooper enregistré.";
+    msgEl.className = "status ok";
+    resetHooperForm();
+    loadHistory(currentPlayer.id);
+  } catch (err) {
+    console.error(err);
+    msgEl.textContent = "Erreur lors de l'enregistrement.";
+    msgEl.className = "status err";
+  }
+}
+
+async function loadHistory(playerId) {
+  const historyEl = document.getElementById("historyList");
+
+  if (!playerId) {
+    clearHistory();
+    return;
+  }
+
+  historyEl.textContent = "Chargement...";
+
+  try {
+    const rpeSnap = await db.collection("rpeEntries")
+      .where("playerId", "==", playerId)
+      .orderBy("date", "desc")
+      .limit(5)
+      .get();
+
+    const hooperSnap = await db.collection("hooperEntries")
+      .where("playerId", "==", playerId)
+      .orderBy("date", "desc")
+      .limit(5)
+      .get();
+
+    let html = "";
+    let hasData = false;
+
+    html += "<div><strong>RPE</strong></div>";
+    rpeSnap.forEach((doc) => {
+      hasData = true;
+      const d = doc.data();
+      html += `<div>- ${d.date} : ${d.type}, statut ${d.status}, RPE ${d.rpe}, durée ${d.duration} min</div>`;
+    });
+
+    html += '<div style="margin-top:6px"><strong>Hooper</strong></div>';
+    hooperSnap.forEach((doc) => {
+      hasData = true;
+      const d = doc.data();
+      html += `<div>- ${d.date} : sommeil ${d.sleep}, humeur ${d.mood}, énergie ${d.energy}, courbatures ${d.soreness}, bien-être ${d.wellbeing}, total ${d.total}</div>`;
+    });
+
+    historyEl.innerHTML = hasData
+      ? html
+      : "<div>Aucun historique pour l'instant.</div>";
+  } catch (err) {
+    console.error(err);
+    historyEl.textContent = "Erreur de chargement de l'historique.";
+  }
+}
+
+function initUI() {
+  setToday("rpeDate");
+  setToday("hooperDate");
+  clearHistory();
+
+  document.getElementById("saveRpeBtn").addEventListener("click", saveRpe);
+  document.getElementById("resetRpeBtn").addEventListener("click", resetRpeForm);
+  document.getElementById("saveHooperBtn").addEventListener("click", saveHooper);
+  document.getElementById("resetHooperBtn").addEventListener("click", resetHooperForm);
+
+  document.getElementById("playerSelect").addEventListener("change", (e) => {
+    const playerId = e.target.value;
+    const label = e.target.selectedOptions[0]?.text || "(aucun)";
+
+    if (!playerId) {
+      currentPlayer = null;
+      document.getElementById("currentPlayerName").textContent = "(aucun)";
+      clearHistory();
+      return;
+    }
+
+    currentPlayer = {
+      id: playerId,
+      fullName: label
+    };
+
+    document.getElementById("currentPlayerName").textContent = label;
+    loadHistory(playerId);
+  });
+
+  fillPlayerSelectFromFirestore();
+}
+
 initUI();
 </script>
 </body>
