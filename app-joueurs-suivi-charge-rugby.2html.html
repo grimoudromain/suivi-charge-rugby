@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app-joueurs-suivi-charge-rugby</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
+  <style>
+    :root,[data-theme="light"] {--bg:#f7f6f2;--surface:#fbfbf9;--surface2:#f1eee9;--border:#d8d4cc;--text:#22201b;--muted:#6e6b65;--primary:#0f6c73;--primary2:#d7ece9;--danger:#a13544;--success:#437a22;--radius:16px;--radius-sm:12px;--shadow:0 12px 30px rgba(0,0,0,.08);} body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)} .shell{max-width:480px;margin:0 auto;padding:20px 16px 32px}.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px 16px;margin-top:14px} h1{font-size:1.4rem;margin:6px 0 2px} h2{font-size:1.1rem;margin:0 0 10px} p.muted{font-size:.85rem;color:var(--muted);margin:4px 0 0}.field{display:grid;gap:5px;margin-bottom:10px}.field label{font-size:.8rem;color:var(--muted)} .field input,.field select{padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);font:inherit;color:var(--text)} .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:flex;gap:8px;margin-top:10px} button{border-radius:var(--radius-sm);border:1px solid var(--border);padding:9px 12px;font:inherit;cursor:pointer;background:var(--surface2)} button.primary{background:var(--primary);border-color:transparent;color:white} button.outline{background:transparent}.status{margin-top:8px;font-size:.8rem}.status.ok{color:var(--success)}.status.err{color:var(--danger)}.header-row{display:flex;justify-content:space-between;align-items:center;gap:8px}.small{font-size:.8rem}.logo{display:flex;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <div class="header-row">
+        <div class="logo" style="width:40px;height:40px;border-radius:12px;"><img src="logo-club.png" alt="Logo du club" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;"></div>
+        <div><h1>Suivi charge – Joueur</h1><p class="muted small">Entre ton RPE séance et ton Hooper bien-être.</p></div>
+        <button id="logoutBtn" class="btn small">Se déconnecter</button>
+      </div>
+      <p class="muted small">Joueur sélectionné : <span id="currentPlayerName">(aucun)</span></p>
+    </div>
+    <div class="card">
+      <h2>Joueur</h2><p class="muted small">Choisis ton nom dans la liste.</p>
+      <div class="field"><label for="playerSelect">Sélectionne ton nom</label><select id="playerSelect"><option value="">Choisis ton nom</option></select></div>
+      <div class="status" id="playerSelectStatus"></div>
+    </div>
+    <div class="card" id="rpeCard">
+      <h2>RPE séance</h2><p class="muted small">Après chaque séance : indique ton statut, ton RPE (0–10) et la durée.</p>
+      <div class="field"><label for="rpeDate">Date</label><input type="date" id="rpeDate" /></div>
+      <div class="field"><label for="rpeType">Type de séance</label><select id="rpeType"><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Vendredi">Vendredi</option><option value="Match">Match officiel</option><option value="Autre">Autre</option></select></div>
+      <div class="field"><label for="rpeStatus">Statut</label><select id="rpeStatus"><option value="Présent">Présent</option><option value="Absent">Absent</option><option value="Blessé">Blessé</option><option value="Partiel">Partiel</option></select></div>
+      <div class="row"><div class="field"><label for="rpeValue">RPE (0–10)</label><input type="number" id="rpeValue" min="0" max="10" step="0.5" /></div><div class="field"><label for="rpeDuration">Durée (min)</label><input type="number" id="rpeDuration" min="0" step="5" /></div></div>
+      <div class="actions"><button class="primary" id="saveRpeBtn">Enregistrer RPE</button><button class="outline" id="resetRpeBtn">Réinitialiser</button></div>
+      <div class="status" id="rpeStatusMsg"></div>
+    </div>
+    <div class="card" id="hooperCard">
+      <h2>Hooper (bien-être)</h2><p class="muted small">2 fois par semaine : note ton sommeil, ton humeur, ton énergie, tes courbatures et ton bien-être.</p>
+      <div class="field"><label for="hooperDate">Date</label><input type="date" id="hooperDate" /></div>
+      <div class="row"><div class="field"><label for="sleep">Sommeil (1–5)</label><input type="number" id="sleep" min="1" max="5" /></div><div class="field"><label for="mood">Humeur (1–5)</label><input type="number" id="mood" min="1" max="5" /></div></div>
+      <div class="row"><div class="field"><label for="energy">Énergie (1–5)</label><input type="number" id="energy" min="1" max="5" /></div><div class="field"><label for="soreness">Courbatures (1–5)</label><input type="number" id="soreness" min="1" max="5" /></div></div>
+      <div class="field"><label for="wellbeing">Bien-être global (1–5)</label><input type="number" id="wellbeing" min="1" max="5" /></div>
+      <div class="actions"><button class="primary" id="saveHooperBtn">Enregistrer Hooper</button><button class="outline" id="resetHooperBtn">Réinitialiser</button></div>
+      <div class="status" id="hooperStatusMsg"></div>
+    </div>
+    <div class="card"><h2>Historique récent</h2><p class="muted small">Dernières séances enregistrées (RPE et Hooper).</p><div id="historyList" class="small"></div></div>
+  </div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyCNPIL-mVXk4kbqiH5XRcTBjTSdwH3Kn0",authDomain:"xvcorsaire-perf.firebaseapp.com",projectId:"xvcorsaire-perf",storageBucket:"xvcorsaire-perf.appspot.com",messagingSenderId:"56741046153",appId:"1:56741046153:web:9cf7401a2b0a89587e5a888"};
+firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); let currentPlayer=null;
+function setToday(id){const el=document.getElementById(id); if(el) el.value=new Date().toISOString().slice(0,10)}
+function resetRpeForm(){setToday('rpeDate'); document.getElementById('rpeType').value='Mardi'; document.getElementById('rpeStatus').value='Présent'; document.getElementById('rpeValue').value=''; document.getElementById('rpeDuration').value=''; const m=document.getElementById('rpeStatusMsg'); m.textContent=''; m.className='status'}
+function resetHooperForm(){setToday('hooperDate'); ['sleep','mood','energy','soreness','wellbeing'].forEach(id=>document.getElementById(id).value=''); const m=document.getElementById('hooperStatusMsg'); m.textContent=''; m.className='status'}
+async function fillPlayerSelectFromFirestore(){const select=document.getElementById('playerSelect'); const statusEl=document.getElementById('playerSelectStatus'); const nameEl=document.getElementById('currentPlayerName'); statusEl.textContent='Chargement des joueurs...'; try{const snap=await db.collection('players').orderBy('lastName').get(); let options='<option value="">Choisis ton nom</option>'; snap.forEach(doc=>{const d=doc.data(); const label=`${(d.lastName||'').toUpperCase()} ${d.firstName||''}`; options+=`<option value="${doc.id}">${label}</option>`}); select.innerHTML=options; statusEl.textContent=''; select.addEventListener('change',()=>{const playerId=select.value; const label=select.selectedOptions[0]?.text||'(aucun)'; if(!playerId){currentPlayer=null; nameEl.textContent='(aucun)'; document.getElementById('historyList').innerHTML='<div>Aucun historique pour l\'instant.</div>';} else {currentPlayer={id:playerId,fullName:label}; nameEl.textContent=label; loadHistory(playerId);}})}catch(err){console.error(err); statusEl.textContent='Erreur lors du chargement de la liste des joueurs.'; statusEl.className='status err'}}
+async function saveRpe(){const msgEl=document.getElementById('rpeStatusMsg'); if(!currentPlayer){msgEl.textContent='Choisis ton nom dans la liste avant d\'enregistrer.'; msgEl.className='status err'; return;} const date=document.getElementById('rpeDate').value; const type=document.getElementById('rpeType').value; const status=document.getElementById('rpeStatus').value; const rpe=Number(document.getElementById('rpeValue').value||0); const duration=Number(document.getElementById('rpeDuration').value||0); const load=rpe*duration; try{await db.collection('rpeEntries').add({playerId:currentPlayer.id,playerName:currentPlayer.fullName,date,type,status,rpe,duration,load,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); msgEl.textContent='RPE enregistré.'; msgEl.className='status ok'; resetRpeForm(); loadHistory(currentPlayer.id);}catch(err){console.error(err); msgEl.textContent='Erreur lors de l\'enregistrement.'; msgEl.className='status err'}}
+async function saveHooper(){const msgEl=document.getElementById('hooperStatusMsg'); if(!currentPlayer){msgEl.textContent='Choisis ton nom dans la liste avant d\'enregistrer.'; msgEl.className='status err'; return;} const date=document.getElementById('hooperDate').value; const sleep=Number(document.getElementById('sleep').value||1); const mood=Number(document.getElementById('mood').value||1); const energy=Number(document.getElementById('energy').value||1); const soreness=Number(document.getElementById('soreness').value||1); const wellbeing=Number(document.getElementById('wellbeing').value||1); const total=sleep+mood+energy+soreness+wellbeing; try{await db.collection('hooperEntries').add({playerId:currentPlayer.id,playerName:currentPlayer.fullName,date,sleep,mood,energy,soreness,wellbeing,total,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); msgEl.textContent='Hooper enregistré.'; msgEl.className='status ok'; resetHooperForm(); loadHistory(currentPlayer.id);}catch(err){console.error(err); msgEl.textContent='Erreur lors de l\'enregistrement.'; msgEl.className='status err'}}
+async function loadHistory(playerId){if(!playerId) return; const historyEl=document.getElementById('historyList'); historyEl.textContent='Chargement...'; try{const rpeSnap=await db.collection('rpeEntries').where('playerId','==',playerId).orderBy('date','desc').limit(5).get(); const hooperSnap=await db.collection('hooperEntries').where('playerId','==',playerId).orderBy('date','desc').limit(5).get(); let html='<div><strong>RPE</strong></div>'; rpeSnap.forEach(doc=>{const d=doc.data(); html+=`<div>- ${d.date} : ${d.type}, statut ${d.status}, RPE ${d.rpe}, durée ${d.duration} min</div>`}); html+='<div style="margin-top:6px"><strong>Hooper</strong></div>'; hooperSnap.forEach(doc=>{const d=doc.data(); html+=`<div>- ${d.date} : sommeil ${d.sleep}, humeur ${d.mood}, énergie ${d.energy}, courbatures ${d.soreness}, bien-être ${d.wellbeing}, total ${d.total}</div>`}); historyEl.innerHTML=html||'<div>Aucun historique pour l\'instant.</div>';}catch(err){console.error(err); historyEl.textContent='Erreur de chargement de l\'historique.'}}
+function initUI(){setToday('rpeDate'); setToday('hooperDate'); document.getElementById('saveRpeBtn').addEventListener('click',saveRpe); document.getElementById('resetRpeBtn').addEventListener('click',resetRpeForm); document.getElementById('saveHooperBtn').addEventListener('click',saveHooper); document.getElementById('resetHooperBtn').addEventListener('click',resetHooperForm); document.getElementById('logoutBtn').addEventListener('click',()=>{window.location.href='index.html'}); fillPlayerSelectFromFirestore()}
+initUI();
+</script>
+</body>
+</html>
