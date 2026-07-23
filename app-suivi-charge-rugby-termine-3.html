@@ -107,7 +107,14 @@
 const qs=s=>document.querySelector(s), qsa=s=>[...document.querySelectorAll(s)];
 const todayStr=new Date().toISOString().slice(0,10);
 const fmt=n=>Number.isFinite(n)?Math.round(n):0;
-const firebaseConfig={apiKey:"AIzaSyCNPIL-mVXk4kbqiH5XRcTBjTSdwH3Kn0",authDomain:"xvcorsaire-perf.firebaseapp.com",projectId:"xvcorsaire-perf",storageBucket:"xvcorsaire-perf.appspot.com",messagingSenderId:"56741046153",appId:"1:56741046153:web:9cf7401a2b0a89587e5a888"};
+const firebaseConfig = {
+  apiKey: "AIzaSyAqydtSfdYTxKkcmm5cYXg3aZ_3MvJGmsI",
+  authDomain: "suivi-charge-rugby-734c5.firebaseapp.com",
+  projectId: "suivi-charge-rugby-734c5",
+  storageBucket: "suivi-charge-rugby-734c5.firebasestorage.app",
+  messagingSenderId: "666633039168",
+  appId: "1:666633039168:web:68368a8ebbbaab75e51ea5"
+};
 firebase.initializeApp(firebaseConfig); const db=firebase.firestore();
 const state={players:[],rpeEntries:[],hooperEntries:[],injuries:[],playerWeights:[],charts:{load:null,alerts:null}};
 let playerWeightChart=null;
