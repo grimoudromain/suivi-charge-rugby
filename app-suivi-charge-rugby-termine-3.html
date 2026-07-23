@@ -127,7 +127,39 @@ function playerMetrics(player){const entries=state.rpeEntries.filter(e=>e.player
 function setFilters(){const teamSel=qs('#teamFilter'), groupSel=qs('#groupFilter'); if(!teamSel||!groupSel) return; const teams=[...new Set(state.players.map(p=>p.team).filter(Boolean))]; const groups=[...new Set(state.players.map(p=>p.group).filter(Boolean))]; const tv=teamSel.value||'all', gv=groupSel.value||'all'; teamSel.innerHTML='<option value="all">Toutes</option>'+teams.map(x=>`<option value="${x}">${x}</option>`).join(''); groupSel.innerHTML='<option value="all">Tous</option>'+groups.map(x=>`<option value="${x}">${x}</option>`).join(''); teamSel.value=teams.includes(tv)?tv:'all'; groupSel.value=groups.includes(gv)?gv:'all'; ['#rpePlayer','#hooperPlayer'].forEach(sel=>{const el=qs(sel); if(el) el.innerHTML=state.players.map(p=>`<option value="${p.id}">${(p.lastName||'').toUpperCase()} ${p.firstName||''}</option>`).join('')})}
 function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; qs('#summaryTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${p.team||''}</td><td>${p.group||''}</td><td>${m.inj?'Blessé':'Disponible'}</td><td>${fmt(m.load7)}</td><td>${fmt(m.ewma)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.rpeAvg.toFixed(1)}</td><td>${fmt(m.dispo)}%</td><td>${m.inj?'Oui':'Non'}</td><td>-</td><td>-</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); qs('#coachTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${fmt(m.load7)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); renderLoadChart(players); renderAlertsChart(players)}
 function renderAvailability(){const players=filteredPlayers(); qs('#availabilityTable').innerHTML=players.map(p=>{const entries=state.rpeEntries.filter(e=>e.playerId===p.id); const total=entries.length; const present=entries.filter(e=>e.status==='Présent').length; const absent=entries.filter(e=>e.status==='Absent').length; const bless=entries.filter(e=>e.status==='Blessé').length; const partial=entries.filter(e=>e.status==='Partiel').length; const presence=total?Math.round(present/total*100):0; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${total}</td><td>${present}</td><td>${absent}</td><td>${bless}</td><td>${partial}</td><td>${presence}%</td></tr>`}).join('')}
-function renderRpeTable(){qs('#rpeTable').innerHTML=[...state.rpeEntries].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const p=state.players.find(x=>x.id===e.playerId); return `<tr><td>${e.date}</td><td>${p?`${(p.lastName||'').toUpperCase()} ${p.firstName||''}`:e.playerId}</td><td>${e.type}</td><td>${e.status}</td><td>${e.rpe}</td><td>${e.duration}</td><td>${e.load}</td><td><button class="btn" data-edit-rpe="${e.id}">Modifier</button></td></tr>`}).join(''); qsa('[data-edit-rpe]').forEach(btn=>btn.addEventListener('click',()=>editRpe(btn.dataset.editRpe)))}
+function renderRpeTable() {
+    qs('#rpeTable').innerHTML = [...state.rpeEntries]
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map(e => {
+            const p = state.players.find(x => x.id === e.playerId);
+            return `
+                <tr>
+                    <td>${e.date}</td>
+                    <td>${p ? `${p.lastName.toUpperCase()} ${p.firstName}` : e.playerId}</td>
+                    <td>${e.type}</td>
+                    <td>${e.status}</td>
+                    <td>${e.rpe}</td>
+                    <td>${e.duration}</td>
+                    <td>${e.load}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn" data-edit-rpe="${e.id}">Modifier</button>
+                            <button class="btn" data-delete-rpe="${e.id}">Supprimer</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        })
+        .join('');
+
+    qsa('[data-edit-rpe]').forEach(btn =>
+        btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
+    );
+
+    qsa('[data-delete-rpe]').forEach(btn =>
+        btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
+    );
+}
 function renderHooperTable(){qs('#hooperTable').innerHTML=[...state.hooperEntries].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const p=state.players.find(x=>x.id===e.playerId); return `<tr><td>${e.date}</td><td>${p?`${(p.lastName||'').toUpperCase()} ${p.firstName||''}`:e.playerId}</td><td>${e.sleep}</td><td>${e.mood}</td><td>${e.energy}</td><td>${e.soreness}</td><td>${e.wellbeing}</td><td>${e.total}</td><td><button class="btn" data-edit-hooper="${e.id}">Modifier</button></td></tr>`}).join(''); qsa('[data-edit-hooper]').forEach(btn=>btn.addEventListener('click',()=>editHooper(btn.dataset.editHooper)))}
 function renderPlayersAdmin(){const select=qs('#playerSelect'), table=qs('#playersTable'); if(!select||!table) return; const players=[...state.players].sort((a,b)=>`${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`,'fr',{sensitivity:'base'})); select.innerHTML='<option value="">Nouveau joueur</option>'+players.map(p=>`<option value="${p.id}">${(p.lastName||'').toUpperCase()} ${p.firstName||''}</option>`).join(''); table.innerHTML=players.map(p=>`<tr><td>${(p.lastName||'').toUpperCase()}</td><td>${p.firstName||''}</td><td>${p.team||''}</td><td>${p.group||''}</td><td>${p.position||''}</td><td>${p.number??''}</td></tr>`).join('')}
 function resetPlayerForm(){qs('#playerIdField').value=''; qs('#playerSelect').value=''; qs('#playerLastName').value=''; qs('#playerFirstName').value=''; qs('#playerTeamField').value='Fédérale 1'; qs('#playerGroupField').value='Avants'; qs('#playerPosition').value=''; qs('#playerNumber').value=''; qs('#playerStatusMsg').textContent=''; qs('#playerWeightMeasure').value=''; qs('#playerWeightDate').value=todayStr; qs('#playerWeightHistory').innerHTML=''; if(playerWeightChart){playerWeightChart.destroy(); playerWeightChart=null;}}
@@ -140,6 +172,23 @@ async function addWeightMeasureFromForm(){const playerId=qs('#playerIdField').va
 async function saveRpe(){const id=qs('#rpeEditId').value; const payload={playerId:qs('#rpePlayer').value,date:qs('#rpeDate').value,type:qs('#rpeType').value,status:qs('#rpeStatus').value,rpe:Number(qs('#rpeValue').value||0),duration:Number(qs('#rpeDuration').value||0),updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; payload.load=payload.rpe*payload.duration; try{ if(id) await db.collection('rpeEntries').doc(id).set(payload,{merge:true}); else await db.collection('rpeEntries').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); resetRpeForm(); await loadAllFromFirestore(); }catch(err){console.error(err)}}
 function resetRpeForm(){qs('#rpeEditId').value=''; qs('#rpeDate').value=todayStr; qs('#rpeType').value='Mardi'; qs('#rpeStatus').value='Présent'; qs('#rpeValue').value=''; qs('#rpeDuration').value=''}
 function editRpe(id){const e=state.rpeEntries.find(x=>x.id===id); if(!e) return; activateTab('rpe'); qs('#rpeEditId').value=e.id; qs('#rpePlayer').value=e.playerId; qs('#rpeDate').value=e.date; qs('#rpeType').value=e.type; qs('#rpeStatus').value=e.status; qs('#rpeValue').value=e.rpe; qs('#rpeDuration').value=e.duration}
+  function deleteRpe(id) {
+    const entry = state.rpeEntries.find(x => x.id === id);
+    if (!entry) return;
+
+    const confirmed = window.confirm(
+        `Supprimer le RPE du ${entry.date} ?`
+    );
+    if (!confirmed) return;
+
+    state.rpeEntries = state.rpeEntries.filter(x => x.id !== id);
+
+    if (qs('#rpeEditId').value === id) {
+        resetRpeForm();
+    }
+
+    syncUI();
+}
 async function saveHooper(){const id=qs('#hooperEditId').value; const payload={playerId:qs('#hooperPlayer').value,date:qs('#hooperDate').value,sleep:Number(qs('#sleep').value||1),mood:Number(qs('#mood').value||1),energy:Number(qs('#energy').value||1),soreness:Number(qs('#soreness').value||1),wellbeing:Number(qs('#wellbeing').value||1),updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; payload.total=payload.sleep+payload.mood+payload.energy+payload.soreness+payload.wellbeing; try{ if(id) await db.collection('hooperEntries').doc(id).set(payload,{merge:true}); else await db.collection('hooperEntries').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); resetHooperForm(); await loadAllFromFirestore(); }catch(err){console.error(err)}}
 function resetHooperForm(){qs('#hooperEditId').value=''; qs('#hooperDate').value=todayStr; qs('#sleep').value=''; qs('#mood').value=''; qs('#energy').value=''; qs('#soreness').value=''; qs('#wellbeing').value=''}
 function editHooper(id){const e=state.hooperEntries.find(x=>x.id===id); if(!e) return; activateTab('hooper'); qs('#hooperEditId').value=e.id; qs('#hooperPlayer').value=e.playerId; qs('#hooperDate').value=e.date; qs('#sleep').value=e.sleep; qs('#mood').value=e.mood; qs('#energy').value=e.energy; qs('#soreness').value=e.soreness; qs('#wellbeing').value=e.wellbeing}
