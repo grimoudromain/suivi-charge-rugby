@@ -123,7 +123,10 @@ async function seedDemoData(){const players=[{firstName:'Arthur',lastName:'Berna
 for(const p of players){await db.collection('players').add(p)}
 await loadAllFromFirestore(); qs('#playerStatusMsg').textContent='Données démo ajoutées dans Firestore.';}
 function filteredPlayers(){const team=qs('#teamFilter')?.value||'all';const group=qs('#groupFilter')?.value||'all';const q=(qs('#searchFilter')?.value||'').trim().toLowerCase();return state.players.filter(p=>(team==='all'||p.team===team)&&(group==='all'||p.group===group)&&(!q||(`${p.firstName} ${p.lastName}`.toLowerCase().includes(q)||`${p.lastName} ${p.firstName}`.toLowerCase().includes(q))))}
-function playerMetrics(player){const entries=state.rpeEntries.filter(e=>e.playerId===player.id);const last7=entries.slice(-7);const last28=entries.slice(-28);const load7=last7.reduce((s,e)=>s+(e.load||0),0);const rpeAvg=last7.length?last7.reduce((s,e)=>s+(e.rpe||0),0)/last7.length:0;const ewma=last28.length?last28.reduce((s,e)=>s+(e.load||0),0)/last28.length:0;const acwr=ewma?load7/ewma:0;const total=entries.length;const present=entries.filter(e=>e.status==='Présent').length;const dispo=total?present/total*100:0;const inj=state.injuries.some(i=>i.playerId===player.id&&i.active);const h=state.hooperEntries.filter(e=>e.playerId===player.id).slice(-10).at(-1);const hooper=h?h.total:null;let alert='RAS';if(inj||acwr>1.5||(hooper!==null&&hooper<13)) alert='Élevée'; else if(acwr>1.2||(hooper!==null&&hooper<16)) alert='Modérée';return {load7,ewma,acwr,rpeAvg,dispo,inj,hooper,alert}}
+function filteredPlayerIds(){
+  return new Set(filteredPlayers().map(p=>p.id));
+}
+  function playerMetrics(player){const entries=state.rpeEntries.filter(e=>e.playerId===player.id);const last7=entries.slice(-7);const last28=entries.slice(-28);const load7=last7.reduce((s,e)=>s+(e.load||0),0);const rpeAvg=last7.length?last7.reduce((s,e)=>s+(e.rpe||0),0)/last7.length:0;const ewma=last28.length?last28.reduce((s,e)=>s+(e.load||0),0)/last28.length:0;const acwr=ewma?load7/ewma:0;const total=entries.length;const present=entries.filter(e=>e.status==='Présent').length;const dispo=total?present/total*100:0;const inj=state.injuries.some(i=>i.playerId===player.id&&i.active);const h=state.hooperEntries.filter(e=>e.playerId===player.id).slice(-10).at(-1);const hooper=h?h.total:null;let alert='RAS';if(inj||acwr>1.5||(hooper!==null&&hooper<13)) alert='Élevée'; else if(acwr>1.2||(hooper!==null&&hooper<16)) alert='Modérée';return {load7,ewma,acwr,rpeAvg,dispo,inj,hooper,alert}}
 function setFilters() {
     const teamSel = qs('#teamFilter');
     const groupSel = qs('#groupFilter');
@@ -165,40 +168,107 @@ function setFilters() {
 function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; qs('#summaryTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${p.team||''}</td><td>${p.group||''}</td><td>${m.inj?'Blessé':'Disponible'}</td><td>${fmt(m.load7)}</td><td>${fmt(m.ewma)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.rpeAvg.toFixed(1)}</td><td>${fmt(m.dispo)}%</td><td>${m.inj?'Oui':'Non'}</td><td>-</td><td>-</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); qs('#coachTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${fmt(m.load7)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); renderLoadChart(players); renderAlertsChart(players)}
 function renderAvailability(){const players=filteredPlayers(); qs('#availabilityTable').innerHTML=players.map(p=>{const entries=state.rpeEntries.filter(e=>e.playerId===p.id); const total=entries.length; const present=entries.filter(e=>e.status==='Présent').length; const absent=entries.filter(e=>e.status==='Absent').length; const bless=entries.filter(e=>e.status==='Blessé').length; const partial=entries.filter(e=>e.status==='Partiel').length; const presence=total?Math.round(present/total*100):0; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${total}</td><td>${present}</td><td>${absent}</td><td>${bless}</td><td>${partial}</td><td>${presence}%</td></tr>`}).join('')}
 function renderRpeTable() {
-    qs('#rpeTable').innerHTML = [...state.rpeEntries]
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .map(e => {
-            const p = state.players.find(x => x.id === e.playerId);
-            return `
-                <tr>
-                    <td>${e.date}</td>
-                    <td>${p ? `${p.lastName.toUpperCase()} ${p.firstName}` : e.playerId}</td>
-                    <td>${e.type}</td>
-                    <td>${e.status}</td>
-                    <td>${e.rpe}</td>
-                    <td>${e.duration}</td>
-                    <td>${e.load}</td>
-                    <td>
-                        <div class="actions">
-                            <button class="btn" data-edit-rpe="${e.id}">Modifier</button>
-                            <button class="btn" data-delete-rpe="${e.id}">Supprimer</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        })
-        .join('');
+  const visibleIds = filteredPlayerIds();
 
-    qsa('[data-edit-rpe]').forEach(btn =>
-        btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
-    );
+  qs('#rpeTable').innerHTML = [...state.rpeEntries]
+    .filter(e => visibleIds.has(e.playerId))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map(e => {
+      const p = state.players.find(x => x.id === e.playerId);
+      return `
+        <tr>
+          <td>${e.date}</td>
+          <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : e.playerId}</td>
+          <td>${e.type}</td>
+          <td>${e.status}</td>
+          <td>${e.rpe}</td>
+          <td>${e.duration}</td>
+          <td>${e.load}</td>
+          <td>
+            <div class="actions">
+              <button class="btn" data-edit-rpe="${e.id}">Modifier</button>
+              <button class="btn" data-delete-rpe="${e.id}">Supprimer</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
 
-    qsa('[data-delete-rpe]').forEach(btn =>
-        btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
-    );
+  qsa('[data-edit-rpe]').forEach(btn =>
+    btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
+  );
+
+  qsa('[data-delete-rpe]').forEach(btn =>
+    btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
+  );
 }
-function renderHooperTable(){qs('#hooperTable').innerHTML=[...state.hooperEntries].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const p=state.players.find(x=>x.id===e.playerId); return `<tr><td>${e.date}</td><td>${p?`${(p.lastName||'').toUpperCase()} ${p.firstName||''}`:e.playerId}</td><td>${e.sleep}</td><td>${e.mood}</td><td>${e.energy}</td><td>${e.soreness}</td><td>${e.wellbeing}</td><td>${e.total}</td><td><button class="btn" data-edit-hooper="${e.id}">Modifier</button></td></tr>`}).join(''); qsa('[data-edit-hooper]').forEach(btn=>btn.addEventListener('click',()=>editHooper(btn.dataset.editHooper)))}
-function renderPlayersAdmin(){const select=qs('#playerSelect'), table=qs('#playersTable'); if(!select||!table) return; const players=[...state.players].sort((a,b)=>`${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`,'fr',{sensitivity:'base'})); select.innerHTML='<option value="">Nouveau joueur</option>'+players.map(p=>`<option value="${p.id}">${(p.lastName||'').toUpperCase()} ${p.firstName||''}</option>`).join(''); table.innerHTML=players.map(p=>`<tr><td>${(p.lastName||'').toUpperCase()}</td><td>${p.firstName||''}</td><td>${p.team||''}</td><td>${p.group||''}</td><td>${p.position||''}</td><td>${p.number??''}</td></tr>`).join('')}
+function renderHooperTable() {
+  const visibleIds = filteredPlayerIds();
+
+  qs('#hooperTable').innerHTML = [...state.hooperEntries]
+    .filter(e => visibleIds.has(e.playerId))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map(e => {
+      const p = state.players.find(x => x.id === e.playerId);
+      return `
+        <tr>
+          <td>${e.date}</td>
+          <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : e.playerId}</td>
+          <td>${e.sleep}</td>
+          <td>${e.mood}</td>
+          <td>${e.energy}</td>
+          <td>${e.soreness}</td>
+          <td>${e.wellbeing}</td>
+          <td>${e.total}</td>
+          <td><button class="btn" data-edit-hooper="${e.id}">Modifier</button></td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  qsa('[data-edit-hooper]').forEach(btn =>
+    btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
+  );
+}
+function renderPlayersAdmin() {
+  const select = qs('#playerSelect');
+  const table = qs('#playersTable');
+  if (!select || !table) return;
+
+  const allPlayers = [...state.players].sort((a, b) =>
+    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+      `${b.lastName || ''} ${b.firstName || ''}`,
+      'fr',
+      { sensitivity: 'base' }
+    )
+  );
+
+  const visiblePlayers = filteredPlayers().sort((a, b) =>
+    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+      `${b.lastName || ''} ${b.firstName || ''}`,
+      'fr',
+      { sensitivity: 'base' }
+    )
+  );
+
+  select.innerHTML =
+    '<option value="">Nouveau joueur</option>' +
+    allPlayers.map(p =>
+      `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
+    ).join('');
+
+  table.innerHTML = visiblePlayers.map(p => `
+    <tr>
+      <td>${(p.lastName || '').toUpperCase()}</td>
+      <td>${p.firstName || ''}</td>
+      <td>${p.team || ''}</td>
+      <td>${p.group || ''}</td>
+      <td>${p.position || ''}</td>
+      <td>${p.number ?? ''}</td>
+    </tr>
+  `).join('');
+}
 function resetPlayerForm(){qs('#playerIdField').value=''; qs('#playerSelect').value=''; qs('#playerLastName').value=''; qs('#playerFirstName').value=''; qs('#playerTeamField').value='Fédérale 1'; qs('#playerGroupField').value='Avants'; qs('#playerPosition').value=''; qs('#playerNumber').value=''; qs('#playerStatusMsg').textContent=''; qs('#playerWeightMeasure').value=''; qs('#playerWeightDate').value=todayStr; qs('#playerWeightHistory').innerHTML=''; if(playerWeightChart){playerWeightChart.destroy(); playerWeightChart=null;}}
 function loadPlayerIntoForm(playerId){const player=state.players.find(p=>p.id===playerId); if(!player) return resetPlayerForm(); qs('#playerIdField').value=player.id; qs('#playerLastName').value=player.lastName||''; qs('#playerFirstName').value=player.firstName||''; qs('#playerTeamField').value=player.team||'Fédérale 1'; qs('#playerGroupField').value=player.group||'Avants'; qs('#playerPosition').value=player.position||''; qs('#playerNumber').value=player.number??''; renderPlayerWeightHistory(playerId); renderPlayerWeightChart(playerId)}
 async function savePlayerFromForm(){const id=qs('#playerIdField').value; const status=qs('#playerStatusMsg'); const lastName=qs('#playerLastName').value.trim(); const firstName=qs('#playerFirstName').value.trim(); const team=qs('#playerTeamField').value; const group=qs('#playerGroupField').value; const position=qs('#playerPosition').value.trim(); const number=qs('#playerNumber').value?Number(qs('#playerNumber').value):null; if(!lastName||!firstName){status.textContent='Nom et prénom obligatoires.'; return;} const payload={lastName,firstName,team,group,position,number,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; try{ if(id){ await db.collection('players').doc(id).set(payload,{merge:true}); status.textContent='Joueur mis à jour dans Firestore.'; } else { const ref=await db.collection('players').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); qs('#playerIdField').value=ref.id; status.textContent='Joueur enregistré dans Firestore.'; } await loadAllFromFirestore(); qs('#playerSelect').value=qs('#playerIdField').value; }catch(err){console.error(err); status.textContent='Erreur enregistrement joueur.'; }}
