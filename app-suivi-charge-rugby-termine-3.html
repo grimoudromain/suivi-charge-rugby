@@ -45,7 +45,12 @@
       <div class="field"><label>Équipe</label><select id="teamFilter"><option value="all">Toutes</option></select></div>
       <div class="field"><label>Groupe</label><select id="groupFilter"><option value="all">Tous</option></select></div>
       <div class="field"><label>Période</label><select id="periodFilter"><option value="7">7 jours</option><option value="14">14 jours</option><option value="28" selected>28 jours</option></select></div>
-      <div class="field"><label>Recherche</label><input id="searchFilter" type="text" placeholder="Nom du joueur"></div>
+      <div class="field">
+  <label>Joueur</label>
+  <select id="searchFilter">
+    <option value="">Tous les joueurs</option>
+  </select>
+</div>
     </div>
 
     <section class="section active" id="dashboard">
@@ -122,7 +127,17 @@ function splitHooper(total){let rem=total;const keys=['sleep','mood','energy','s
 async function seedDemoData(){const players=[{firstName:'Arthur',lastName:'Bernard',team:'Fédérale 1',group:'Avants',position:'Pilier',number:1},{firstName:'Baptiste',lastName:'Colin',team:'Fédérale 1',group:'Arrières',position:'Ailier',number:14},{firstName:'Clément',lastName:'Dupuy',team:'Espoirs',group:'Avants',position:'Talonneur',number:2},{firstName:'Dorian',lastName:'Le Roux',team:'Espoirs',group:'Arrières',position:'Centre',number:12},{firstName:'Enzo',lastName:'Martin',team:'Fédérale 1',group:'Avants',position:'Deuxième ligne',number:5},{firstName:'Florian',lastName:'Rousseau',team:'Espoirs',group:'Arrières',position:'Arrière',number:15}];
 for(const p of players){await db.collection('players').add(p)}
 await loadAllFromFirestore(); qs('#playerStatusMsg').textContent='Données démo ajoutées dans Firestore.';}
-function filteredPlayers(){const team=qs('#teamFilter')?.value||'all';const group=qs('#groupFilter')?.value||'all';const q=(qs('#searchFilter')?.value||'').trim().toLowerCase();return state.players.filter(p=>(team==='all'||p.team===team)&&(group==='all'||p.group===group)&&(!q||(`${p.firstName} ${p.lastName}`.toLowerCase().includes(q)||`${p.lastName} ${p.firstName}`.toLowerCase().includes(q))))}
+function filteredPlayers() {
+  const team = qs('#teamFilter')?.value || 'all';
+  const group = qs('#groupFilter')?.value || 'all';
+  const selectedPlayerId = qs('#searchFilter')?.value || '';
+
+  return state.players.filter(p =>
+    (team === 'all' || p.team === team) &&
+    (group === 'all' || p.group === group) &&
+    (!selectedPlayerId || p.id === selectedPlayerId)
+  );
+}
 function filteredPlayerIds(){
   return new Set(filteredPlayers().map(p=>p.id));
 }
@@ -166,7 +181,8 @@ function filteredPlayerIds(){
     function setFilters() {
   const teamSel = qs('#teamFilter');
   const groupSel = qs('#groupFilter');
-  if (!teamSel || !groupSel) return;
+  const searchSel = qs('#searchFilter');
+  if (!teamSel || !groupSel || !searchSel) return;
 
   const playersSorted = [...state.players].sort((a, b) =>
     `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
@@ -178,8 +194,10 @@ function filteredPlayerIds(){
 
   const teams = [...new Set(playersSorted.map(p => p.team))];
   const groups = [...new Set(playersSorted.map(p => p.group))];
+
   const teamVal = teamSel.value || 'all';
   const groupVal = groupSel.value || 'all';
+  const searchVal = searchSel.value || '';
 
   teamSel.innerHTML =
     '<option value="all">Toutes</option>' +
@@ -189,8 +207,15 @@ function filteredPlayerIds(){
     '<option value="all">Tous</option>' +
     groups.map(x => `<option value="${x}">${x}</option>`).join('');
 
+  searchSel.innerHTML =
+    '<option value="">Tous les joueurs</option>' +
+    playersSorted.map(p =>
+      `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
+    ).join('');
+
   teamSel.value = teams.includes(teamVal) ? teamVal : 'all';
   groupSel.value = groups.includes(groupVal) ? groupVal : 'all';
+  searchSel.value = playersSorted.some(p => p.id === searchVal) ? searchVal : '';
 
   ['#rpePlayer', '#hooperPlayer'].forEach(sel => {
     const el = qs(sel);
@@ -353,7 +378,7 @@ function syncUI(){renderDashboard(); renderAvailability(); renderRpeTable(); ren
 async function loadAllFromFirestore(){const [playersSnap,rpeSnap,hooperSnap,weightsSnap]=await Promise.all([db.collection('players').get(),db.collection('rpeEntries').get(),db.collection('hooperEntries').get(),db.collection('playerWeights').get()]); state.players=playersSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.rpeEntries=rpeSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.hooperEntries=hooperSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.playerWeights=weightsSnap.docs.map(doc=>({id:doc.id,...doc.data()})); setFilters(); syncUI()}
 qsa('.nav button').forEach(btn=>btn.addEventListener('click',()=>activateTab(btn.dataset.tab)));
 qs('#themeToggle').addEventListener('click',()=>{const html=document.documentElement; const current=html.getAttribute('data-theme')||'light'; html.setAttribute('data-theme',current==='light'?'dark':'light')});
-qs('#seedData').addEventListener('click',seedDemoData); qs('#teamFilter').addEventListener('change',syncUI); qs('#groupFilter').addEventListener('change',syncUI); qs('#periodFilter').addEventListener('change',syncUI); qs('#searchFilter').addEventListener('input',syncUI); qs('#saveRpeBtn').addEventListener('click',saveRpe); qs('#resetRpeBtn').addEventListener('click',resetRpeForm); qs('#saveHooperBtn').addEventListener('click',saveHooper); qs('#resetHooperBtn').addEventListener('click',resetHooperForm); qs('#playerSelect').addEventListener('change',e=>{const id=e.target.value; if(!id) resetPlayerForm(); else loadPlayerIntoForm(id)}); qs('#savePlayerBtn').addEventListener('click',savePlayerFromForm); qs('#resetPlayerBtn').addEventListener('click',resetPlayerForm); qs('#deletePlayerBtn').addEventListener('click',deletePlayerFromForm); qs('#addWeightMeasureBtn').addEventListener('click',addWeightMeasureFromForm); qs('#rpeDate').value=todayStr; qs('#hooperDate').value=todayStr; qs('#playerWeightDate').value=todayStr; activateTab('dashboard'); loadAllFromFirestore().catch(err=>console.error('Erreur chargement Firestore',err));
+qs('#seedData').addEventListener('click',seedDemoData); qs('#teamFilter').addEventListener('change',syncUI); qs('#groupFilter').addEventListener('change',syncUI); qs('#periodFilter').addEventListener('change',syncUI); qs('#searchFilter').addEventListener('change',syncUI); qs('#saveRpeBtn').addEventListener('click',saveRpe); qs('#resetRpeBtn').addEventListener('click',resetRpeForm); qs('#saveHooperBtn').addEventListener('click',saveHooper); qs('#resetHooperBtn').addEventListener('click',resetHooperForm); qs('#playerSelect').addEventListener('change',e=>{const id=e.target.value; if(!id) resetPlayerForm(); else loadPlayerIntoForm(id)}); qs('#savePlayerBtn').addEventListener('click',savePlayerFromForm); qs('#resetPlayerBtn').addEventListener('click',resetPlayerForm); qs('#deletePlayerBtn').addEventListener('click',deletePlayerFromForm); qs('#addWeightMeasureBtn').addEventListener('click',addWeightMeasureFromForm); qs('#rpeDate').value=todayStr; qs('#hooperDate').value=todayStr; qs('#playerWeightDate').value=todayStr; activateTab('dashboard'); loadAllFromFirestore().catch(err=>console.error('Erreur chargement Firestore',err));
 </script>
 </body>
 </html>
