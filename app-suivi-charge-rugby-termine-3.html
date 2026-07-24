@@ -126,8 +126,43 @@ function filteredPlayers(){const team=qs('#teamFilter')?.value||'all';const grou
 function filteredPlayerIds(){
   return new Set(filteredPlayers().map(p=>p.id));
 }
-  function playerMetrics(player){const entries=state.rpeEntries.filter(e=>e.playerId===player.id);const last7=entries.slice(-7);const last28=entries.slice(-28);const load7=last7.reduce((s,e)=>s+(e.load||0),0);const rpeAvg=last7.length?last7.reduce((s,e)=>s+(e.rpe||0),0)/last7.length:0;const ewma=last28.length?last28.reduce((s,e)=>s+(e.load||0),0)/last28.length:0;const acwr=ewma?load7/ewma:0;const total=entries.length;const present=entries.filter(e=>e.status==='Présent').length;const dispo=total?present/total*100:0;const inj=state.injuries.some(i=>i.playerId===player.id&&i.active);const h=state.hooperEntries.filter(e=>e.playerId===player.id).slice(-10).at(-1);const hooper=h?h.total:null;let alert='RAS';if(inj||acwr>1.5||(hooper!==null&&hooper<13)) alert='Élevée'; else if(acwr>1.2||(hooper!==null&&hooper<16)) alert='Modérée';return {load7,ewma,acwr,rpeAvg,dispo,inj,hooper,alert}}
-function setFilters() {
+  function playerMetrics(player){
+  const entries = state.rpeEntries
+    .filter(e => e.playerId === player.id)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const last7 = entries.slice(-7);
+  const last28 = entries.slice(-28);
+
+  const load7 = last7.reduce((s, e) => s + (e.load || 0), 0);
+  const rpeAvg = last7.length
+    ? last7.reduce((s, e) => s + (e.rpe || 0), 0) / last7.length
+    : 0;
+  const ewma = last28.length
+    ? last28.reduce((s, e) => s + (e.load || 0), 0) / last28.length
+    : 0;
+  const acwr = ewma ? load7 / ewma : 0;
+
+  const total = entries.length;
+  const present = entries.filter(e => e.status === 'Présent').length;
+  const dispo = total ? present / total * 100 : 0;
+
+  const latestEntry = entries.length ? entries[entries.length - 1] : null;
+  const inj = latestEntry ? latestEntry.status === 'Blessé' : false;
+
+  const h = state.hooperEntries
+    .filter(e => e.playerId === player.id)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .at(-1);
+
+  const hooper = h ? h.total : null;
+
+  let alert = 'RAS';
+  if (inj || acwr > 1.5 || (hooper !== null && hooper < 13)) alert = 'Élevée';
+  else if (acwr > 1.2 || (hooper !== null && hooper < 16)) alert = 'Modérée';
+
+  return { load7, ewma, acwr, rpeAvg, dispo, inj, hooper, alert };
+}
     const teamSel = qs('#teamFilter');
     const groupSel = qs('#groupFilter');
     if (!teamSel || !groupSel) return;
