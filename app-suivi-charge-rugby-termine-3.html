@@ -65,6 +65,12 @@
         <div class="card panel"><h3>Évolution charge et EWMA</h3><div class="chart-wrap"><canvas id="loadChart"></canvas></div></div>
         <div class="card panel"><h3>Répartition des alertes</h3><div class="chart-wrap small"><canvas id="alertsChart"></canvas></div></div>
       </div>
+            <div class="card panel">
+        <h3>Comparaison des semaines par type de séance</h3>
+        <div class="chart-wrap">
+          <canvas id="weeklyRpeChart"></canvas>
+        </div>
+      </div>
       <div class="card panel"><h3>Tableau récapitulatif joueurs</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Équipe</th><th>Groupe</th><th>Statut</th><th>Charge 7j</th><th>EWMA</th><th>ACWR</th><th>RPE moyen</th><th>Dispo</th><th>Blessés</th><th>Monotonie</th><th>Strain</th><th>Hooper</th><th>Alerte</th></tr></thead><tbody id="summaryTable"></tbody></table></div></div>
     </section>
 
@@ -121,7 +127,18 @@ const firebaseConfig = {
   appId: "1:666633039168:web:68368a8ebbbaab75e51ea5"
 };
 firebase.initializeApp(firebaseConfig); const db=firebase.firestore();
-const state={players:[],rpeEntries:[],hooperEntries:[],injuries:[],playerWeights:[],charts:{load:null,alerts:null}};
+const state={
+  players:[],
+  rpeEntries:[],
+  hooperEntries:[],
+  injuries:[],
+  playerWeights:[],
+  charts:{
+    load:null,
+    alerts:null,
+    weeklyRpe:null
+  }
+};
 let playerWeightChart=null;
 function splitHooper(total){let rem=total;const keys=['sleep','mood','energy','soreness','wellbeing'];const out={};keys.forEach((k,idx)=>{const minLeft=keys.length-idx-1;const max=Math.min(5,rem-minLeft);const val=Math.max(1,Math.min(5,max));out[k]=val;rem-=val});return out}
 async function seedDemoData(){const players=[{firstName:'Arthur',lastName:'Bernard',team:'Fédérale 1',group:'Avants',position:'Pilier',number:1},{firstName:'Baptiste',lastName:'Colin',team:'Fédérale 1',group:'Arrières',position:'Ailier',number:14},{firstName:'Clément',lastName:'Dupuy',team:'Espoirs',group:'Avants',position:'Talonneur',number:2},{firstName:'Dorian',lastName:'Le Roux',team:'Espoirs',group:'Arrières',position:'Centre',number:12},{firstName:'Enzo',lastName:'Martin',team:'Fédérale 1',group:'Avants',position:'Deuxième ligne',number:5},{firstName:'Florian',lastName:'Rousseau',team:'Espoirs',group:'Arrières',position:'Arrière',number:15}];
@@ -226,7 +243,7 @@ function filteredPlayerIds(){
     }
   });
 }
-function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; qs('#summaryTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${p.team||''}</td><td>${p.group||''}</td><td>${m.inj?'Blessé':'Disponible'}</td><td>${fmt(m.load7)}</td><td>${fmt(m.ewma)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.rpeAvg.toFixed(1)}</td><td>${fmt(m.dispo)}%</td><td>${m.inj?'Oui':'Non'}</td><td>-</td><td>-</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); qs('#coachTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${fmt(m.load7)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); renderLoadChart(players); renderAlertsChart(players)}
+function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; qs('#summaryTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${p.team||''}</td><td>${p.group||''}</td><td>${m.inj?'Blessé':'Disponible'}</td><td>${fmt(m.load7)}</td><td>${fmt(m.ewma)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.rpeAvg.toFixed(1)}</td><td>${fmt(m.dispo)}%</td><td>${m.inj?'Oui':'Non'}</td><td>-</td><td>-</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); qs('#coachTable').innerHTML=players.map(p=>{const m=playerMetrics(p); const pill=m.alert==='Élevée'?'red':m.alert==='Modérée'?'orange':'green'; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${fmt(m.load7)}</td><td>${m.acwr.toFixed(2)}</td><td>${m.hooper ?? '-'}</td><td><span class="pill ${pill}">${m.alert}</span></td></tr>`}).join(''); renderLoadChart(players); renderAlertsChart(players); renderWeeklyRpeChart(players);}
 function renderAvailability(){const players=filteredPlayers(); qs('#availabilityTable').innerHTML=players.map(p=>{const entries=state.rpeEntries.filter(e=>e.playerId===p.id); const total=entries.length; const present=entries.filter(e=>e.status==='Présent').length; const absent=entries.filter(e=>e.status==='Absent').length; const bless=entries.filter(e=>e.status==='Blessé').length; const partial=entries.filter(e=>e.status==='Partiel').length; const presence=total?Math.round(present/total*100):0; return `<tr><td>${(p.lastName||'').toUpperCase()} ${p.firstName||''}</td><td>${total}</td><td>${present}</td><td>${absent}</td><td>${bless}</td><td>${partial}</td><td>${presence}%</td></tr>`}).join('')}
 function renderRpeTable() {
   const visibleIds = filteredPlayerIds();
@@ -373,6 +390,86 @@ function resetHooperForm(){qs('#hooperEditId').value=''; qs('#hooperDate').value
 function editHooper(id){const e=state.hooperEntries.find(x=>x.id===id); if(!e) return; activateTab('hooper'); qs('#hooperEditId').value=e.id; qs('#hooperPlayer').value=e.playerId; qs('#hooperDate').value=e.date; qs('#sleep').value=e.sleep; qs('#mood').value=e.mood; qs('#energy').value=e.energy; qs('#soreness').value=e.soreness; qs('#wellbeing').value=e.wellbeing}
 function renderLoadChart(players){const ctx=qs('#loadChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.load) state.charts.load.destroy(); state.charts.load=new Chart(ctx,{type:'bar',data:{labels:players.map(p=>`${p.lastName} ${p.firstName}`),datasets:[{label:'Charge 7j',data:players.map(p=>playerMetrics(p).load7),backgroundColor:'rgba(15,108,115,.55)'},{label:'EWMA',data:players.map(p=>playerMetrics(p).ewma),backgroundColor:'rgba(0,100,148,.45)'}]},options:{responsive:true,maintainAspectRatio:false}})}
 function renderAlertsChart(players){const ctx=qs('#alertsChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.alerts) state.charts.alerts.destroy(); const counts={'RAS':0,'Modérée':0,'Élevée':0}; players.forEach(p=>counts[playerMetrics(p).alert]++); state.charts.alerts=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:['#437a22','#da7101','#a13544']}]},options:{responsive:true,maintainAspectRatio:false}})}
+  function getWeekLabel(dateStr){
+  const d = new Date(dateStr + 'T12:00:00');
+  const day = d.getDay(); // 0 dimanche, 1 lundi...
+  const diff = day === 0 ? -6 : 1 - day; // remonter jusqu'au lundi
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
+  return monday.toISOString().slice(0,10); // YYYY-MM-DD du lundi
+}
+function renderWeeklyRpeChart(players){
+  const ctx = qs('#weeklyRpeChart');
+  if(!ctx || typeof Chart === 'undefined') return;
+
+  if(state.charts.weeklyRpe) state.charts.weeklyRpe.destroy();
+
+  const visibleIds = new Set(players.map(p => p.id));
+  const entries = state.rpeEntries
+    .filter(e => visibleIds.has(e.playerId))
+    .filter(e => ['Mardi','Mercredi','Vendredi','Match'].includes(e.type));
+
+  const byWeek = {};
+
+  entries.forEach(e => {
+    const week = getWeekLabel(e.date);
+    if(!byWeek[week]){
+      byWeek[week] = { Mardi:0, Mercredi:0, Vendredi:0, Match:0 };
+    }
+    byWeek[week][e.type] += Number(e.load || 0);
+  });
+
+  const labels = Object.keys(byWeek).sort((a,b) => a.localeCompare(b));
+
+  state.charts.weeklyRpe = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Mardi',
+          data: labels.map(w => byWeek[w].Mardi),
+          backgroundColor: 'rgba(15,108,115,0.75)'
+        },
+        {
+          label: 'Mercredi',
+          data: labels.map(w => byWeek[w].Mercredi),
+          backgroundColor: 'rgba(0,100,148,0.75)'
+        },
+        {
+          label: 'Vendredi',
+          data: labels.map(w => byWeek[w].Vendredi),
+          backgroundColor: 'rgba(218,113,1,0.75)'
+        },
+        {
+          label: 'Match',
+          data: labels.map(w => byWeek[w].Match),
+          backgroundColor: 'rgba(161,53,68,0.75)'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          title: { display: true, text: 'Semaine (lundi)' }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          title: { display: true, text: 'Charge totale (RPE × durée)' }
+        }
+      }
+    }
+  });
+}
 function activateTab(id){qsa('.section').forEach(sec=>sec.classList.toggle('active',sec.id===id)); qsa('.nav button').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id)); const titleMap={dashboard:'Dashboard',disponibilites:'Disponibilités', 'vue-coach':'Vue coach', joueurs:'Joueurs', rpe:'RPE', hooper:'Hooper', 'player-access':'Interface joueurs'}; const introMap={dashboard:'Vue centrale charge interne, disponibilité et synthèse staff.',disponibilites:'Présence, absence et blessure par joueur.','vue-coach':'Liste des joueurs à surveiller.',joueurs:'Création, modification et suppression des fiches joueurs.',rpe:'Gestion des RPE par joueur.',hooper:'Gestion des scores Hooper.','player-access':'Interface dédiée aux joueurs.'}; qs('#pageTitle').textContent=titleMap[id]; qs('#pageIntro').textContent=introMap[id]}
 function syncUI(){renderDashboard(); renderAvailability(); renderRpeTable(); renderHooperTable(); renderPlayersAdmin()}
 async function loadAllFromFirestore(){const [playersSnap,rpeSnap,hooperSnap,weightsSnap]=await Promise.all([db.collection('players').get(),db.collection('rpeEntries').get(),db.collection('hooperEntries').get(),db.collection('playerWeights').get()]); state.players=playersSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.rpeEntries=rpeSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.hooperEntries=hooperSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.playerWeights=weightsSnap.docs.map(doc=>({id:doc.id,...doc.data()})); setFilters(); syncUI()}
