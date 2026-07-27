@@ -321,64 +321,53 @@ function renderAvailability() {
     `;
   }).join('');
 }
+  
 function renderRpeTable() {
-  const team = qs('#teamFilter')?.value || 'all';
-  const group = qs('#groupFilter')?.value || 'all';
-  const selectedPlayerId = qs('#searchFilter')?.value || '';
+    const visibleIds = filteredPlayerIds();
 
-  qs('#rpeTable').innerHTML = [...state.rpeEntries]
-    .filter(e => {
-      const p = state.players.find(x => x.id === e.playerId);
+    qs('#rpeTable').innerHTML = [...state.rpeEntries]
+        .filter(e => visibleIds.has(e.playerId))
+        .sort((a, b) => {
+            const dateCompare = b.date.localeCompare(a.date);
+            if (dateCompare !== 0) return dateCompare;
 
-      if (selectedPlayerId && e.playerId !== selectedPlayerId) return false;
-      if (!p && (team !== 'all' || group !== 'all')) return false;
-      if (p && team !== 'all' && p.team !== team) return false;
-      if (p && group !== 'all' && p.group !== group) return false;
+            const playerA = state.players.find(x => x.id === a.playerId);
+            const playerB = state.players.find(x => x.id === b.playerId);
 
-      return true;
-    })
-    .sort((a, b) => {
-      const dateCompare = b.date.localeCompare(a.date);
-      if (dateCompare !== 0) return dateCompare;
+            const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+            const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
 
-      const playerA = state.players.find(x => x.id === a.playerId);
-      const playerB = state.players.find(x => x.id === b.playerId);
+            return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+        })
+        .map(e => {
+            const p = state.players.find(x => x.id === e.playerId);
+            return `
+        <tr>
+          <td>${e.date}</td>
+          <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : (e.playerName || e.playerId)}</td>
+          <td>${e.type}</td>
+          <td>${e.status}</td>
+          <td>${e.rpe}</td>
+          <td>${e.duration}</td>
+          <td>${e.load}</td>
+          <td>
+            <div class="actions">
+              <button class="btn" data-edit-rpe="${e.id}">Modifier</button>
+              <button class="btn" data-delete-rpe="${e.id}">Supprimer</button>
+            </div>
+          </td>
+        </tr>
+      `;
+        })
+        .join('');
 
-      const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}` || (a.playerName || '');
-      const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}` || (b.playerName || '');
+    qsa('[data-edit-rpe]').forEach(btn =>
+        btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
+    );
 
-      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
-    })
-    .map(e => {
-      const p = state.players.find(x => x.id === e.playerId);
-      const displayName = p
-        ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}`
-        : (e.playerName || e.playerId || 'Joueur inconnu');
-
-      return `<tr>
-        <td>${e.date}</td>
-        <td>${displayName}</td>
-        <td>${e.type}</td>
-        <td>${e.status}</td>
-        <td>${e.rpe}</td>
-        <td>${e.duration}</td>
-        <td>${e.load}</td>
-        <td>
-          <div class="actions">
-            <button class="btn" data-edit-rpe="${e.id}">Modifier</button>
-            <button class="btn" data-delete-rpe="${e.id}">Supprimer</button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
-
-  qsa('[data-edit-rpe]').forEach(btn =>
-    btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
-  );
-
-  qsa('[data-delete-rpe]').forEach(btn =>
-    btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
-  );
+    qsa('[data-delete-rpe]').forEach(btn =>
+        btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
+    );
 }
 
   qsa('[data-edit-rpe]').forEach(btn =>
@@ -390,64 +379,52 @@ function renderRpeTable() {
   );
 }
 function renderHooperTable() {
-  const team = qs('#teamFilter')?.value || 'all';
-  const group = qs('#groupFilter')?.value || 'all';
-  const selectedPlayerId = qs('#searchFilter')?.value || '';
+    const visibleIds = filteredPlayerIds();
 
-  qs('#hooperTable').innerHTML = [...state.hooperEntries]
-    .filter(e => {
-      const p = state.players.find(x => x.id === e.playerId);
+    qs('#hooperTable').innerHTML = [...state.hooperEntries]
+        .filter(e => visibleIds.has(e.playerId))
+        .sort((a, b) => {
+            const dateCompare = b.date.localeCompare(a.date);
+            if (dateCompare !== 0) return dateCompare;
 
-      if (selectedPlayerId && e.playerId !== selectedPlayerId) return false;
-      if (!p && (team !== 'all' || group !== 'all')) return false;
-      if (p && team !== 'all' && p.team !== team) return false;
-      if (p && group !== 'all' && p.group !== group) return false;
+            const playerA = state.players.find(x => x.id === a.playerId);
+            const playerB = state.players.find(x => x.id === b.playerId);
 
-      return true;
-    })
-    .sort((a, b) => {
-      const dateCompare = b.date.localeCompare(a.date);
-      if (dateCompare !== 0) return dateCompare;
+            const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+            const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
 
-      const playerA = state.players.find(x => x.id === a.playerId);
-      const playerB = state.players.find(x => x.id === b.playerId);
+            return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+        })
+        .map(e => {
+            const p = state.players.find(x => x.id === e.playerId);
+            return `
+        <tr>
+          <td>${e.date}</td>
+          <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : (e.playerName || e.playerId)}</td>
+          <td>${e.sleep}</td>
+          <td>${e.mood}</td>
+          <td>${e.energy}</td>
+          <td>${e.soreness}</td>
+          <td>${e.wellbeing}</td>
+          <td>${e.total}</td>
+          <td>
+            <div class="actions">
+              <button class="btn" data-edit-hooper="${e.id}">Modifier</button>
+              <button class="btn" data-delete-hooper="${e.id}">Supprimer</button>
+            </div>
+          </td>
+        </tr>
+      `;
+        })
+        .join('');
 
-      const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}` || (a.playerName || '');
-      const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}` || (b.playerName || '');
+    qsa('[data-edit-hooper]').forEach(btn =>
+        btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
+    );
 
-      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
-    })
-    .map(e => {
-      const p = state.players.find(x => x.id === e.playerId);
-      const displayName = p
-        ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}`
-        : (e.playerName || e.playerId || 'Joueur inconnu');
-
-      return `<tr>
-        <td>${e.date}</td>
-        <td>${displayName}</td>
-        <td>${e.sleep}</td>
-        <td>${e.mood}</td>
-        <td>${e.energy}</td>
-        <td>${e.soreness}</td>
-        <td>${e.wellbeing}</td>
-        <td>${e.total}</td>
-        <td>
-          <div class="actions">
-            <button class="btn" data-edit-hooper="${e.id}">Modifier</button>
-            <button class="btn" data-delete-hooper="${e.id}">Supprimer</button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
-
-  qsa('[data-edit-hooper]').forEach(btn =>
-    btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
-  );
-
-  qsa('[data-delete-hooper]').forEach(btn =>
-    btn.addEventListener('click', () => deleteHooper(btn.dataset.deleteHooper))
-  );
+    qsa('[data-delete-hooper]').forEach(btn =>
+        btn.addEventListener('click', () => deleteHooper(btn.dataset.deleteHooper))
+    );
 }
 
   qsa('[data-edit-hooper]').forEach(btn =>
