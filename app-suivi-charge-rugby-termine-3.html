@@ -298,7 +298,18 @@ function renderRpeTable() {
 
   qs('#rpeTable').innerHTML = [...state.rpeEntries]
     .filter(e => visibleIds.has(e.playerId))
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => {
+  const dateCompare = b.date.localeCompare(a.date);
+  if (dateCompare !== 0) return dateCompare;
+
+  const playerA = state.players.find(x => x.id === a.playerId);
+  const playerB = state.players.find(x => x.id === b.playerId);
+
+  const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+  const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+
+  return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+})
     .map(e => {
       const p = state.players.find(x => x.id === e.playerId);
       return `
@@ -334,7 +345,18 @@ function renderHooperTable() {
 
   qs('#hooperTable').innerHTML = [...state.hooperEntries]
     .filter(e => visibleIds.has(e.playerId))
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => {
+  const dateCompare = b.date.localeCompare(a.date);
+  if (dateCompare !== 0) return dateCompare;
+
+  const playerA = state.players.find(x => x.id === a.playerId);
+  const playerB = state.players.find(x => x.id === b.playerId);
+
+  const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+  const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+
+  return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+})
     .map(e => {
       const p = state.players.find(x => x.id === e.playerId);
       return `
