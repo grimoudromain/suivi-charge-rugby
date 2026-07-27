@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+</td><!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
@@ -299,7 +299,12 @@ function renderHooperTable() {
           <td>${e.soreness}</td>
           <td>${e.wellbeing}</td>
           <td>${e.total}</td>
-          <td><button class="btn" data-edit-hooper="${e.id}">Modifier</button></td>
+          <td>
+  <div class="actions">
+    <button class="btn" data-edit-hooper="${e.id}">Modifier</button>
+    <button class="btn" data-delete-hooper="${e.id}">Supprimer</button>
+  </div>
+</td>
         </tr>
       `;
     })
@@ -308,6 +313,9 @@ function renderHooperTable() {
   qsa('[data-edit-hooper]').forEach(btn =>
     btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
   );
+  qsa('[data-delete-hooper]').forEach(btn =>
+  btn.addEventListener('click', () => deleteHooper(btn.dataset.deleteHooper))
+);
 }
 function renderPlayersAdmin() {
   const select = qs('#playerSelect');
@@ -388,7 +396,31 @@ function editRpe(id){const e=state.rpeEntries.find(x=>x.id===id); if(!e) return;
 async function saveHooper(){const id=qs('#hooperEditId').value; const payload={playerId:qs('#hooperPlayer').value,date:qs('#hooperDate').value,sleep:Number(qs('#sleep').value||1),mood:Number(qs('#mood').value||1),energy:Number(qs('#energy').value||1),soreness:Number(qs('#soreness').value||1),wellbeing:Number(qs('#wellbeing').value||1),updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; payload.total=payload.sleep+payload.mood+payload.energy+payload.soreness+payload.wellbeing; try{ if(id) await db.collection('hooperEntries').doc(id).set(payload,{merge:true}); else await db.collection('hooperEntries').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); resetHooperForm(); await loadAllFromFirestore(); }catch(err){console.error(err)}}
 function resetHooperForm(){qs('#hooperEditId').value=''; qs('#hooperDate').value=todayStr; qs('#sleep').value=''; qs('#mood').value=''; qs('#energy').value=''; qs('#soreness').value=''; qs('#wellbeing').value=''}
 function editHooper(id){const e=state.hooperEntries.find(x=>x.id===id); if(!e) return; activateTab('hooper'); qs('#hooperEditId').value=e.id; qs('#hooperPlayer').value=e.playerId; qs('#hooperDate').value=e.date; qs('#sleep').value=e.sleep; qs('#mood').value=e.mood; qs('#energy').value=e.energy; qs('#soreness').value=e.soreness; qs('#wellbeing').value=e.wellbeing}
-function renderLoadChart(players){const ctx=qs('#loadChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.load) state.charts.load.destroy(); state.charts.load=new Chart(ctx,{type:'bar',data:{labels:players.map(p=>`${p.lastName} ${p.firstName}`),datasets:[{label:'Charge 7j',data:players.map(p=>playerMetrics(p).load7),backgroundColor:'rgba(15,108,115,.55)'},{label:'EWMA',data:players.map(p=>playerMetrics(p).ewma),backgroundColor:'rgba(0,100,148,.45)'}]},options:{responsive:true,maintainAspectRatio:false}})}
+async function deleteHooper(id) {
+  const entry = state.hooperEntries.find(x => x.id === id);
+  if (!entry) return;
+
+  const confirmed = window.confirm(
+    `Supprimer le Hooper du ${entry.date} ?`
+  );
+  if (!confirmed) return;
+
+  try {
+    await db.collection('hooperEntries').doc(id).delete();
+
+    state.hooperEntries = state.hooperEntries.filter(x => x.id !== id);
+
+    if (qs('#hooperEditId').value === id) {
+      resetHooperForm();
+    }
+
+    await loadAllFromFirestore();
+  } catch (err) {
+    console.error('Erreur suppression Hooper', err);
+    alert('Erreur lors de la suppression du Hooper.');
+  }
+}
+  function renderLoadChart(players){const ctx=qs('#loadChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.load) state.charts.load.destroy(); state.charts.load=new Chart(ctx,{type:'bar',data:{labels:players.map(p=>`${p.lastName} ${p.firstName}`),datasets:[{label:'Charge 7j',data:players.map(p=>playerMetrics(p).load7),backgroundColor:'rgba(15,108,115,.55)'},{label:'EWMA',data:players.map(p=>playerMetrics(p).ewma),backgroundColor:'rgba(0,100,148,.45)'}]},options:{responsive:true,maintainAspectRatio:false}})}
 function renderAlertsChart(players){const ctx=qs('#alertsChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.alerts) state.charts.alerts.destroy(); const counts={'RAS':0,'Modérée':0,'Élevée':0}; players.forEach(p=>counts[playerMetrics(p).alert]++); state.charts.alerts=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:['#437a22','#da7101','#a13544']}]},options:{responsive:true,maintainAspectRatio:false}})}
   function getWeekLabel(dateStr){
   const d = new Date(dateStr + 'T12:00:00');
