@@ -1,4 +1,4 @@
-</td><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
@@ -361,15 +361,6 @@ function renderRpeTable() {
         })
         .join('');
 
-    qsa('[data-edit-rpe]').forEach(btn =>
-        btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
-    );
-
-    qsa('[data-delete-rpe]').forEach(btn =>
-        btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
-    );
-}
-
   qsa('[data-edit-rpe]').forEach(btn =>
     btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
   );
@@ -417,15 +408,6 @@ function renderHooperTable() {
       `;
         })
         .join('');
-
-    qsa('[data-edit-hooper]').forEach(btn =>
-        btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
-    );
-
-    qsa('[data-delete-hooper]').forEach(btn =>
-        btn.addEventListener('click', () => deleteHooper(btn.dataset.deleteHooper))
-    );
-}
 
   qsa('[data-edit-hooper]').forEach(btn =>
     btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
