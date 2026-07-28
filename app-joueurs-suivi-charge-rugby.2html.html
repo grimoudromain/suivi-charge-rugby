@@ -214,7 +214,7 @@ async function saveHooper() {
   const invalid = values.some(v => !Number.isFinite(v) || v < 1 || v > 5);
 
   if (invalid) {
-    msgEl.textContent = "Toutes les notes doivent être comprises entre 1 et 5.";
+    msgEl.textContent = "Toutes les notes Hooper doivent être comprises entre 1 et 5.";
     msgEl.className = "status err";
     return;
   }
@@ -242,7 +242,7 @@ async function saveHooper() {
     try {
       await loadHistory(currentPlayer.id);
     } catch (historyErr) {
-      console.error("Erreur historique Hooper :", historyErr);
+      console.error("Erreur chargement historique Hooper :", historyErr);
     }
   } catch (err) {
     console.error("Erreur enregistrement Hooper :", err);
