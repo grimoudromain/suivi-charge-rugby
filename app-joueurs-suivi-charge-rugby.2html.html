@@ -198,11 +198,27 @@ async function saveHooper() {
   }
 
   const date = document.getElementById("hooperDate").value;
-  const sleep = Number(document.getElementById("sleep").value || 1);
-  const mood = Number(document.getElementById("mood").value || 1);
-  const energy = Number(document.getElementById("energy").value || 1);
-  const soreness = Number(document.getElementById("soreness").value || 1);
-  const wellbeing = Number(document.getElementById("wellbeing").value || 1);
+  const sleep = Number(document.getElementById("sleep").value);
+  const mood = Number(document.getElementById("mood").value);
+  const energy = Number(document.getElementById("energy").value);
+  const soreness = Number(document.getElementById("soreness").value);
+  const wellbeing = Number(document.getElementById("wellbeing").value);
+
+  if (!date) {
+    msgEl.textContent = "Choisis une date.";
+    msgEl.className = "status err";
+    return;
+  }
+
+  const values = [sleep, mood, energy, soreness, wellbeing];
+  const invalid = values.some(v => !Number.isFinite(v) || v < 1 || v > 5);
+
+  if (invalid) {
+    msgEl.textContent = "Toutes les notes Hooper doivent être comprises entre 1 et 5.";
+    msgEl.className = "status err";
+    return;
+  }
+
   const total = sleep + mood + energy + soreness + wellbeing;
 
   try {
@@ -222,60 +238,18 @@ async function saveHooper() {
     msgEl.textContent = "Hooper enregistré.";
     msgEl.className = "status ok";
     resetHooperForm();
-    loadHistory(currentPlayer.id);
+
+    try {
+      await loadHistory(currentPlayer.id);
+    } catch (historyErr) {
+      console.error("Historique Hooper non rechargé :", historyErr);
+    }
   } catch (err) {
-    console.error(err);
-    msgEl.textContent = "Erreur lors de l'enregistrement.";
+    console.error("Erreur enregistrement Hooper :", err);
+    msgEl.textContent = err?.message
+      ? `Erreur lors de l'enregistrement : ${err.message}`
+      : "Erreur lors de l'enregistrement.";
     msgEl.className = "status err";
-  }
-}
-
-async function loadHistory(playerId) {
-  const historyEl = document.getElementById("historyList");
-
-  if (!playerId) {
-    clearHistory();
-    return;
-  }
-
-  historyEl.textContent = "Chargement...";
-
-  try {
-    const rpeSnap = await db.collection("rpeEntries")
-      .where("playerId", "==", playerId)
-      .orderBy("date", "desc")
-      .limit(5)
-      .get();
-
-    const hooperSnap = await db.collection("hooperEntries")
-      .where("playerId", "==", playerId)
-      .orderBy("date", "desc")
-      .limit(5)
-      .get();
-
-    let html = "";
-    let hasData = false;
-
-    html += "<div><strong>RPE</strong></div>";
-    rpeSnap.forEach((doc) => {
-      hasData = true;
-      const d = doc.data();
-      html += `<div>- ${d.date} : ${d.type}, statut ${d.status}, RPE ${d.rpe}, durée ${d.duration} min</div>`;
-    });
-
-    html += '<div style="margin-top:6px"><strong>Hooper</strong></div>';
-    hooperSnap.forEach((doc) => {
-      hasData = true;
-      const d = doc.data();
-      html += `<div>- ${d.date} : sommeil ${d.sleep}, humeur ${d.mood}, énergie ${d.energy}, courbatures ${d.soreness}, bien-être ${d.wellbeing}, total ${d.total}</div>`;
-    });
-
-    historyEl.innerHTML = hasData
-      ? html
-      : "<div>Aucun historique pour l'instant.</div>";
-  } catch (err) {
-    console.error(err);
-    historyEl.textContent = "Erreur de chargement de l'historique.";
   }
 }
 
