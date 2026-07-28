@@ -326,7 +326,19 @@ function renderRpeTable() {
     const visibleIds = filteredPlayerIds();
 
     qs('#rpeTable').innerHTML = [...state.rpeEntries]
-        .filter(e => visibleIds.has(e.playerId))
+        .filter(e => {
+  const selectedPlayerId = qs('#searchFilter')?.value || '';
+  if (selectedPlayerId) return e.playerId === selectedPlayerId;
+
+  const p = state.players.find(x => x.id === e.playerId);
+  const team = qs('#teamFilter')?.value || 'all';
+  const group = qs('#groupFilter')?.value || 'all';
+
+  if (!p) return true;
+  if (team !== 'all' && p.team !== team) return false;
+  if (group !== 'all' && p.group !== group) return false;
+  return true;
+})
         .sort((a, b) => {
             const dateCompare = b.date.localeCompare(a.date);
             if (dateCompare !== 0) return dateCompare;
