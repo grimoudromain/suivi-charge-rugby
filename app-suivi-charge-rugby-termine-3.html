@@ -44,7 +44,18 @@
     <div class="filters" id="staffFilters">
       <div class="field"><label>Équipe</label><select id="teamFilter"><option value="all">Toutes</option></select></div>
       <div class="field"><label>Groupe</label><select id="groupFilter"><option value="all">Tous</option></select></div>
-      <div class="field"><label>Période</label><select id="periodFilter"><option value="7">7 jours</option><option value="14">14 jours</option><option value="28" selected>28 jours</option></select></div>
+      <div class="field">
+  <label>Période</label>
+  <select id="periodFilter">
+    <option value="all">Depuis le début</option>
+    <option value="7">7 jours</option>
+    <option value="14">14 jours</option>
+    <option value="28" selected>28 jours</option>
+    <option value="Mardi">Mardi</option>
+    <option value="Mercredi">Mercredi</option>
+    <option value="Vendredi">Vendredi</option>
+  </select>
+</div>
       <div class="field">
   <label>Joueur</label>
   <select id="searchFilter">
@@ -159,27 +170,43 @@ function filteredPlayerIds(){
   return new Set(filteredPlayers().map(p=>p.id));
 }
  function playerMetrics(player){
+  const period = qs('#periodFilter')?.value || '28';
+
   const entries = state.rpeEntries
     .filter(e => e.playerId === player.id)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const last7 = entries.slice(-7);
-  const last28 = entries.slice(-28);
+  const periodEntries = entries.filter(e => matchesPeriod(e, period));
+
+  const last7 = period === 'all'
+    ? entries
+    : period === 'Mardi' || period === 'Mercredi' || period === 'Vendredi'
+      ? periodEntries
+      : periodEntries;
+
+  const last28 = period === 'all'
+    ? entries
+    : period === 'Mardi' || period === 'Mercredi' || period === 'Vendredi'
+      ? periodEntries
+      : entries.slice(-28);
 
   const load7 = last7.reduce((s, e) => s + (e.load || 0), 0);
+
   const rpeAvg = last7.length
     ? last7.reduce((s, e) => s + (e.rpe || 0), 0) / last7.length
     : 0;
+
   const ewma = last28.length
     ? last28.reduce((s, e) => s + (e.load || 0), 0) / last28.length
     : 0;
+
   const acwr = ewma ? load7 / ewma : 0;
 
-  const total = entries.length;
-  const present = entries.filter(e => e.status === 'Présent').length;
+  const total = periodEntries.length;
+  const present = periodEntries.filter(e => e.status === 'Présent').length;
   const dispo = total ? present / total * 100 : 0;
 
-  const latestEntry = entries.length ? entries[entries.length - 1] : null;
+  const latestEntry = periodEntries.length ? periodEntries[periodEntries.length - 1] : null;
   const inj = latestEntry ? latestEntry.status === 'Blessé' : false;
 
   const h = state.hooperEntries
@@ -195,6 +222,7 @@ function filteredPlayerIds(){
 
   return { load7, ewma, acwr, rpeAvg, dispo, inj, hooper, alert };
 }
+  
     function setFilters() {
   const teamSel = qs('#teamFilter');
   const groupSel = qs('#groupFilter');
@@ -243,6 +271,25 @@ function filteredPlayerIds(){
     }
   });
 }
+
+  function matchesPeriod(entry, period) {
+  if (period === "all") return true;
+
+  if (period === "Mardi" || period === "Mercredi" || period === "Vendredi") {
+    return entry.type === period;
+  }
+
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (Number(period) - 1));
+
+  const entryDate = new Date(entry.date + "T12:00:00");
+  return entryDate >= start && entryDate <= today;
+}
+  
 function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; const summaryPlayers = [...players].sort((a, b) =>
   `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
     `${b.lastName || ''} ${b.firstName || ''}`,
@@ -291,6 +338,8 @@ qs('#coachTable').innerHTML = coachPlayers.map(p => {
   </tr>`;
 }).join(''); renderLoadChart(players); renderAlertsChart(players); renderWeeklyRpeChart(players);}
 function renderAvailability() {
+  const period = qs('#periodFilter')?.value || '28';
+
   const players = [...filteredPlayers()].sort((a, b) =>
     `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
       `${b.lastName || ''} ${b.firstName || ''}`,
@@ -300,7 +349,10 @@ function renderAvailability() {
   );
 
   qs('#availabilityTable').innerHTML = players.map(p => {
-    const entries = state.rpeEntries.filter(e => e.playerId === p.id);
+    const entries = state.rpeEntries
+      .filter(e => e.playerId === p.id)
+      .filter(e => matchesPeriod(e, period));
+
     const total = entries.length;
     const present = entries.filter(e => e.status === 'Présent').length;
     const absent = entries.filter(e => e.status === 'Absent').length;
@@ -323,37 +375,27 @@ function renderAvailability() {
 }
   
 function renderRpeTable() {
-    const visibleIds = filteredPlayerIds();
+  const visibleIds = filteredPlayerIds();
+  const period = qs('#periodFilter')?.value || '28';
 
-    qs('#rpeTable').innerHTML = [...state.rpeEntries]
-        .filter(e => {
-  const selectedPlayerId = qs('#searchFilter')?.value || '';
-  if (selectedPlayerId) return e.playerId === selectedPlayerId;
+  qs('#rpeTable').innerHTML = [...state.rpeEntries]
+    .filter(e => visibleIds.has(e.playerId))
+    .filter(e => matchesPeriod(e, period))
+    .sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) return dateCompare;
 
-  const p = state.players.find(x => x.id === e.playerId);
-  const team = qs('#teamFilter')?.value || 'all';
-  const group = qs('#groupFilter')?.value || 'all';
+      const playerA = state.players.find(x => x.id === a.playerId);
+      const playerB = state.players.find(x => x.id === b.playerId);
 
-  if (!p) return true;
-  if (team !== 'all' && p.team !== team) return false;
-  if (group !== 'all' && p.group !== group) return false;
-  return true;
-})
-        .sort((a, b) => {
-            const dateCompare = b.date.localeCompare(a.date);
-            if (dateCompare !== 0) return dateCompare;
+      const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+      const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
 
-            const playerA = state.players.find(x => x.id === a.playerId);
-            const playerB = state.players.find(x => x.id === b.playerId);
-
-            const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
-            const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
-
-            return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
-        })
-        .map(e => {
-            const p = state.players.find(x => x.id === e.playerId);
-            return `
+      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+    })
+    .map(e => {
+      const p = state.players.find(x => x.id === e.playerId);
+      return `
         <tr>
           <td>${e.date}</td>
           <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : (e.playerName || e.playerId)}</td>
@@ -370,8 +412,8 @@ function renderRpeTable() {
           </td>
         </tr>
       `;
-        })
-        .join('');
+    })
+    .join('');
 
   qsa('[data-edit-rpe]').forEach(btn =>
     btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
@@ -547,10 +589,13 @@ function renderWeeklyRpeChart(players){
 
   if(state.charts.weeklyRpe) state.charts.weeklyRpe.destroy();
 
+  const period = qs('#periodFilter')?.value || '28';
   const visibleIds = new Set(players.map(p => p.id));
+
   const entries = state.rpeEntries
     .filter(e => visibleIds.has(e.playerId))
-    .filter(e => ['Mardi','Mercredi','Vendredi','Match'].includes(e.type));
+    .filter(e => ['Mardi','Mercredi','Vendredi','Match'].includes(e.type))
+    .filter(e => matchesPeriod(e, period));
 
   const byWeek = {};
 
