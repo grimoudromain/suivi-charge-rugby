@@ -57,6 +57,17 @@
   </select>
 </div>
       <div class="field">
+  <label>Statut</label>
+  <select id="statusFilter">
+    <option value="all">Tous</option>
+    <option value="Présent">Présent</option>
+    <option value="Absent">Absent</option>
+    <option value="Blessé">Blessé</option>
+    <option value="Partiel">Partiel</option>
+  </select>
+</div>
+      
+      <div class="field">
   <label>Joueur</label>
   <select id="searchFilter">
     <option value="">Tous les joueurs</option>
@@ -169,35 +180,28 @@ function filteredPlayers() {
 function filteredPlayerIds(){
   return new Set(filteredPlayers().map(p=>p.id));
 }
+  
  function playerMetrics(player){
   const period = qs('#periodFilter')?.value || '28';
+  const status = qs('#statusFilter')?.value || 'all';
 
   const entries = state.rpeEntries
     .filter(e => e.playerId === player.id)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const periodEntries = entries.filter(e => matchesPeriod(e, period));
+  const periodEntries = entries
+    .filter(e => matchesPeriod(e, period))
+    .filter(e => matchesStatus(e, status));
 
-  const last7 = period === 'all'
-    ? entries
-    : period === 'Mardi' || period === 'Mercredi' || period === 'Vendredi'
-      ? periodEntries
-      : periodEntries;
+  const load7 = periodEntries.reduce((s, e) => s + (e.load || 0), 0);
 
-  const last28 = period === 'all'
-    ? entries
-    : period === 'Mardi' || period === 'Mercredi' || period === 'Vendredi'
-      ? periodEntries
-      : entries.slice(-28);
-
-  const load7 = last7.reduce((s, e) => s + (e.load || 0), 0);
-
-  const rpeAvg = last7.length
-    ? last7.reduce((s, e) => s + (e.rpe || 0), 0) / last7.length
+  const rpeAvg = periodEntries.length
+    ? periodEntries.reduce((s, e) => s + (e.rpe || 0), 0) / periodEntries.length
     : 0;
 
-  const ewma = last28.length
-    ? last28.reduce((s, e) => s + (e.load || 0), 0) / last28.length
+  const ewmaBase = entries.slice(-28);
+  const ewma = ewmaBase.length
+    ? ewmaBase.reduce((s, e) => s + (e.load || 0), 0) / ewmaBase.length
     : 0;
 
   const acwr = ewma ? load7 / ewma : 0;
@@ -289,6 +293,10 @@ function filteredPlayerIds(){
   const entryDate = new Date(entry.date + "T12:00:00");
   return entryDate >= start && entryDate <= today;
 }
+  function matchesStatus(entry, status) {
+  if (status === 'all') return true;
+  return entry.status === status;
+}
   
 function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; const summaryPlayers = [...players].sort((a, b) =>
   `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
@@ -339,6 +347,7 @@ qs('#coachTable').innerHTML = coachPlayers.map(p => {
 }).join(''); renderLoadChart(players); renderAlertsChart(players); renderWeeklyRpeChart(players);}
 function renderAvailability() {
   const period = qs('#periodFilter')?.value || '28';
+  const status = qs('#statusFilter')?.value || 'all';
 
   const players = [...filteredPlayers()].sort((a, b) =>
     `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
@@ -351,7 +360,8 @@ function renderAvailability() {
   qs('#availabilityTable').innerHTML = players.map(p => {
     const entries = state.rpeEntries
       .filter(e => e.playerId === p.id)
-      .filter(e => matchesPeriod(e, period));
+      .filter(e => matchesPeriod(e, period))
+      .filter(e => matchesStatus(e, status));
 
     const total = entries.length;
     const present = entries.filter(e => e.status === 'Présent').length;
@@ -377,10 +387,12 @@ function renderAvailability() {
 function renderRpeTable() {
   const visibleIds = filteredPlayerIds();
   const period = qs('#periodFilter')?.value || '28';
+  const status = qs('#statusFilter')?.value || 'all';
 
   qs('#rpeTable').innerHTML = [...state.rpeEntries]
     .filter(e => visibleIds.has(e.playerId))
     .filter(e => matchesPeriod(e, period))
+    .filter(e => matchesStatus(e, status))
     .sort((a, b) => {
       const dateCompare = b.date.localeCompare(a.date);
       if (dateCompare !== 0) return dateCompare;
@@ -590,12 +602,14 @@ function renderWeeklyRpeChart(players){
   if(state.charts.weeklyRpe) state.charts.weeklyRpe.destroy();
 
   const period = qs('#periodFilter')?.value || '28';
-  const visibleIds = new Set(players.map(p => p.id));
+const status = qs('#statusFilter')?.value || 'all';
+const visibleIds = new Set(players.map(p => p.id));
 
-  const entries = state.rpeEntries
-    .filter(e => visibleIds.has(e.playerId))
-    .filter(e => ['Mardi','Mercredi','Vendredi','Match'].includes(e.type))
-    .filter(e => matchesPeriod(e, period));
+const entries = state.rpeEntries
+  .filter(e => visibleIds.has(e.playerId))
+  .filter(e => ['Mardi','Mercredi','Vendredi','Match'].includes(e.type))
+  .filter(e => matchesPeriod(e, period))
+  .filter(e => matchesStatus(e, status));
 
   const byWeek = {};
 
@@ -663,7 +677,35 @@ function syncUI(){renderDashboard(); renderAvailability(); renderRpeTable(); ren
 async function loadAllFromFirestore(){const [playersSnap,rpeSnap,hooperSnap,weightsSnap]=await Promise.all([db.collection('players').get(),db.collection('rpeEntries').get(),db.collection('hooperEntries').get(),db.collection('playerWeights').get()]); state.players=playersSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.rpeEntries=rpeSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.hooperEntries=hooperSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.playerWeights=weightsSnap.docs.map(doc=>({id:doc.id,...doc.data()})); setFilters(); syncUI()}
 qsa('.nav button').forEach(btn=>btn.addEventListener('click',()=>activateTab(btn.dataset.tab)));
 qs('#themeToggle').addEventListener('click',()=>{const html=document.documentElement; const current=html.getAttribute('data-theme')||'light'; html.setAttribute('data-theme',current==='light'?'dark':'light')});
-qs('#seedData').addEventListener('click',seedDemoData); qs('#teamFilter').addEventListener('change',syncUI); qs('#groupFilter').addEventListener('change',syncUI); qs('#periodFilter').addEventListener('change',syncUI); qs('#searchFilter').addEventListener('change',syncUI); qs('#saveRpeBtn').addEventListener('click',saveRpe); qs('#resetRpeBtn').addEventListener('click',resetRpeForm); qs('#saveHooperBtn').addEventListener('click',saveHooper); qs('#resetHooperBtn').addEventListener('click',resetHooperForm); qs('#playerSelect').addEventListener('change',e=>{const id=e.target.value; if(!id) resetPlayerForm(); else loadPlayerIntoForm(id)}); qs('#savePlayerBtn').addEventListener('click',savePlayerFromForm); qs('#resetPlayerBtn').addEventListener('click',resetPlayerForm); qs('#deletePlayerBtn').addEventListener('click',deletePlayerFromForm); qs('#addWeightMeasureBtn').addEventListener('click',addWeightMeasureFromForm); qs('#rpeDate').value=todayStr; qs('#hooperDate').value=todayStr; qs('#playerWeightDate').value=todayStr; activateTab('dashboard'); loadAllFromFirestore().catch(err=>console.error('Erreur chargement Firestore',err));
+qs('#seedData').addEventListener('click', seedDemoData);
+qs('#teamFilter').addEventListener('change', syncUI);
+qs('#groupFilter').addEventListener('change', syncUI);
+qs('#periodFilter').addEventListener('change', syncUI);
+qs('#statusFilter').addEventListener('change', syncUI);
+qs('#searchFilter').addEventListener('change', syncUI);
+
+qs('#saveRpeBtn').addEventListener('click', saveRpe);
+qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
+qs('#saveHooperBtn').addEventListener('click', saveHooper);
+qs('#resetHooperBtn').addEventListener('click', resetHooperForm);
+
+qs('#playerSelect').addEventListener('change', e => {
+  const id = e.target.value;
+  if (!id) resetPlayerForm();
+  else loadPlayerIntoForm(id);
+});
+
+qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
+qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
+qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
+qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
+
+qs('#rpeDate').value = todayStr;
+qs('#hooperDate').value = todayStr;
+qs('#playerWeightDate').value = todayStr;
+
+activateTab('dashboard');
+loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
 </script>
 </body>
 </html>
