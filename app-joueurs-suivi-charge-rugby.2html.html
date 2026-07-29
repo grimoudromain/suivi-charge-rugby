@@ -160,9 +160,32 @@ async function saveRpe() {
   const date = document.getElementById("rpeDate").value;
   const type = document.getElementById("rpeType").value;
   const status = document.getElementById("rpeStatus").value;
-  const rpe = Number(document.getElementById("rpeValue").value || 0);
-  const duration = Number(document.getElementById("rpeDuration").value || 0);
-  const load = rpe * duration;
+  const rpe = Number(document.getElementById("rpeValue").value);
+  const duration = Number(document.getElementById("rpeDuration").value);
+
+  if (!date) {
+    msgEl.textContent = "Choisis une date.";
+    msgEl.className = "status err";
+    return;
+  }
+
+  if (status === "Présent" || status === "Partiel") {
+    if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) {
+      msgEl.textContent = "Le RPE doit être compris entre 0 et 10.";
+      msgEl.className = "status err";
+      return;
+    }
+
+    if (!Number.isFinite(duration) || duration < 0) {
+      msgEl.textContent = "La durée doit être positive.";
+      msgEl.className = "status err";
+      return;
+    }
+  }
+
+  const finalRpe = (status === "Absent" || status === "Blessé") ? 0 : rpe;
+  const finalDuration = (status === "Absent" || status === "Blessé") ? 0 : duration;
+  const load = finalRpe * finalDuration;
 
   try {
     await db.collection("rpeEntries").add({
@@ -171,8 +194,8 @@ async function saveRpe() {
       date,
       type,
       status,
-      rpe,
-      duration,
+      rpe: finalRpe,
+      duration: finalDuration,
       load,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -180,10 +203,17 @@ async function saveRpe() {
     msgEl.textContent = "RPE enregistré.";
     msgEl.className = "status ok";
     resetRpeForm();
-    loadHistory(currentPlayer.id);
+
+    try {
+      await loadHistory(currentPlayer.id);
+    } catch (historyErr) {
+      console.error("Erreur chargement historique RPE :", historyErr);
+    }
   } catch (err) {
-    console.error(err);
-    msgEl.textContent = "Erreur lors de l'enregistrement.";
+    console.error("Erreur enregistrement RPE :", err);
+    msgEl.textContent = err?.message
+      ? `Erreur lors de l'enregistrement : ${err.message}`
+      : "Erreur lors de l'enregistrement.";
     msgEl.className = "status err";
   }
 }
