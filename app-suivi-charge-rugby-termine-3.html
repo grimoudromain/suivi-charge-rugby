@@ -163,6 +163,29 @@
     </table>
   </div>
 </div>
+
+<div class="card panel" style="margin-top:18px">
+  <h3>Comparaison par poste</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Poste</th>
+          <th>Joueurs</th>
+          <th>Charge moyenne 7j</th>
+          <th>EWMA moyen</th>
+          <th>ACWR moyen</th>
+          <th>RPE moyen</th>
+          <th>Disponibilité moyenne</th>
+          <th>Blessés</th>
+          <th>Hooper moyen</th>
+          <th>Alertes</th>
+        </tr>
+      </thead>
+      <tbody id="positionComparisonTable"></tbody>
+    </table>
+  </div>
+</div>
     </section>
 
     <section class="section" id="disponibilites"><div class="card panel"><h3>Disponibilité par joueur</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Total séances</th><th>Présent</th><th>Absent</th><th>Blessé</th><th>Partiel</th><th>% présence</th></tr></thead><tbody id="availabilityTable"></tbody></table></div></div></section>
@@ -209,6 +232,35 @@
 const qs=s=>document.querySelector(s), qsa=s=>[...document.querySelectorAll(s)];
 const todayStr=new Date().toISOString().slice(0,10);
 const fmt=n=>Number.isFinite(n)?Math.round(n):0;
+
+const POSITION_ORDER = [
+  'Pilier G',
+  'Talonneur',
+  'Pilier D',
+  '2nd ligne',
+  '3eme ligne',
+  'Demi de mêlée',
+  "Demi d'ouverture",
+  'Centre',
+  'Ailier',
+  'Arrière'
+];
+
+function normalizePosition(value) {
+  return (value || '').trim();
+}
+
+function getPositionOrder(position) {
+  const normalized = normalizePosition(position);
+  const index = POSITION_ORDER.indexOf(normalized);
+  return index === -1 ? 999 : index;
+}
+
+function sortByRugbyPosition(a, b) {
+  const diff = getPositionOrder(a) - getPositionOrder(b);
+  if (diff !== 0) return diff;
+  return normalizePosition(a).localeCompare(normalizePosition(b), 'fr', { sensitivity: 'base' });
+}
 const firebaseConfig = {
   apiKey: "AIzaSyAqydtSfdYTxKkcmm5cYXg3aZ_3MvJGmsI",
   authDomain: "suivi-charge-rugby-734c5.firebaseapp.com",
@@ -307,16 +359,23 @@ function filteredPlayerIds(){
   if (!teamSel || !groupSel || !positionSel || !searchSel) return;
 
   const playersSorted = [...state.players].sort((a, b) =>
-  `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-    `${b.lastName || ''} ${b.firstName || ''}`,
-    'fr',
-    { sensitivity: 'base' }
-  )
-);
+    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+      `${b.lastName || ''} ${b.firstName || ''}`,
+      'fr',
+      { sensitivity: 'base' }
+    )
+  );
 
   const teams = [...new Set(playersSorted.map(p => p.team).filter(Boolean))];
   const groups = [...new Set(playersSorted.map(p => p.group).filter(Boolean))];
-  const positions = [...new Set(playersSorted.map(p => p.position).filter(Boolean))];
+
+  const positionsRaw = [...new Set(playersSorted.map(p => normalizePosition(p.position)).filter(Boolean))];
+  const positionsOrdered = [
+    ...POSITION_ORDER.filter(pos => positionsRaw.includes(pos)),
+    ...positionsRaw.filter(pos => !POSITION_ORDER.includes(pos)).sort((a, b) =>
+      a.localeCompare(b, 'fr', { sensitivity: 'base' })
+    )
+  ];
 
   const teamVal = teamSel.value || 'all';
   const groupVal = groupSel.value || 'all';
@@ -333,7 +392,7 @@ function filteredPlayerIds(){
 
   positionSel.innerHTML =
     '<option value="all">Tous les postes</option>' +
-    positions.map(x => `<option value="${x}">${x}</option>`).join('');
+    positionsOrdered.map(x => `<option value="${x}">${x}</option>`).join('');
 
   searchSel.innerHTML =
     '<option value="">Tous les joueurs</option>' +
@@ -343,7 +402,7 @@ function filteredPlayerIds(){
 
   teamSel.value = teams.includes(teamVal) ? teamVal : 'all';
   groupSel.value = groups.includes(groupVal) ? groupVal : 'all';
-  positionSel.value = positions.includes(positionVal) ? positionVal : 'all';
+  positionSel.value = positionsOrdered.includes(positionVal) ? positionVal : 'all';
   searchSel.value = playersSorted.some(p => p.id === searchVal) ? searchVal : '';
 
   ['#rpePlayer', '#hooperPlayer'].forEach(sel => {
@@ -395,13 +454,16 @@ function renderDashboard() {
 
   qs('#kpiAlerts').textContent = metrics.filter(m => m.alert !== 'RAS').length;
 
-  const summaryPlayers = [...players].sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+  const summaryPlayers = [...players].sort((a, b) => {
+    const positionDiff = sortByRugbyPosition(a.position, b.position);
+    if (positionDiff !== 0) return positionDiff;
+
+    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
       `${b.lastName || ''} ${b.firstName || ''}`,
       'fr',
       { sensitivity: 'base' }
-    )
-  );
+    );
+  });
 
   qs('#summaryTable').innerHTML = summaryPlayers.map(p => {
     const m = playerMetrics(p);
@@ -428,13 +490,16 @@ function renderDashboard() {
     `;
   }).join('');
 
-  const coachPlayers = [...players].sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+  const coachPlayers = [...players].sort((a, b) => {
+    const positionDiff = sortByRugbyPosition(a.position, b.position);
+    if (positionDiff !== 0) return positionDiff;
+
+    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
       `${b.lastName || ''} ${b.firstName || ''}`,
       'fr',
       { sensitivity: 'base' }
-    )
-  );
+    );
+  });
 
   qs('#coachTable').innerHTML = coachPlayers.map(p => {
     const m = playerMetrics(p);
@@ -464,13 +529,13 @@ function renderPositionComparison() {
 
   const byPosition = {};
   players.forEach(player => {
-    const key = player.position || 'Non renseigné';
+    const key = normalizePosition(player.position) || 'Non renseigné';
     if (!byPosition[key]) byPosition[key] = [];
     byPosition[key].push(player);
   });
 
   const rows = Object.entries(byPosition)
-    .sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }))
+    .sort((a, b) => sortByRugbyPosition(a[0], b[0]))
     .map(([position, positionPlayers]) => {
       const metrics = positionPlayers.map(playerMetrics);
 
@@ -661,13 +726,16 @@ function renderPlayersAdmin() {
     )
   );
 
-  const visiblePlayers = filteredPlayers().sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+  const visiblePlayers = [...filteredPlayers()].sort((a, b) => {
+    const positionDiff = sortByRugbyPosition(a.position, b.position);
+    if (positionDiff !== 0) return positionDiff;
+
+    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
       `${b.lastName || ''} ${b.firstName || ''}`,
       'fr',
       { sensitivity: 'base' }
-    )
-  );
+    );
+  });
 
   select.innerHTML =
     '<option value="">Nouveau joueur</option>' +
