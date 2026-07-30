@@ -42,38 +42,58 @@
   <main class="content">
     <div class="topbar"><div><h2 id="pageTitle">Dashboard</h2><p id="pageIntro">Vue centrale charge interne, disponibilité et synthèse staff.</p></div><div class="role-pill" id="rolePill">Rôle : Staff</div></div>
     <div class="filters" id="staffFilters">
-      <div class="field"><label>Équipe</label><select id="teamFilter"><option value="all">Toutes</option></select></div>
-      <div class="field"><label>Groupe</label><select id="groupFilter"><option value="all">Tous</option></select></div>
-      <div class="field">
-  <label>Période</label>
-  <select id="periodFilter">
-    <option value="all">Depuis le début</option>
-    <option value="7">7 jours</option>
-    <option value="14">14 jours</option>
-    <option value="28" selected>28 jours</option>
-    <option value="Mardi">Mardi</option>
-    <option value="Mercredi">Mercredi</option>
-    <option value="Vendredi">Vendredi</option>
-  </select>
+  <div class="field">
+    <label>Équipe</label>
+    <select id="teamFilter">
+      <option value="all">Toutes</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Groupe</label>
+    <select id="groupFilter">
+      <option value="all">Tous</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Poste</label>
+    <select id="positionFilter">
+      <option value="all">Tous les postes</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Période</label>
+    <select id="periodFilter">
+      <option value="all">Depuis le début</option>
+      <option value="7">7 jours</option>
+      <option value="14">14 jours</option>
+      <option value="28" selected>28 jours</option>
+      <option value="Mardi">Mardi</option>
+      <option value="Mercredi">Mercredi</option>
+      <option value="Vendredi">Vendredi</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Statut</label>
+    <select id="statusFilter">
+      <option value="all">Tous</option>
+      <option value="Présent">Présent</option>
+      <option value="Absent">Absent</option>
+      <option value="Blessé">Blessé</option>
+      <option value="Partiel">Partiel</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Joueur</label>
+    <select id="searchFilter">
+      <option value="">Tous les joueurs</option>
+    </select>
+  </div>
 </div>
-      <div class="field">
-  <label>Statut</label>
-  <select id="statusFilter">
-    <option value="all">Tous</option>
-    <option value="Présent">Présent</option>
-    <option value="Absent">Absent</option>
-    <option value="Blessé">Blessé</option>
-    <option value="Partiel">Partiel</option>
-  </select>
-</div>
-      
-      <div class="field">
-  <label>Joueur</label>
-  <select id="searchFilter">
-    <option value="">Tous les joueurs</option>
-  </select>
-</div>
-    </div>
 
     <section class="section active" id="dashboard">
       <div class="kpis">
@@ -93,7 +113,56 @@
           <canvas id="weeklyRpeChart"></canvas>
         </div>
       </div>
-      <div class="card panel"><h3>Tableau récapitulatif joueurs</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Équipe</th><th>Groupe</th><th>Statut</th><th>Charge 7j</th><th>EWMA</th><th>ACWR</th><th>RPE moyen</th><th>Dispo</th><th>Blessés</th><th>Monotonie</th><th>Strain</th><th>Hooper</th><th>Alerte</th></tr></thead><tbody id="summaryTable"></tbody></table></div></div>
+     <div class="card panel">
+  <h3>Tableau récapitulatif joueurs</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Joueur</th>
+          <th>Équipe</th>
+          <th>Groupe</th>
+          <th>Statut</th>
+          <th>Poste</th>
+          <th>Charge 7j</th>
+          <th>EWMA</th>
+          <th>ACWR</th>
+          <th>RPE moyen</th>
+          <th>Dispo</th>
+          <th>Blessés</th>
+          <th>Monotonie</th>
+          <th>Strain</th>
+          <th>Hooper</th>
+          <th>Alerte</th>
+        </tr>
+      </thead>
+      <tbody id="summaryTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card panel" style="margin-top:18px">
+  <h3>Comparaison par poste</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Poste</th>
+          <th>Joueurs</th>
+          <th>Charge moyenne 7j</th>
+          <th>EWMA moyen</th>
+          <th>ACWR moyen</th>
+          <th>RPE moyen</th>
+          <th>Disponibilité moyenne</th>
+          <th>Blessés</th>
+          <th>Hooper moyen</th>
+          <th>Alertes</th>
+        </tr>
+      </thead>
+      <tbody id="positionComparisonTable"></tbody>
+    </table>
+  </div>
+</div>
     </section>
 
     <section class="section" id="disponibilites"><div class="card panel"><h3>Disponibilité par joueur</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Total séances</th><th>Présent</th><th>Absent</th><th>Blessé</th><th>Partiel</th><th>% présence</th></tr></thead><tbody id="availabilityTable"></tbody></table></div></div></section>
@@ -169,11 +238,13 @@ await loadAllFromFirestore(); qs('#playerStatusMsg').textContent='Données démo
 function filteredPlayers() {
   const team = qs('#teamFilter')?.value || 'all';
   const group = qs('#groupFilter')?.value || 'all';
+  const position = qs('#positionFilter')?.value || 'all';
   const selectedPlayerId = qs('#searchFilter')?.value || '';
 
   return state.players.filter(p =>
     (team === 'all' || p.team === team) &&
     (group === 'all' || p.group === group) &&
+    (position === 'all' || (p.position || '') === position) &&
     (!selectedPlayerId || p.id === selectedPlayerId)
   );
 }
@@ -230,22 +301,26 @@ function filteredPlayerIds(){
     function setFilters() {
   const teamSel = qs('#teamFilter');
   const groupSel = qs('#groupFilter');
+  const positionSel = qs('#positionFilter');
   const searchSel = qs('#searchFilter');
-  if (!teamSel || !groupSel || !searchSel) return;
+
+  if (!teamSel || !groupSel || !positionSel || !searchSel) return;
 
   const playersSorted = [...state.players].sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    )
-  );
+  `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+    `${b.lastName || ''} ${b.firstName || ''}`,
+    'fr',
+    { sensitivity: 'base' }
+  )
+);
 
-  const teams = [...new Set(playersSorted.map(p => p.team))];
-  const groups = [...new Set(playersSorted.map(p => p.group))];
+  const teams = [...new Set(playersSorted.map(p => p.team).filter(Boolean))];
+  const groups = [...new Set(playersSorted.map(p => p.group).filter(Boolean))];
+  const positions = [...new Set(playersSorted.map(p => p.position).filter(Boolean))];
 
   const teamVal = teamSel.value || 'all';
   const groupVal = groupSel.value || 'all';
+  const positionVal = positionSel.value || 'all';
   const searchVal = searchSel.value || '';
 
   teamSel.innerHTML =
@@ -256,6 +331,10 @@ function filteredPlayerIds(){
     '<option value="all">Tous</option>' +
     groups.map(x => `<option value="${x}">${x}</option>`).join('');
 
+  positionSel.innerHTML =
+    '<option value="all">Tous les postes</option>' +
+    positions.map(x => `<option value="${x}">${x}</option>`).join('');
+
   searchSel.innerHTML =
     '<option value="">Tous les joueurs</option>' +
     playersSorted.map(p =>
@@ -264,6 +343,7 @@ function filteredPlayerIds(){
 
   teamSel.value = teams.includes(teamVal) ? teamVal : 'all';
   groupSel.value = groups.includes(groupVal) ? groupVal : 'all';
+  positionSel.value = positions.includes(positionVal) ? positionVal : 'all';
   searchSel.value = playersSorted.some(p => p.id === searchVal) ? searchVal : '';
 
   ['#rpePlayer', '#hooperPlayer'].forEach(sel => {
@@ -298,53 +378,139 @@ function filteredPlayerIds(){
   return entry.status === status;
 }
   
-function renderDashboard(){const players=filteredPlayers(); qs('#kpiPlayers').textContent=players.length; const metrics=players.map(playerMetrics); qs('#kpiLoad').textContent=fmt(metrics.reduce((s,m)=>s+m.load7,0)/Math.max(1,metrics.length)); qs('#kpiInj').textContent=metrics.filter(m=>m.inj).length; qs('#kpiPresence').textContent=fmt(metrics.reduce((s,m)=>s+m.dispo,0)/Math.max(1,metrics.length))+'%'; qs('#kpiAlerts').textContent=metrics.filter(m=>m.alert!=='RAS').length; const summaryPlayers = [...players].sort((a, b) =>
-  `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-    `${b.lastName || ''} ${b.firstName || ''}`,
-    'fr',
-    { sensitivity: 'base' }
-  )
-);
+function renderDashboard() {
+  const players = filteredPlayers();
 
-qs('#summaryTable').innerHTML = summaryPlayers.map(p => {
-  const m = playerMetrics(p);
-  const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+  qs('#kpiPlayers').textContent = players.length;
 
-  return `<tr>
-    <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
-    <td>${p.team || ''}</td>
-    <td>${p.group || ''}</td>
-    <td>${m.inj ? 'Blessé' : 'Disponible'}</td>
-    <td>${fmt(m.load7)}</td>
-    <td>${fmt(m.ewma)}</td>
-    <td>${m.acwr.toFixed(2)}</td>
-    <td>${m.rpeAvg.toFixed(1)}</td>
-    <td>${fmt(m.dispo)}%</td>
-    <td>${m.inj ? 'Oui' : 'Non'}</td>
-    <td>-</td>
-    <td>-</td>
-    <td>${m.hooper ?? '-'}</td>
-    <td><span class="pill ${pill}">${m.alert}</span></td>
-  </tr>`;
-}).join('') ; const coachPlayers = [...players].sort((a, b) =>
-  `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-    `${b.lastName || ''} ${b.firstName || ''}`,
-    'fr',
-    { sensitivity: 'base' }
-  )
-);
+  const metrics = players.map(playerMetrics);
 
-qs('#coachTable').innerHTML = coachPlayers.map(p => {
-  const m = playerMetrics(p);
-  const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
-  return `<tr>
-    <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
-    <td>${fmt(m.load7)}</td>
-    <td>${m.acwr.toFixed(2)}</td>
-    <td>${m.hooper ?? '-'}</td>
-    <td><span class="pill ${pill}">${m.alert}</span></td>
-  </tr>`;
-}).join(''); renderLoadChart(players); renderAlertsChart(players); renderWeeklyRpeChart(players);}
+  qs('#kpiLoad').textContent =
+    fmt(metrics.reduce((s, m) => s + m.load7, 0) / Math.max(1, metrics.length));
+
+  qs('#kpiInj').textContent = metrics.filter(m => m.inj).length;
+
+  qs('#kpiPresence').textContent =
+    fmt(metrics.reduce((s, m) => s + m.dispo, 0) / Math.max(1, metrics.length)) + '%';
+
+  qs('#kpiAlerts').textContent = metrics.filter(m => m.alert !== 'RAS').length;
+
+  const summaryPlayers = [...players].sort((a, b) =>
+    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+      `${b.lastName || ''} ${b.firstName || ''}`,
+      'fr',
+      { sensitivity: 'base' }
+    )
+  );
+
+  qs('#summaryTable').innerHTML = summaryPlayers.map(p => {
+    const m = playerMetrics(p);
+    const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+
+    return `
+      <tr>
+        <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+        <td>${p.team || ''}</td>
+        <td>${p.group || ''}</td>
+        <td>${m.inj ? 'Blessé' : 'Disponible'}</td>
+        <td>${p.position || ''}</td>
+        <td>${fmt(m.load7)}</td>
+        <td>${fmt(m.ewma)}</td>
+        <td>${m.acwr.toFixed(2)}</td>
+        <td>${m.rpeAvg.toFixed(1)}</td>
+        <td>${fmt(m.dispo)}%</td>
+        <td>${m.inj ? 'Oui' : 'Non'}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>${m.hooper ?? '-'}</td>
+        <td><span class="pill ${pill}">${m.alert}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  const coachPlayers = [...players].sort((a, b) =>
+    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+      `${b.lastName || ''} ${b.firstName || ''}`,
+      'fr',
+      { sensitivity: 'base' }
+    )
+  );
+
+  qs('#coachTable').innerHTML = coachPlayers.map(p => {
+    const m = playerMetrics(p);
+    const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+
+    return `
+      <tr>
+        <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+        <td>${fmt(m.load7)}</td>
+        <td>${m.acwr.toFixed(2)}</td>
+        <td>${m.hooper ?? '-'}</td>
+        <td><span class="pill ${pill}">${m.alert}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  renderLoadChart(players);
+  renderAlertsChart(players);
+  renderWeeklyRpeChart(players);
+}
+
+function renderPositionComparison() {
+  const tbody = qs('#positionComparisonTable');
+  if (!tbody) return;
+
+  const players = filteredPlayers();
+
+  const byPosition = {};
+  players.forEach(player => {
+    const key = player.position || 'Non renseigné';
+    if (!byPosition[key]) byPosition[key] = [];
+    byPosition[key].push(player);
+  });
+
+  const rows = Object.entries(byPosition)
+    .sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }))
+    .map(([position, positionPlayers]) => {
+      const metrics = positionPlayers.map(playerMetrics);
+
+      const count = positionPlayers.length;
+      const loadAvg = count ? metrics.reduce((s, m) => s + m.load7, 0) / count : 0;
+      const ewmaAvg = count ? metrics.reduce((s, m) => s + m.ewma, 0) / count : 0;
+      const acwrAvg = count ? metrics.reduce((s, m) => s + m.acwr, 0) / count : 0;
+      const rpeAvg = count ? metrics.reduce((s, m) => s + m.rpeAvg, 0) / count : 0;
+      const dispoAvg = count ? metrics.reduce((s, m) => s + m.dispo, 0) / count : 0;
+      const injured = metrics.filter(m => m.inj).length;
+
+      const hooperValues = metrics
+        .map(m => m.hooper)
+        .filter(v => v !== null && v !== undefined);
+
+      const hooperAvg = hooperValues.length
+        ? hooperValues.reduce((s, v) => s + v, 0) / hooperValues.length
+        : null;
+
+      const alerts = metrics.filter(m => m.alert !== 'RAS').length;
+
+      return `
+        <tr>
+          <td>${position}</td>
+          <td>${count}</td>
+          <td>${fmt(loadAvg)}</td>
+          <td>${fmt(ewmaAvg)}</td>
+          <td>${acwrAvg.toFixed(2)}</td>
+          <td>${rpeAvg.toFixed(1)}</td>
+          <td>${fmt(dispoAvg)}%</td>
+          <td>${injured}</td>
+          <td>${hooperAvg !== null ? hooperAvg.toFixed(1) : '-'}</td>
+          <td>${alerts}</td>
+        </tr>
+      `;
+    });
+
+  tbody.innerHTML = rows.join('');
+}
+  
 function renderAvailability() {
   const period = qs('#periodFilter')?.value || '28';
   const status = qs('#statusFilter')?.value || 'all';
@@ -673,13 +839,21 @@ const entries = state.rpeEntries
   });
 }
 function activateTab(id){qsa('.section').forEach(sec=>sec.classList.toggle('active',sec.id===id)); qsa('.nav button').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id)); const titleMap={dashboard:'Dashboard',disponibilites:'Disponibilités', 'vue-coach':'Vue coach', joueurs:'Joueurs', rpe:'RPE', hooper:'Hooper', 'player-access':'Interface joueurs'}; const introMap={dashboard:'Vue centrale charge interne, disponibilité et synthèse staff.',disponibilites:'Présence, absence et blessure par joueur.','vue-coach':'Liste des joueurs à surveiller.',joueurs:'Création, modification et suppression des fiches joueurs.',rpe:'Gestion des RPE par joueur.',hooper:'Gestion des scores Hooper.','player-access':'Interface dédiée aux joueurs.'}; qs('#pageTitle').textContent=titleMap[id]; qs('#pageIntro').textContent=introMap[id]}
-function syncUI(){renderDashboard(); renderAvailability(); renderRpeTable(); renderHooperTable(); renderPlayersAdmin()}
+function syncUI() {
+  renderDashboard();
+  renderPositionComparison();
+  renderAvailability();
+  renderRpeTable();
+  renderHooperTable();
+  renderPlayersAdmin();
+}
 async function loadAllFromFirestore(){const [playersSnap,rpeSnap,hooperSnap,weightsSnap]=await Promise.all([db.collection('players').get(),db.collection('rpeEntries').get(),db.collection('hooperEntries').get(),db.collection('playerWeights').get()]); state.players=playersSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.rpeEntries=rpeSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.hooperEntries=hooperSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.playerWeights=weightsSnap.docs.map(doc=>({id:doc.id,...doc.data()})); setFilters(); syncUI()}
 qsa('.nav button').forEach(btn=>btn.addEventListener('click',()=>activateTab(btn.dataset.tab)));
 qs('#themeToggle').addEventListener('click',()=>{const html=document.documentElement; const current=html.getAttribute('data-theme')||'light'; html.setAttribute('data-theme',current==='light'?'dark':'light')});
 qs('#seedData').addEventListener('click', seedDemoData);
 qs('#teamFilter').addEventListener('change', syncUI);
 qs('#groupFilter').addEventListener('change', syncUI);
+qs('#positionFilter').addEventListener('change', syncUI);
 qs('#periodFilter').addEventListener('change', syncUI);
 qs('#statusFilter').addEventListener('change', syncUI);
 qs('#searchFilter').addEventListener('change', syncUI);
@@ -694,6 +868,18 @@ qs('#playerSelect').addEventListener('change', e => {
   if (!id) resetPlayerForm();
   else loadPlayerIntoForm(id);
 });
+
+qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
+qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
+qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
+qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
+
+qs('#rpeDate').value = todayStr;
+qs('#hooperDate').value = todayStr;
+qs('#playerWeightDate').value = todayStr;
+
+activateTab('dashboard');
+loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
 
 qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
 qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
