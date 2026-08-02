@@ -426,7 +426,22 @@ function filteredPlayerIds(){
       : (acwr > 1.3 || (hooper !== null && hooper < 16))
         ? 'orange'
         : 'green';
-  return {
+     // Détermination du risque et de la raison principale
+  let riskReason = 'RAS';
+  const risk =
+    inj || acwr > 1.5 || (hooper !== null && hooper < 13)
+      ? 'red'
+      : (acwr > 1.3 || (hooper !== null && hooper < 16))
+        ? 'orange'
+        : 'green';
+
+  if (inj) riskReason = 'Blessure';
+  else if (acwr > 1.5) riskReason = 'ACWR élevé';
+  else if (hooper !== null && hooper < 13) riskReason = 'Hooper bas';
+  else if (acwr > 1.3) riskReason = 'ACWR vigilance';
+  else if (hooper !== null && hooper < 16) riskReason = 'Hooper vigilance';
+   
+   return {
     load7: acuteLoad,
     ewma: chronicEWMA,
     acwr,
@@ -437,7 +452,8 @@ function filteredPlayerIds(){
     alert,
     monotony,
     strain,
-    risk
+    risk,
+    riskReason
   };
 }
   
@@ -576,7 +592,12 @@ function renderDashboard() {
         <td>${m.monotony.toFixed(2)}</td>
         <td>${fmt(m.strain)}</td>
         <td>${m.hooper ?? '-'}</td>
-        <td><span class="pill ${m.risk}">${m.risk === 'green' ? 'Vert' : m.risk === 'orange' ? 'Orange' : 'Rouge'}</span></td>
+                <td>
+          <span class="pill ${m.risk}">
+            ${m.risk === 'green' ? 'Vert' : m.risk === 'orange' ? 'Orange' : 'Rouge'}
+          </span>
+          <div class="mini muted">${m.riskReason}</div>
+        </td>
         <td><span class="pill ${pill}">${m.alert}</span></td>
       </tr>
     `;
