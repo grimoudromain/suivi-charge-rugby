@@ -232,7 +232,54 @@
 const qs=s=>document.querySelector(s), qsa=s=>[...document.querySelectorAll(s)];
 const todayStr=new Date().toISOString().slice(0,10);
 const fmt=n=>Number.isFinite(n)?Math.round(n):0;
+// ==== Utilitaires pour les calculs de charge ====
 
+function dateKey(dateStr) {
+  // On suppose dateStr au format YYYY-MM-DD
+  return dateStr;
+}
+
+function aggregateDailyLoad(entries) {
+  // Regroupe les charges par jour (RPE × durée)
+  const daily = {};
+  entries.forEach(e => {
+    const key = dateKey(e.date);
+    const load = Number(e.load || 0);
+    if (!daily[key]) daily[key] = 0;
+    daily[key] += load;
+  });
+  return Object.entries(daily)
+    .map(([date, load]) => ({ date, load }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function mean(arr) {
+  if (!arr.length) return 0;
+  return arr.reduce((s, x) => s + x, 0) / arr.length;
+}
+
+function stdDev(arr) {
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  const v = arr.reduce((s, x) => s + Math.pow(x - m, 2), 0) / arr.length;
+  return Math.sqrt(v);
+}
+
+// EWMA exponentielle sur une série {date, load}
+function calcEWMA(series, lambda) {
+  if (!series.length) return 0;
+  let ewma = series[0].load;
+  for (let i = 1; i < series.length; i++) {
+    ewma = lambda * series[i].load + (1 - lambda) * ewma;
+  }
+  return ewma;
+}
+
+// Retourne les N derniers jours d'une série déjà triée par date
+function lastNDays(series, n) {
+  return series.slice(-n);
+}
+  
 const POSITION_ORDER = [
   'Pilier G',
   'Talonneur',
@@ -304,50 +351,85 @@ function filteredPlayerIds(){
   return new Set(filteredPlayers().map(p=>p.id));
 }
   
- function playerMetrics(player){
+ function playerMetrics(player) {
   const period = qs('#periodFilter')?.value || '28';
   const status = qs('#statusFilter')?.value || 'all';
 
+  // Toutes les entrées RPE du joueur, triées
   const entries = state.rpeEntries
     .filter(e => e.playerId === player.id)
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  // Entrées filtrées par période et statut (pour les KPI / présence / blessures)
   const periodEntries = entries
     .filter(e => matchesPeriod(e, period))
     .filter(e => matchesStatus(e, status));
 
-  const load7 = periodEntries.reduce((s, e) => s + (e.load || 0), 0);
+  // Charges journalières sur toutes les entrées (pour le EWMA et monotony/strain)
+  const dailySeries = aggregateDailyLoad(entries);
+  const dailyLoads = dailySeries.map(d => d.load);
 
+  // Charge aiguë : somme des charges des 7 derniers jours (calendaires)
+  const acuteWindow = lastNDays(dailySeries, 7);
+  const acuteLoad = acuteWindow.reduce((s, d) => s + d.load, 0);
+
+  // EWMA chronique sur les 28 derniers jours
+  const chronicWindow = lastNDays(dailySeries, 28);
+  const lambda = 2 / (28 + 1); // fenêtre 28 jours
+  const chronicEWMA = chronicWindow.length ? calcEWMA(chronicWindow, lambda) : 0;
+
+  // ACWR = charge aiguë / charge chronique EWMA
+  const acwr = chronicEWMA ? acuteLoad / chronicEWMA : 0;
+
+  // RPE moyen sur les entrées filtrées (période/statut)
   const rpeAvg = periodEntries.length
     ? periodEntries.reduce((s, e) => s + (e.rpe || 0), 0) / periodEntries.length
     : 0;
 
-  const ewmaBase = entries.slice(-28);
-  const ewma = ewmaBase.length
-    ? ewmaBase.reduce((s, e) => s + (e.load || 0), 0) / ewmaBase.length
-    : 0;
-
-  const acwr = ewma ? load7 / ewma : 0;
-
+  // Disponibilité (% présent) sur la période sélectionnée
   const total = periodEntries.length;
   const present = periodEntries.filter(e => e.status === 'Présent').length;
-  const dispo = total ? present / total * 100 : 0;
+  const dispo = total ? (present / total) * 100 : 0;
 
+  // Blessé = dernier statut de la période filtrée
   const latestEntry = periodEntries.length ? periodEntries[periodEntries.length - 1] : null;
   const inj = latestEntry ? latestEntry.status === 'Blessé' : false;
 
+  // Dernier Hooper
   const h = state.hooperEntries
     .filter(e => e.playerId === player.id)
     .sort((a, b) => a.date.localeCompare(b.date))
     .at(-1);
-
   const hooper = h ? h.total : null;
 
-  let alert = 'RAS';
-  if (inj || acwr > 1.5 || (hooper !== null && hooper < 13)) alert = 'Élevée';
-  else if (acwr > 1.2 || (hooper !== null && hooper < 16)) alert = 'Modérée';
+  // Monotonie et strain sur les 7 derniers jours de charges journalières
+  const monotonyWindow = acuteWindow;
+  const monotonyLoads = monotonyWindow.map(d => d.load);
+  const monoMean = mean(monotonyLoads);
+  const monoSd = stdDev(monotonyLoads);
+  const monotony = monoSd ? monoMean / monoSd : 0;
+  const strain = acuteLoad * monotony;
 
-  return { load7, ewma, acwr, rpeAvg, dispo, inj, hooper, alert };
+  // Alerte (tu gardes ta logique actuelle)
+  let alert = 'RAS';
+  if (inj || acwr > 1.5 || (hooper !== null && hooper < 13)) {
+    alert = 'Élevée';
+  } else if (acwr > 1.2 || (hooper !== null && hooper < 16)) {
+    alert = 'Modérée';
+  }
+
+  return {
+    load7: acuteLoad,
+    ewma: chronicEWMA,
+    acwr,
+    rpeAvg,
+    dispo,
+    inj,
+    hooper,
+    alert,
+    monotony,
+    strain
+  };
 }
   
     function setFilters() {
@@ -469,7 +551,7 @@ function renderDashboard() {
     const m = playerMetrics(p);
     const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
 
-    return `
+        return `
       <tr>
         <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
         <td>${p.team || ''}</td>
@@ -482,8 +564,8 @@ function renderDashboard() {
         <td>${m.rpeAvg.toFixed(1)}</td>
         <td>${fmt(m.dispo)}%</td>
         <td>${m.inj ? 'Oui' : 'Non'}</td>
-        <td>-</td>
-        <td>-</td>
+        <td>${m.monotony.toFixed(2)}</td>
+        <td>${fmt(m.strain)}</td>
         <td>${m.hooper ?? '-'}</td>
         <td><span class="pill ${pill}">${m.alert}</span></td>
       </tr>
