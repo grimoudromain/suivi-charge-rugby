@@ -420,31 +420,31 @@ function filteredPlayerIds(){
 
   // Alerte (tu gardes ta logique actuelle)
   let alert = 'RAS';
-  if (inj || acwr > 1.5 || (hooper !== null && hooper < 13)) {
+  if (inj || acwr > 1.6 || (hooper !== null && hooper < 13)) {
     alert = 'Élevée';
   } else if (acwr > 1.3 || (hooper !== null && hooper < 16)) {
     alert = 'Modérée';
   }
-  const risk =
-    inj || acwr > 1.5 || (hooper !== null && hooper < 13)
-      ? 'red'
-      : (acwr > 1.3 || (hooper !== null && hooper < 16))
-        ? 'orange'
-        : 'green';
-     // Détermination du risque et de la raison principale
+  
   let riskReason = 'RAS';
-  const risk =
-    inj || acwr > 1.5 || (hooper !== null && hooper < 13)
-      ? 'red'
-      : (acwr > 1.3 || (hooper !== null && hooper < 16))
-        ? 'orange'
-        : 'green';
+  let risk = 'green';
 
-  if (inj) riskReason = 'Blessure';
-  else if (acwr > 1.5) riskReason = 'ACWR élevé';
-  else if (hooper !== null && hooper < 13) riskReason = 'Hooper bas';
-  else if (acwr > 1.3) riskReason = 'ACWR vigilance';
-  else if (hooper !== null && hooper < 16) riskReason = 'Hooper vigilance';
+  if (inj) {
+    risk = 'red';
+    riskReason = 'Blessure';
+  } else if (acwr > 1.6) {
+    risk = 'red';
+    riskReason = 'ACWR élevé';
+  } else if (hooper !== null && hooper < 13) {
+    risk = 'red';
+    riskReason = 'Hooper bas';
+  } else if (acwr > 1.3) {
+    risk = 'orange';
+    riskReason = 'ACWR vigilance';
+  } else if (hooper !== null && hooper < 16) {
+    risk = 'orange';
+    riskReason = 'Hooper vigilance';
+  } 
    
    return {
     load7: acuteLoad,
