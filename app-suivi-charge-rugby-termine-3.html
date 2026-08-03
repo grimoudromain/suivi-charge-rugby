@@ -199,6 +199,13 @@
     <section class="section" id="disponibilites">
   <div class="card panel">
     <h3>Disponibilité par joueur</h3>
+    <div class="actions" style="margin-bottom:12px">
+  <select id="availabilitySort" class="btn">
+    <option value="name">Trier par nom</option>
+    <option value="position">Trier par poste</option>
+  </select>
+  <button class="btn primary" id="exportAvailabilityPdfBtn">Exporter en PDF</button>
+</div>
 
     <!-- BOUTON EXPORT PDF ICI -->
     <div class="actions" style="margin-bottom:12px">
@@ -723,14 +730,20 @@ function renderPositionComparison() {
 function renderAvailability() {
   const period = qs('#periodFilter')?.value || '28';
   const status = qs('#statusFilter')?.value || 'all';
+  const sortMode = qs('#availabilitySort')?.value || 'name';
 
-  const players = [...filteredPlayers()].sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+  const players = [...filteredPlayers()].sort((a, b) => {
+    if (sortMode === 'position') {
+      const d = sortByRugbyPosition(a.position, b.position);
+      if (d !== 0) return d;
+    }
+
+    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
       `${b.lastName || ''} ${b.firstName || ''}`,
       'fr',
       { sensitivity: 'base' }
-    )
-  );
+    );
+  });
 
   qs('#availabilityTable').innerHTML = players.map(p => {
     const entries = state.rpeEntries
@@ -1088,6 +1101,7 @@ qs('#positionFilter').addEventListener('change', syncUI);
 qs('#periodFilter').addEventListener('change', syncUI);
 qs('#statusFilter').addEventListener('change', syncUI);
 qs('#searchFilter').addEventListener('change', syncUI);
+qs('#availabilitySort')?.addEventListener('change', renderAvailability);
 
 qs('#saveRpeBtn').addEventListener('click', saveRpe);
 qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
