@@ -196,7 +196,33 @@
 </div>
     </section>
 
-    <section class="section" id="disponibilites"><div class="card panel"><h3>Disponibilité par joueur</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Total séances</th><th>Présent</th><th>Absent</th><th>Blessé</th><th>Partiel</th><th>% présence</th></tr></thead><tbody id="availabilityTable"></tbody></table></div></div></section>
+    <section class="section" id="disponibilites">
+  <div class="card panel">
+    <h3>Disponibilité par joueur</h3>
+
+    <!-- BOUTON EXPORT PDF ICI -->
+    <div class="actions" style="margin-bottom:12px">
+      <button class="btn primary" id="exportAvailabilityPdfBtn">Exporter en PDF</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Joueur</th>
+            <th>Total séances</th>
+            <th>Présent</th>
+            <th>Absent</th>
+            <th>Blessé</th>
+            <th>Partiel</th>
+            <th>% présence</th>
+          </tr>
+        </thead>
+        <tbody id="availabilityTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
     <section class="section" id="vue-coach"><div class="card panel"><h3>Joueurs à surveiller</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Charge</th><th>ACWR</th><th>Hooper</th><th>Alerte</th></tr></thead><tbody id="coachTable"></tbody></table></div></div></section>
 
     <section class="section" id="joueurs">
@@ -1033,9 +1059,28 @@ function syncUI() {
   renderHooperTable();
   renderPlayersAdmin();
 }
-async function loadAllFromFirestore(){const [playersSnap,rpeSnap,hooperSnap,weightsSnap]=await Promise.all([db.collection('players').get(),db.collection('rpeEntries').get(),db.collection('hooperEntries').get(),db.collection('playerWeights').get()]); state.players=playersSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.rpeEntries=rpeSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.hooperEntries=hooperSnap.docs.map(doc=>({id:doc.id,...doc.data()})); state.playerWeights=weightsSnap.docs.map(doc=>({id:doc.id,...doc.data()})); setFilters(); syncUI()}
-qsa('.nav button').forEach(btn=>btn.addEventListener('click',()=>activateTab(btn.dataset.tab)));
-qs('#themeToggle').addEventListener('click',()=>{const html=document.documentElement; const current=html.getAttribute('data-theme')||'light'; html.setAttribute('data-theme',current==='light'?'dark':'light')});
+
+async function loadAllFromFirestore() {
+  const [playersSnap, rpeSnap, hooperSnap, weightsSnap] = await Promise.all([
+    db.collection('players').get(),
+    db.collection('rpeEntries').get(),
+    db.collection('hooperEntries').get(),
+    db.collection('playerWeights').get()
+  ]);
+  state.players = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  state.rpeEntries = rpeSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  state.hooperEntries = hooperSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  state.playerWeights = weightsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  setFilters();
+  syncUI();
+}
+
+qsa('.nav button').forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+qs('#themeToggle').addEventListener('click', () => {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'light';
+  html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+});
 qs('#seedData').addEventListener('click', seedDemoData);
 qs('#teamFilter').addEventListener('change', syncUI);
 qs('#groupFilter').addEventListener('change', syncUI);
@@ -1059,25 +1104,55 @@ qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
 qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
 qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
 qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
-
+  
+qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF);
+  
 qs('#rpeDate').value = todayStr;
 qs('#hooperDate').value = todayStr;
 qs('#playerWeightDate').value = todayStr;
 
 activateTab('dashboard');
 loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
+  
+function exportAvailabilityPDF() {
+  const rows = [...document.querySelectorAll('#availabilityTable tr')].map(tr =>
+    [...tr.querySelectorAll('td')].map(td => td.innerText.trim())
+  );
 
-qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
-qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
-qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
-qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
+  const headers = ['Joueur', 'Total séances', 'Présent', 'Absent', 'Blessé', 'Partiel', '% présence'];
 
-qs('#rpeDate').value = todayStr;
-qs('#hooperDate').value = todayStr;
-qs('#playerWeightDate').value = todayStr;
-
-activateTab('dashboard');
-loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
+  const w = window.open('', '_blank');
+  w.document.write(`
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Disponibilités joueurs</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; }
+        h1 { font-size: 20px; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 8px; font-size: 12px; text-align: left; }
+        th { background: #f2f2f2; }
+      </style>
+    </head>
+    <body>
+      <h1>Tableau de disponibilités joueurs</h1>
+      <table>
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+      <script>
+        window.onload = () => { window.print(); };
+      <\/script>
+    </body>
+    </html>
+  `);
+  w.document.close();
+}
 </script>
 </body>
 </html>
