@@ -215,16 +215,17 @@
     <div class="table-wrap">
       <table class="table">
         <thead>
-          <tr>
-            <th>Joueur</th>
-            <th>Total séances</th>
-            <th>Présent</th>
-            <th>Absent</th>
-            <th>Blessé</th>
-            <th>Partiel</th>
-            <th>% présence</th>
-          </tr>
-        </thead>
+  <tr>
+    <th>Joueur</th>
+    <th>Poste</th>
+    <th>Total séances</th>
+    <th>Présent</th>
+    <th>Absent</th>
+    <th>Blessé</th>
+    <th>Partiel</th>
+    <th>% présence</th>
+  </tr>
+</thead>
         <tbody id="availabilityTable"></tbody>
       </table>
     </div>
@@ -348,6 +349,35 @@ function sortByRugbyPosition(a, b) {
   const diff = getPositionOrder(a) - getPositionOrder(b);
   if (diff !== 0) return diff;
   return normalizePosition(a).localeCompare(normalizePosition(b), 'fr', { sensitivity: 'base' });
+}
+  function positionColor(position) {
+  const p = normalizePosition(position);
+
+  if (['Pilier G', 'Pilier D'].includes(p)) return '#dbeafe';
+  if (p === 'Talonneur') return '#fed7aa';
+  if (p === '2nd ligne') return '#e9d5ff';
+  if (p === '3eme ligne') return '#d1fae5';
+  if (p === 'Demi de mêlée') return '#fef3c7';
+  if (p === "Demi d'ouverture") return '#fde68a';
+  if (p === 'Centre') return '#fecaca';
+  if (p === 'Ailier') return '#cffafe';
+  if (p === 'Arrière') return '#bbf7d0';
+
+  return '#f3f4f6';
+}
+
+function positionTextColor(position) {
+  const p = normalizePosition(position);
+
+  if (['Pilier G', 'Pilier D', 'Talonneur', '2nd ligne', '3eme ligne', 'Demi de mêlée', "Demi d'ouverture", 'Centre', 'Ailier', 'Arrière'].includes(p)) {
+    return '#111827';
+  }
+
+  return '#374151';
+}
+
+function positionBadgeStyle(position) {
+  return `background:${positionColor(position)};color:${positionTextColor(position)};padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700;display:inline-block;`;
 }
 const firebaseConfig = {
   apiKey: "AIzaSyAqydtSfdYTxKkcmm5cYXg3aZ_3MvJGmsI",
@@ -761,6 +791,7 @@ function renderAvailability() {
     return `
       <tr>
         <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+        <td><span style="${positionBadgeStyle(p.position)}">${p.position || 'Non renseigné'}</span></td>
         <td>${total}</td>
         <td>${present}</td>
         <td>${absent}</td>
@@ -1133,7 +1164,7 @@ function exportAvailabilityPDF() {
     [...tr.querySelectorAll('td')].map(td => td.innerText.trim())
   );
 
-  const headers = ['Joueur', 'Total séances', 'Présent', 'Absent', 'Blessé', 'Partiel', '% présence'];
+  const headers = ['Joueur', 'Poste', 'Total séances', 'Présent', 'Absent', 'Blessé', 'Partiel', '% présence'];
 
   const w = window.open('', '_blank');
   w.document.write(`
@@ -1146,7 +1177,8 @@ function exportAvailabilityPDF() {
         h1 { font-size: 20px; margin-bottom: 16px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ccc; padding: 8px; font-size: 12px; text-align: left; }
-        th { background: #f2f2f2; }
+th { background: #f2f2f2; }
+.badge { display:inline-block; padding:4px 8px; border-radius:999px; font-weight:700; }
       </style>
     </head>
     <body>
@@ -1156,7 +1188,17 @@ function exportAvailabilityPDF() {
           <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
-          ${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+          ${rows.map(r => {
+  const pos = r[1] || '';
+  const bg = positionColor(pos);
+  const fg = positionTextColor(pos);
+  return `<tr>
+    ${r.map((c, idx) => idx === 1
+      ? `<td><span class="badge" style="background:${bg};color:${fg}">${c}</span></td>`
+      : `<td>${c}</td>`
+    ).join('')}
+  </tr>`;
+}).join('')}
         </tbody>
       </table>
       <script>
