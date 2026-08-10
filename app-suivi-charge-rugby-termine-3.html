@@ -867,51 +867,57 @@ function renderRpeTable() {
   );
 }
 function renderHooperTable() {
-    const visibleIds = filteredPlayerIds();
+  const tbody = qs('#hooperTable');
+  if (!tbody) return;
 
-    qs('#hooperTable').innerHTML = [...state.hooperEntries]
-        .filter(e => visibleIds.has(e.playerId))
-        .sort((a, b) => {
-            const dateCompare = b.date.localeCompare(a.date);
-            if (dateCompare !== 0) return dateCompare;
+  const entries = [...state.hooperEntries]
+    .sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) return dateCompare;
 
-            const playerA = state.players.find(x => x.id === a.playerId);
-            const playerB = state.players.find(x => x.id === b.playerId);
+      const playerA = state.players.find(player => player.id === a.playerId);
+      const playerB = state.players.find(player => player.id === b.playerId);
 
-            const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
-            const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+      const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+      const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
 
-            return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
-        })
-        .map(e => {
-            const p = state.players.find(x => x.id === e.playerId);
-            return `
-        <tr>
-          <td>${e.date}</td>
-          <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : (e.playerName || e.playerId)}</td>
-          <td>${e.sleep}</td>
-          <td>${e.mood}</td>
-          <td>${e.energy}</td>
-          <td>${e.soreness}</td>
-          <td>${e.wellbeing}</td>
-          <td>${e.total}</td>
-          <td>
-            <div class="actions">
-              <button class="btn" data-edit-hooper="${e.id}">Modifier</button>
-              <button class="btn" data-delete-hooper="${e.id}">Supprimer</button>
-            </div>
-          </td>
-        </tr>
-      `;
-        })
-        .join('');
+      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+    });
 
-  qsa('[data-edit-hooper]').forEach(btn =>
-    btn.addEventListener('click', () => editHooper(btn.dataset.editHooper))
+  tbody.innerHTML = entries.map(entry => {
+    const player = state.players.find(player => player.id === entry.playerId);
+
+    const playerName = player
+      ? `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`
+      : (entry.playerName || `Joueur introuvable (${entry.playerId})`);
+
+    return `
+      <tr>
+        <td>${entry.date || ''}</td>
+        <td>${playerName}</td>
+        <td>${entry.sleep ?? '-'}</td>
+        <td>${entry.mood ?? '-'}</td>
+        <td>${entry.energy ?? '-'}</td>
+        <td>${entry.soreness ?? '-'}</td>
+        <td>${entry.wellbeing ?? '-'}</td>
+        <td>${entry.total ?? '-'}</td>
+        <td>
+          <div class="actions">
+            <button class="btn" data-edit-hooper="${entry.id}">Modifier</button>
+            <button class="btn" data-delete-hooper="${entry.id}">Supprimer</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  qsa('[data-edit-hooper]').forEach(button =>
+    button.addEventListener('click', () => editHooper(button.dataset.editHooper))
   );
-  qsa('[data-delete-hooper]').forEach(btn =>
-  btn.addEventListener('click', () => deleteHooper(btn.dataset.deleteHooper))
-);
+
+  qsa('[data-delete-hooper]').forEach(button =>
+    button.addEventListener('click', () => deleteHooper(button.dataset.deleteHooper))
+  );
 }
 function renderPlayersAdmin() {
   const select = qs('#playerSelect');
