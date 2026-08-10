@@ -587,7 +587,7 @@ if (rpePlayer) {
     playersSorted
       .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
       .join('') +
-    '<option value="all">Tous les joueurs — Repos collectif</option>';
+    '<option value="all">Tous les joueurs</option>';
 }
 
 const hooperPlayer = qs('#hooperPlayer');
@@ -978,11 +978,6 @@ async function saveRpe() {
     return;
   }
 
-  if (isAllPlayers && !isRest) {
-    alert('L’option "Tous les joueurs" est réservée au statut Repos.');
-    return;
-  }
-
   const rpe = isRest ? 0 : Number(qs('#rpeValue').value || 0);
   const duration = isRest ? 0 : Number(qs('#rpeDuration').value || 0);
   const load = rpe * duration;
@@ -1000,15 +995,15 @@ async function saveRpe() {
         );
 
         const payload = {
-          playerId: player.id,
-          date: date,
-          type: type,
-          status: 'Repos',
-          rpe: 0,
-          duration: 0,
-          load: 0,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+  playerId: player.id,
+  date: date,
+  type: type,
+  status: status,
+  rpe: rpe,
+  duration: duration,
+  load: load,
+  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+};
 
         if (existingEntry) {
           batch.set(
@@ -1028,7 +1023,7 @@ async function saveRpe() {
 
       await batch.commit();
 
-      alert(`Repos enregistré pour ${state.players.length} joueur(s).`);
+      alert(`Saisie enregistré pour ${state.players.length} joueur(s).`);
       resetRpeForm();
       await loadAllFromFirestore();
       return;
