@@ -91,6 +91,7 @@
       <option value="Absent">Absent</option>
       <option value="Blessé">Blessé</option>
       <option value="Partiel">Partiel</option>
+      <option value="Repos">Repos</option>
     </select>
   </div>
 
@@ -264,7 +265,7 @@
       </div>
     </section>
 
-    <section class="section" id="rpe"><div class="split"><div class="card panel"><h3>Ajouter / modifier un RPE</h3><div class="stack"><input type="hidden" id="rpeEditId"><div class="field"><label>Joueur</label><select id="rpePlayer"></select></div><div class="field"><label>Date</label><input id="rpeDate" type="date"></div><div class="field"><label>Type</label><select id="rpeType"><option>Mardi</option><option>Mercredi</option><option>Vendredi</option><option>Match</option></select></div><div class="field"><label>Statut</label><select id="rpeStatus"><option>Présent</option><option>Absent</option><option>Blessé</option><option>Partiel</option></select></div><div class="field"><label>RPE</label><input id="rpeValue" type="number" min="0" max="10"></div><div class="field"><label>Durée</label><input id="rpeDuration" type="number" min="0" max="180"></div><div class="actions"><button class="btn primary" id="saveRpeBtn">Enregistrer</button><button class="btn" id="resetRpeBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique RPE</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Joueur</th><th>Type</th><th>Statut</th><th>RPE</th><th>Durée</th><th>Charge</th><th>Actions</th></tr></thead><tbody id="rpeTable"></tbody></table></div></div></div></section>
+    <section class="section" id="rpe"><div class="split"><div class="card panel"><h3>Ajouter / modifier un RPE</h3><div class="stack"><input type="hidden" id="rpeEditId"><div class="field"><label>Joueur</label><select id="rpePlayer"></select></div><div class="field"><label>Date</label><input id="rpeDate" type="date"></div><div class="field"><label>Type</label><select id="rpeType"><option>Mardi</option><option>Mercredi</option><option>Vendredi</option><option>Match</option></select></div><div class="field"><label>Statut</label><select id="rpeStatus"><option>Présent</option><option>Absent</option><option>Blessé</option><option>Partiel</option><option>Repos</option</select></div><div class="field"><label>RPE</label><input id="rpeValue" type="number" min="0" max="10"></div><div class="field"><label>Durée</label><input id="rpeDuration" type="number" min="0" max="180"></div><div class="actions"><button class="btn primary" id="saveRpeBtn">Enregistrer</button><button class="btn" id="resetRpeBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique RPE</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Joueur</th><th>Type</th><th>Statut</th><th>RPE</th><th>Durée</th><th>Charge</th><th>Actions</th></tr></thead><tbody id="rpeTable"></tbody></table></div></div></div></section>
 
     <section class="section" id="hooper"><div class="split"><div class="card panel"><h3>Ajouter / modifier un Hooper</h3><div class="stack"><input type="hidden" id="hooperEditId"><div class="field"><label>Joueur</label><select id="hooperPlayer"></select></div><div class="field"><label>Date</label><input id="hooperDate" type="date"></div><div class="field"><label>Sommeil</label><input id="sleep" type="number" min="1" max="5"></div><div class="field"><label>Humeur</label><input id="mood" type="number" min="1" max="5"></div><div class="field"><label>Énergie</label><input id="energy" type="number" min="1" max="5"></div><div class="field"><label>Courbatures</label><input id="soreness" type="number" min="1" max="5"></div><div class="field"><label>Bien-être</label><input id="wellbeing" type="number" min="1" max="5"></div><div class="actions"><button class="btn primary" id="saveHooperBtn">Enregistrer</button><button class="btn" id="resetHooperBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique Hooper</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Joueur</th><th>Sommeil</th><th>Humeur</th><th>Énergie</th><th>Courbatures</th><th>Bien-être</th><th>Total</th><th>Actions</th></tr></thead><tbody id="hooperTable"></tbody></table></div></div></div></section>
     <section class="section" id="player-access"><div class="card panel login-box"><h3>Accès joueur</h3><p class="muted mini">Zone simplifiée de connexion joueur.</p></div></section>
@@ -949,7 +950,39 @@ async function deletePlayerFromForm(){const id=qs('#playerIdField').value; const
 function renderPlayerWeightHistory(playerId){const tbody=qs('#playerWeightHistory'); if(!tbody) return; const rows=state.playerWeights.filter(m=>m.playerId===playerId).sort((a,b)=>a.date.localeCompare(b.date)); tbody.innerHTML=rows.map(m=>`<tr><td>${m.date}</td><td>${Number(m.weight).toFixed(1)}</td></tr>`).join('')}
 function renderPlayerWeightChart(playerId){const canvas=qs('#playerWeightChart'); if(!canvas||typeof Chart==='undefined') return; if(playerWeightChart){playerWeightChart.destroy(); playerWeightChart=null;} const rows=state.playerWeights.filter(m=>m.playerId===playerId).sort((a,b)=>a.date.localeCompare(b.date)); if(!rows.length) return; playerWeightChart=new Chart(canvas,{type:'line',data:{labels:rows.map(r=>r.date),datasets:[{label:'Poids (kg)',data:rows.map(r=>r.weight),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.15)',tension:.25,pointRadius:3,fill:false}]},options:{responsive:true,plugins:{legend:{display:false},title:{display:true,text:'Évolution du poids'}},scales:{x:{title:{display:true,text:'Date'}},y:{title:{display:true,text:'Poids (kg)'}}}}})}
 async function addWeightMeasureFromForm(){const playerId=qs('#playerIdField').value; const date=qs('#playerWeightDate').value; const weightValue=qs('#playerWeightMeasure').value; const status=qs('#playerStatusMsg'); if(!playerId){status.textContent='Enregistre ou sélectionne d’abord un joueur.'; return;} if(!date||!weightValue){status.textContent='Date et poids obligatoires.'; return;} try{ await db.collection('playerWeights').add({playerId,date,weight:Number(weightValue),createdAt:firebase.firestore.FieldValue.serverTimestamp()}); await db.collection('players').doc(playerId).set({weight:Number(weightValue),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); status.textContent='Mesure de poids ajoutée.'; await loadAllFromFirestore(); loadPlayerIntoForm(playerId); }catch(err){console.error(err); status.textContent='Erreur ajout poids.'; }}
-async function saveRpe(){const id=qs('#rpeEditId').value; const payload={playerId:qs('#rpePlayer').value,date:qs('#rpeDate').value,type:qs('#rpeType').value,status:qs('#rpeStatus').value,rpe:Number(qs('#rpeValue').value||0),duration:Number(qs('#rpeDuration').value||0),updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; payload.load=payload.rpe*payload.duration; try{ if(id) await db.collection('rpeEntries').doc(id).set(payload,{merge:true}); else await db.collection('rpeEntries').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); resetRpeForm(); await loadAllFromFirestore(); }catch(err){console.error(err)}}
+async function saveRpe() {
+  const id = qs('#rpeEditId').value;
+  const status = qs('#rpeStatus').value;
+  const isRest = status === 'Repos';
+
+  const payload = {
+    playerId: qs('#rpePlayer').value,
+    date: qs('#rpeDate').value,
+    type: qs('#rpeType').value,
+    status: status,
+    rpe: isRest ? 0 : Number(qs('#rpeValue').value || 0),
+    duration: isRest ? 0 : Number(qs('#rpeDuration').value || 0),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  payload.load = payload.rpe * payload.duration;
+
+  try {
+    if (id) {
+      await db.collection('rpeEntries').doc(id).set(payload, { merge: true });
+    } else {
+      await db.collection('rpeEntries').add({
+        ...payload,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    resetRpeForm();
+    await loadAllFromFirestore();
+  } catch (err) {
+    console.error(err);
+  }
+}
 function resetRpeForm(){qs('#rpeEditId').value=''; qs('#rpeDate').value=todayStr; qs('#rpeType').value='Mardi'; qs('#rpeStatus').value='Présent'; qs('#rpeValue').value=''; qs('#rpeDuration').value=''}
 function editRpe(id){const e=state.rpeEntries.find(x=>x.id===id); if(!e) return; activateTab('rpe'); qs('#rpeEditId').value=e.id; qs('#rpePlayer').value=e.playerId; qs('#rpeDate').value=e.date; qs('#rpeType').value=e.type; qs('#rpeStatus').value=e.status; qs('#rpeValue').value=e.rpe; qs('#rpeDuration').value=e.duration}
   async function deleteRpe(id) {
