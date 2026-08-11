@@ -506,7 +506,7 @@ function filteredPlayerIds(){
   // Disponibilité (% présent) sur la période sélectionnée
  const availabilityEntries = entries
   .filter(e => matchesPeriod(e, period))
-  .filter(e => e.status !== 'Repos');
+  .filter(e => !isRestStatus(e.status));
 
 const total = availabilityEntries.length;
 
@@ -689,7 +689,12 @@ function matchesPeriod(entry, period) {
   if (status === 'all') return true;
   return entry.status === status;
 }
-  
+  function isRestStatus(status) {
+  return String(status || '')
+    .trim()
+    .toLowerCase()
+    .startsWith('repos');
+}
 function renderDashboard() {
   const players = filteredPlayers();
 
@@ -858,7 +863,7 @@ function renderAvailability() {
   .filter(e => e.playerId === p.id)
   .filter(e => matchesPeriod(e, period))
   .filter(e => matchesStatus(e, status))
-  .filter(e => e.status !== 'Repos');
+  .filter(e => !isRestStatus(e.status));
 
     const total = entries.length;
     const present = entries.filter(e => e.status === 'Présent').length;
