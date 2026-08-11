@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+x<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
@@ -666,7 +666,7 @@ if (playerAccessSelect) {
     ? selectedValue
     : '';
 }
-      
+
 }
 
 function matchesPeriod(entry, period) {
@@ -1521,7 +1521,8 @@ qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF
 qs('#rpeDate').value = todayStr;
 qs('#hooperDate').value = todayStr;
 qs('#playerWeightDate').value = todayStr;
-qs('#playerHooperDate')?.value = todayStr;
+const playerHooperDate = qs('#playerHooperDate');
+if (playerHooperDate) playerHooperDate.value = todayStr;
 
 activateTab('dashboard');
 loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
