@@ -504,10 +504,16 @@ function filteredPlayerIds(){
     : 0;
 
   // Disponibilité (% présent) sur la période sélectionnée
- const availabilityEntries = periodEntries.filter(e => e.status !== 'Repos');
+ const availabilityEntries = entries
+  .filter(e => matchesPeriod(e, period))
+  .filter(e => e.status !== 'Repos');
 
 const total = availabilityEntries.length;
-const present = availabilityEntries.filter(e => e.status === 'Présent').length;
+
+const present = availabilityEntries.filter(
+  e => e.status === 'Présent'
+).length;
+
 const dispo = total ? (present / total) * 100 : 0;
 
   // Blessé = dernier statut de la période filtrée
@@ -1069,6 +1075,10 @@ async function saveRpe() {
           entry.date === date &&
           entry.type === type
         );
+
+        if (status === 'Repos' && existingEntry) {
+  return;
+}
 
         const payload = {
   playerId: player.id,
