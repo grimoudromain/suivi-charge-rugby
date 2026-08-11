@@ -241,48 +241,136 @@ async function saveHooper() {
   }
 
   const values = [sleep, mood, energy, soreness, wellbeing];
-  const invalid = values.some(v => !Number.isFinite(v) || v < 1 || v > 5);
+
+  const invalid = values.some(value =>
+    !Number.isFinite(value) || value < 1 || value > 5
+  );
 
   if (invalid) {
-    msgEl.textContent = "Toutes les notes Hooper doivent être comprises entre 1 et 5.";
+    msgEl.textContent = "Toutes les notes doivent être comprises entre 1 et 5.";
     msgEl.className = "status err";
     return;
   }
 
-  const total = sleep + mood + energy + soreness + wellbeing;
+  const payload = {
+    playerId: currentPlayer.id,
+    playerName: currentPlayer.fullName,
+    date: date,
+    sleep: sleep,
+    mood: mood,
+    energy: energy,
+    soreness: soreness,
+    wellbeing: wellbeing,
+    total: sleep + mood + energy + soreness + wellbeing,
+    source: "player",
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
 
   try {
-    await db.collection("hooperEntries").add({
-      playerId: currentPlayer.id,
-      playerName: currentPlayer.fullName,
-      date,
-      sleep,
-      mood,
-      energy,
-      soreness,
-      wellbeing,
-      total,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const existingSnap = await db.collection("hooperEntries")
+      .where("playerId", "==", currentPlayer.id)
+      .where("date", "==", date)
+      .get();
 
-    msgEl.textContent = "Hooper enregistré.";
-    msgEl.className = "status ok";
+    if (!existingSnap.empty) {
+      await existingSnap.docs[0].ref.set(payload, { merge: true });
+    } else {
+      await db.collection("hooperEntries").add({
+        ...payload,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
     resetHooperForm();
 
-    try {
-      await loadHistory(currentPlayer.id);
-    } catch (historyErr) {
-      console.error("Erreur chargement historique Hooper :", historyErr);
-    }
+    msgEl.textContent = "Hooper enregistré avec succès.";
+    msgEl.className = "status ok";
+
+    await loadHistory(currentPlayer.id);
   } catch (err) {
     console.error("Erreur enregistrement Hooper :", err);
+
     msgEl.textContent = err?.message
-      ? `Erreur lors de l'enregistrement : ${err.message}`
-      : "Erreur lors de l'enregistrement.";
+      ? `Erreur : ${err.message}`
+      : "Erreur lors de l'enregistrement du Hooper.";
+
     msgEl.className = "status err";
   }
 }
+async function loadHistory(playerId) {
+  const historyList = document.getElementById("historyList");
 
+  if (!playerId) {
+    clearHistory();
+    return;
+  }
+
+  historyList.innerHTML = "<div>Chargement de l'historique...</div>";
+
+  try {
+    const [rpeSnap, hooperSnap] = await Promise.all([
+      db.collection("rpeEntries")
+        .where("playerId", "==", playerId)
+        .get(),
+
+      db.collection("hooperEntries")
+        .where("playerId", "==", playerId)
+        .get()
+    ]);
+
+    const rpeRows = rpeSnap.docs.map(doc => ({
+      id: doc.id,
+      category: "RPE",
+      ...doc.data()
+    }));
+
+    const hooperRows = hooperSnap.docs.map(doc => ({
+      id: doc.id,
+      category: "Hooper",
+      ...doc.data()
+    }));
+
+    const rows = [...rpeRows, ...hooperRows]
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      .slice(0, 12);
+
+    if (!rows.length) {
+      clearHistory();
+      return;
+    }
+
+    historyList.innerHTML = rows.map(row => {
+      if (row.category === "RPE") {
+        return `
+          <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <strong>${row.date || ''} — RPE</strong><br>
+            ${row.type || ''} · ${row.status || ''} ·
+            RPE ${row.rpe ?? '-'} · ${row.duration ?? '-'} min ·
+            Charge ${row.load ?? '-'}
+          </div>
+        `;
+      }
+
+      return `
+        <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <strong>${row.date || ''} — Hooper</strong><br>
+          Sommeil ${row.sleep ?? '-'} ·
+          Humeur ${row.mood ?? '-'} ·
+          Énergie ${row.energy ?? '-'} ·
+          Courbatures ${row.soreness ?? '-'} ·
+          Bien-être ${row.wellbeing ?? '-'} ·
+          Total ${row.total ?? '-'}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error("Erreur chargement historique joueur :", err);
+
+    historyList.innerHTML =
+      "<div>Impossible de charger l'historique.</div>";
+  }
+}
+  
 function initUI() {
   setToday("rpeDate");
   setToday("hooperDate");
