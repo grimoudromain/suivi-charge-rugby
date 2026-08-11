@@ -917,13 +917,12 @@ function renderHooperTable() {
   const tbody = qs('#hooperTable');
   if (!tbody) return;
 
-  const entries = [...state.hooperEntries]
-  .sort((a, b) => {
+  const entries = [...state.hooperEntries].sort((a, b) => {
     // 1. Date la plus récente en premier
-    const dateCompare = b.date.localeCompare(a.date);
+    const dateCompare = (b.date || '').localeCompare(a.date || '');
     if (dateCompare !== 0) return dateCompare;
 
-    // 2. Pour une même date : ordre alphabétique des joueurs
+    // 2. Pour une même date : joueurs par ordre alphabétique
     const playerA = state.players.find(player => player.id === a.playerId);
     const playerB = state.players.find(player => player.id === b.playerId);
 
@@ -933,11 +932,6 @@ function renderHooperTable() {
     return nameA.localeCompare(nameB, 'fr', {
       sensitivity: 'base'
     });
-  });
-
-    if (nameCompare !== 0) return nameCompare;
-
-    return b.date.localeCompare(a.date);
   });
 
   tbody.innerHTML = entries.map(entry => {
