@@ -1,4 +1,4 @@
-x<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
@@ -918,18 +918,27 @@ function renderHooperTable() {
   if (!tbody) return;
 
   const entries = [...state.hooperEntries]
-    .sort((a, b) => {
-      const dateCompare = b.date.localeCompare(a.date);
-      if (dateCompare !== 0) return dateCompare;
+  .sort((a, b) => {
+    // 1. Date la plus récente en premier
+    const dateCompare = b.date.localeCompare(a.date);
+    if (dateCompare !== 0) return dateCompare;
 
-      const playerA = state.players.find(player => player.id === a.playerId);
-      const playerB = state.players.find(player => player.id === b.playerId);
+    // 2. Pour une même date : ordre alphabétique des joueurs
+    const playerA = state.players.find(player => player.id === a.playerId);
+    const playerB = state.players.find(player => player.id === b.playerId);
 
-      const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
-      const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+    const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+    const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
 
-      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+    return nameA.localeCompare(nameB, 'fr', {
+      sensitivity: 'base'
     });
+  });
+
+    if (nameCompare !== 0) return nameCompare;
+
+    return b.date.localeCompare(a.date);
+  });
 
   tbody.innerHTML = entries.map(entry => {
     const player = state.players.find(player => player.id === entry.playerId);
