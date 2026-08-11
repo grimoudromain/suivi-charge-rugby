@@ -39,7 +39,10 @@
       <button data-tab="joueurs"><span>Joueurs</span><span class="tag">Staff</span></button>
       <button data-tab="rpe"><span>RPE</span><span class="tag">Staff</span></button>
       <button data-tab="hooper"><span>Hooper</span><span class="tag">Staff</span></button>
-      <button data-tab="player-access" data-role="player" style="display:none"><span>Interface joueurs</span><span class="tag">Joueur</span></button>
+      <button data-tab="player-access" data-role="player">
+  <span>Accès joueur</span>
+  <span class="tag">Joueur</span>
+</button>
     </div>
     <div class="sidebar-footer">
       <button class="theme-btn" id="themeToggle">Changer thème</button>
@@ -173,8 +176,6 @@
   </div>
 </div>
 
-<div class="card panel" style="margin-top:18px">
-  <h3>Comparaison par poste</h3>
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -207,11 +208,6 @@
   </select>
   <button class="btn primary" id="exportAvailabilityPdfBtn">Exporter en PDF</button>
 </div>
-
-    <!-- BOUTON EXPORT PDF ICI -->
-    <div class="actions" style="margin-bottom:12px">
-      <button class="btn primary" id="exportAvailabilityPdfBtn">Exporter en PDF</button>
-    </div>
 
     <div class="table-wrap">
       <table class="table">
@@ -268,7 +264,63 @@
     <section class="section" id="rpe"><div class="split"><div class="card panel"><h3>Ajouter / modifier un RPE</h3><div class="stack"><input type="hidden" id="rpeEditId"><div class="field"><label>Joueur</label><select id="rpePlayer"></select></div><div class="field"><label>Date</label><input id="rpeDate" type="date"></div><div class="field"><label>Type</label><select id="rpeType"><option>Mardi</option><option>Mercredi</option><option>Vendredi</option><option>Match</option></select></div><div class="field"><label>Statut</label><select id="rpeStatus"><option>Présent</option><option>Absent</option><option>Blessé</option><option>Partiel</option><option>Repos</option</select></div><div class="field"><label>RPE</label><input id="rpeValue" type="number" min="0" max="10"></div><div class="field"><label>Durée</label><input id="rpeDuration" type="number" min="0" max="180"></div><div class="actions"><button class="btn primary" id="saveRpeBtn">Enregistrer</button><button class="btn" id="resetRpeBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique RPE</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Joueur</th><th>Type</th><th>Statut</th><th>RPE</th><th>Durée</th><th>Charge</th><th>Actions</th></tr></thead><tbody id="rpeTable"></tbody></table></div></div></div></section>
 
     <section class="section" id="hooper"><div class="split"><div class="card panel"><h3>Ajouter / modifier un Hooper</h3><div class="stack"><input type="hidden" id="hooperEditId"><div class="field"><label>Joueur</label><select id="hooperPlayer"></select></div><div class="field"><label>Date</label><input id="hooperDate" type="date"></div><div class="field"><label>Sommeil</label><input id="sleep" type="number" min="1" max="5"></div><div class="field"><label>Humeur</label><input id="mood" type="number" min="1" max="5"></div><div class="field"><label>Énergie</label><input id="energy" type="number" min="1" max="5"></div><div class="field"><label>Courbatures</label><input id="soreness" type="number" min="1" max="5"></div><div class="field"><label>Bien-être</label><input id="wellbeing" type="number" min="1" max="5"></div><div class="actions"><button class="btn primary" id="saveHooperBtn">Enregistrer</button><button class="btn" id="resetHooperBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique Hooper</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Joueur</th><th>Sommeil</th><th>Humeur</th><th>Énergie</th><th>Courbatures</th><th>Bien-être</th><th>Total</th><th>Actions</th></tr></thead><tbody id="hooperTable"></tbody></table></div></div></div></section>
-    <section class="section" id="player-access"><div class="card panel login-box"><h3>Accès joueur</h3><p class="muted mini">Zone simplifiée de connexion joueur.</p></div></section>
+    <section class="section" id="player-access">
+  <div class="card panel login-box">
+    <h3>Questionnaire Hooper joueur</h3>
+
+    <p class="muted mini">
+      Sélectionne ton nom, choisis la date et renseigne les cinq critères.
+      Le questionnaire sera visible par le staff dans l’onglet Hooper.
+    </p>
+
+    <div class="stack" style="margin-top:16px">
+      <div class="field">
+        <label for="playerAccessSelect">Joueur</label>
+        <select id="playerAccessSelect">
+          <option value="">Sélectionner mon nom</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="playerHooperDate">Date</label>
+        <input id="playerHooperDate" type="date">
+      </div>
+
+      <div class="field">
+        <label for="playerSleep">Sommeil</label>
+        <input id="playerSleep" type="number" min="1" max="5" placeholder="De 1 à 5">
+      </div>
+
+      <div class="field">
+        <label for="playerMood">Humeur</label>
+        <input id="playerMood" type="number" min="1" max="5" placeholder="De 1 à 5">
+      </div>
+
+      <div class="field">
+        <label for="playerEnergy">Énergie</label>
+        <input id="playerEnergy" type="number" min="1" max="5" placeholder="De 1 à 5">
+      </div>
+
+      <div class="field">
+        <label for="playerSoreness">Courbatures</label>
+        <input id="playerSoreness" type="number" min="1" max="5" placeholder="De 1 à 5">
+      </div>
+
+      <div class="field">
+        <label for="playerWellbeing">Bien-être</label>
+        <input id="playerWellbeing" type="number" min="1" max="5" placeholder="De 1 à 5">
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="savePlayerHooperBtn">
+          Enregistrer mon Hooper
+        </button>
+      </div>
+
+      <div class="status mini" id="playerHooperStatusMsg"></div>
+    </div>
+  </div>
+</section>
   </main>
 </div>
 <script>
@@ -460,10 +512,10 @@ function filteredPlayerIds(){
 
   // Disponibilité (% présent) sur la période sélectionnée
  const availabilityEntries = periodEntries.filter(e => e.status !== 'Repos');
-   
-  const total = periodEntries.length;
-  const present = periodEntries.filter(e => e.status === 'Présent').length;
-  const dispo = total ? (present / total) * 100 : 0;
+
+const total = availabilityEntries.length;
+const present = availabilityEntries.filter(e => e.status === 'Présent').length;
+const dispo = total ? (present / total) * 100 : 0;
 
   // Blessé = dernier statut de la période filtrée
   const latestEntry = periodEntries.length ? periodEntries[periodEntries.length - 1] : null;
@@ -598,7 +650,23 @@ if (hooperPlayer) {
     .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
     .join('');
 }
+const playerAccessSelect = qs('#playerAccessSelect');
+if (playerAccessSelect) {
+  const selectedValue = playerAccessSelect.value || '';
 
+  playerAccessSelect.innerHTML =
+    '<option value="">Sélectionner mon nom</option>' +
+    playersSorted
+      .map(p =>
+        `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
+      )
+      .join('');
+
+  playerAccessSelect.value = playersSorted.some(p => p.id === selectedValue)
+    ? selectedValue
+    : '';
+}
+      
 }
 
 function matchesPeriod(entry, period) {
@@ -1106,7 +1174,178 @@ function editRpe(id){const e=state.rpeEntries.find(x=>x.id===id); if(!e) return;
     alert('Erreur lors de la suppression du RPE.');
   }
 }
-async function saveHooper(){const id=qs('#hooperEditId').value; const payload={playerId:qs('#hooperPlayer').value,date:qs('#hooperDate').value,sleep:Number(qs('#sleep').value||1),mood:Number(qs('#mood').value||1),energy:Number(qs('#energy').value||1),soreness:Number(qs('#soreness').value||1),wellbeing:Number(qs('#wellbeing').value||1),updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; payload.total=payload.sleep+payload.mood+payload.energy+payload.soreness+payload.wellbeing; try{ if(id) await db.collection('hooperEntries').doc(id).set(payload,{merge:true}); else await db.collection('hooperEntries').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); resetHooperForm(); await loadAllFromFirestore(); }catch(err){console.error(err)}}
+async function saveHooper() {
+  const id = qs('#hooperEditId').value;
+  const playerId = qs('#hooperPlayer').value;
+  const date = qs('#hooperDate').value;
+
+  const sleepValue = qs('#sleep').value;
+  const moodValue = qs('#mood').value;
+  const energyValue = qs('#energy').value;
+  const sorenessValue = qs('#soreness').value;
+  const wellbeingValue = qs('#wellbeing').value;
+
+  if (!playerId) {
+    alert('Sélectionne un joueur.');
+    return;
+  }
+
+  if (!date) {
+    alert('Sélectionne une date.');
+    return;
+  }
+
+  if (
+    sleepValue === '' ||
+    moodValue === '' ||
+    energyValue === '' ||
+    sorenessValue === '' ||
+    wellbeingValue === ''
+  ) {
+    alert('Remplis les cinq critères Hooper avant d’enregistrer.');
+    return;
+  }
+
+  const payload = {
+    playerId: playerId,
+    date: date,
+    sleep: Number(sleepValue),
+    mood: Number(moodValue),
+    energy: Number(energyValue),
+    soreness: Number(sorenessValue),
+    wellbeing: Number(wellbeingValue),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  payload.total =
+    payload.sleep +
+    payload.mood +
+    payload.energy +
+    payload.soreness +
+    payload.wellbeing;
+
+  try {
+    if (id) {
+      await db.collection('hooperEntries').doc(id).set(payload, { merge: true });
+    } else {
+      const existingEntry = state.hooperEntries.find(entry =>
+        entry.playerId === playerId &&
+        entry.date === date
+      );
+
+      if (existingEntry) {
+        await db.collection('hooperEntries')
+          .doc(existingEntry.id)
+          .set(payload, { merge: true });
+      } else {
+        await db.collection('hooperEntries').add({
+          ...payload,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    resetHooperForm();
+    await loadAllFromFirestore();
+  } catch (err) {
+    console.error('Erreur enregistrement Hooper', err);
+    alert('Erreur lors de l’enregistrement du Hooper.');
+  }
+}
+  async function savePlayerHooper() {
+  const playerId = qs('#playerAccessSelect').value;
+  const date = qs('#playerHooperDate').value;
+
+  const sleepValue = qs('#playerSleep').value;
+  const moodValue = qs('#playerMood').value;
+  const energyValue = qs('#playerEnergy').value;
+  const sorenessValue = qs('#playerSoreness').value;
+  const wellbeingValue = qs('#playerWellbeing').value;
+
+  const statusMessage = qs('#playerHooperStatusMsg');
+
+  if (!playerId) {
+    statusMessage.textContent = 'Sélectionne ton nom.';
+    return;
+  }
+
+  if (!date) {
+    statusMessage.textContent = 'Sélectionne une date.';
+    return;
+  }
+
+  if (
+    sleepValue === '' ||
+    moodValue === '' ||
+    energyValue === '' ||
+    sorenessValue === '' ||
+    wellbeingValue === ''
+  ) {
+    statusMessage.textContent = 'Remplis les cinq critères avant d’enregistrer.';
+    return;
+  }
+
+  const player = state.players.find(p => p.id === playerId);
+
+  if (!player) {
+    statusMessage.textContent = 'Joueur introuvable. Recharge la page puis recommence.';
+    return;
+  }
+
+  const payload = {
+    playerId: playerId,
+    playerName: `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`,
+    date: date,
+    sleep: Number(sleepValue),
+    mood: Number(moodValue),
+    energy: Number(energyValue),
+    soreness: Number(sorenessValue),
+    wellbeing: Number(wellbeingValue),
+    source: 'player',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  payload.total =
+    payload.sleep +
+    payload.mood +
+    payload.energy +
+    payload.soreness +
+    payload.wellbeing;
+
+  try {
+    const existingEntry = state.hooperEntries.find(entry =>
+      entry.playerId === playerId &&
+      entry.date === date &&
+      entry.source === 'player'
+    );
+
+    if (existingEntry) {
+      await db.collection('hooperEntries')
+        .doc(existingEntry.id)
+        .set(payload, { merge: true });
+
+      statusMessage.textContent = 'Ton Hooper a été mis à jour.';
+    } else {
+      await db.collection('hooperEntries').add({
+        ...payload,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      statusMessage.textContent = 'Ton Hooper a bien été enregistré.';
+    }
+
+    qs('#playerSleep').value = '';
+    qs('#playerMood').value = '';
+    qs('#playerEnergy').value = '';
+    qs('#playerSoreness').value = '';
+    qs('#playerWellbeing').value = '';
+
+    await loadAllFromFirestore();
+  } catch (err) {
+    console.error('Erreur enregistrement Hooper joueur', err);
+    statusMessage.textContent = 'Erreur lors de l’enregistrement. Réessaie.';
+  }
+}
 function resetHooperForm(){qs('#hooperEditId').value=''; qs('#hooperDate').value=todayStr; qs('#sleep').value=''; qs('#mood').value=''; qs('#energy').value=''; qs('#soreness').value=''; qs('#wellbeing').value=''}
 function editHooper(id){const e=state.hooperEntries.find(x=>x.id===id); if(!e) return; activateTab('hooper'); qs('#hooperEditId').value=e.id; qs('#hooperPlayer').value=e.playerId; qs('#hooperDate').value=e.date; qs('#sleep').value=e.sleep; qs('#mood').value=e.mood; qs('#energy').value=e.energy; qs('#soreness').value=e.soreness; qs('#wellbeing').value=e.wellbeing}
 async function deleteHooper(id) {
@@ -1264,6 +1503,7 @@ qs('#saveRpeBtn').addEventListener('click', saveRpe);
 qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
 qs('#saveHooperBtn').addEventListener('click', saveHooper);
 qs('#resetHooperBtn').addEventListener('click', resetHooperForm);
+qs('#savePlayerHooperBtn')?.addEventListener('click', savePlayerHooper);
 
 qs('#playerSelect').addEventListener('change', e => {
   const id = e.target.value;
@@ -1281,6 +1521,7 @@ qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF
 qs('#rpeDate').value = todayStr;
 qs('#hooperDate').value = todayStr;
 qs('#playerWeightDate').value = todayStr;
+qs('#playerHooperDate')?.value = todayStr;
 
 activateTab('dashboard');
 loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
