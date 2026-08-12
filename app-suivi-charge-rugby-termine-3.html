@@ -74,17 +74,28 @@
   </div>
 
   <div class="field">
-    <label>Période</label>
-    <select id="periodFilter">
-      <option value="all">Depuis le début</option>
-      <option value="7">7 jours</option>
-      <option value="14">14 jours</option>
-      <option value="28" selected>28 jours</option>
-      <option value="Mardi">Mardi</option>
-      <option value="Mercredi">Mercredi</option>
-      <option value="Vendredi">Vendredi</option>
-    </select>
-  </div>
+  <label>Période</label>
+  <select id="periodFilter">
+    <option value="all">Depuis le début</option>
+    <option value="7">7 jours</option>
+    <option value="14">14 jours</option>
+    <option value="28" selected>28 jours</option>
+    <option value="Mardi">Mardi</option>
+    <option value="Mercredi">Mercredi</option>
+    <option value="Vendredi">Vendredi</option>
+    <option value="custom">Plage personnalisée</option>
+  </select>
+</div>
+
+<div class="field" id="customDateFromField" style="display:none">
+  <label for="customDateFrom">Du</label>
+  <input id="customDateFrom" type="date">
+</div>
+
+<div class="field" id="customDateToField" style="display:none">
+  <label for="customDateTo">Au</label>
+  <input id="customDateTo" type="date">
+</div>
 
   <div class="field">
     <label>Statut</label>
@@ -669,9 +680,25 @@ if (playerAccessSelect) {
 }
 
 function matchesPeriod(entry, period) {
-  if (period === "all") return true;
+  if (period === 'all') return true;
 
-  if (period === "Mardi" || period === "Mercredi" || period === "Vendredi") {
+  if (period === 'custom') {
+    const from = qs('#customDateFrom')?.value || '';
+    const to = qs('#customDateTo')?.value || '';
+
+    if (!from && !to) return true;
+
+    if (from && entry.date < from) return false;
+    if (to && entry.date > to) return false;
+
+    return true;
+  }
+
+  if (
+    period === 'Mardi' ||
+    period === 'Mercredi' ||
+    period === 'Vendredi'
+  ) {
     return entry.type === period;
   }
 
@@ -682,12 +709,9 @@ function matchesPeriod(entry, period) {
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - (Number(period) - 1));
 
-  const entryDate = new Date(entry.date + "T12:00:00");
+  const entryDate = new Date(entry.date + 'T12:00:00');
+
   return entryDate >= start && entryDate <= today;
-}
-  function matchesStatus(entry, status) {
-  if (status === 'all') return true;
-  return entry.status === status;
 }
   function isRestStatus(status) {
   return String(status || '')
@@ -1508,7 +1532,28 @@ qs('#seedData').addEventListener('click', seedDemoData);
 qs('#teamFilter').addEventListener('change', syncUI);
 qs('#groupFilter').addEventListener('change', syncUI);
 qs('#positionFilter').addEventListener('change', syncUI);
-qs('#periodFilter').addEventListener('change', syncUI);
+function updateCustomDateFields() {
+  const isCustom = qs('#periodFilter').value === 'custom';
+
+  const fromField = qs('#customDateFromField');
+  const toField = qs('#customDateToField');
+
+  if (fromField) {
+    fromField.style.display = isCustom ? 'grid' : 'none';
+  }
+
+  if (toField) {
+    toField.style.display = isCustom ? 'grid' : 'none';
+  }
+}
+
+qs('#periodFilter').addEventListener('change', () => {
+  updateCustomDateFields();
+  syncUI();
+});
+
+qs('#customDateFrom').addEventListener('change', syncUI);
+qs('#customDateTo').addEventListener('change', syncUI);
 qs('#statusFilter').addEventListener('change', syncUI);
 qs('#searchFilter').addEventListener('change', syncUI);
 qs('#availabilitySort')?.addEventListener('change', renderAvailability);
@@ -1538,6 +1583,8 @@ qs('#playerWeightDate').value = todayStr;
 const playerHooperDate = qs('#playerHooperDate');
 if (playerHooperDate) playerHooperDate.value = todayStr;
 
+updateCustomDateFields();
+  
 activateTab('dashboard');
 loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
   
