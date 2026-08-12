@@ -1536,22 +1536,26 @@ async function loadAllFromFirestore() {
   syncUI();
 }
 
-qsa('.nav button').forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+qsa('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+});
+
 qs('#themeToggle').addEventListener('click', () => {
   const html = document.documentElement;
   const current = html.getAttribute('data-theme') || 'light';
   html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
 });
-qs('#seedData').addEventListener('click', seedDemoData);
-qs('#teamFilter').addEventListener('change', syncUI);
-qs('#groupFilter').addEventListener('change', syncUI);
-qs('#positionFilter').addEventListener('change', syncUI);
-qs('#periodFilter').addEventListener('change', syncUI);
-function updateCustomDateFields() {
-  const isCustom = qs('#periodFilter').value === 'custom';
 
+qs('#seedData').addEventListener('click', seedDemoData);
+
+function updateCustomDateFields() {
+  const periodFilter = qs('#periodFilter');
   const fromField = qs('#customDateFromField');
   const toField = qs('#customDateToField');
+
+  if (!periodFilter) return;
+
+  const isCustom = periodFilter.value === 'custom';
 
   if (fromField) {
     fromField.style.display = isCustom ? 'grid' : 'none';
@@ -1562,8 +1566,17 @@ function updateCustomDateFields() {
   }
 }
 
-qs('#periodFilter').addEventListener('change', syncUI();
+qs('#teamFilter').addEventListener('change', syncUI);
+qs('#groupFilter').addEventListener('change', syncUI);
+qs('#positionFilter').addEventListener('change', syncUI);
+
+qs('#periodFilter').addEventListener('change', () => {
+  updateCustomDateFields();
+  syncUI();
 });
+
+qs('#customDateFrom')?.addEventListener('change', syncUI);
+qs('#customDateTo')?.addEventListener('change', syncUI);
 
 qs('#statusFilter').addEventListener('change', syncUI);
 qs('#searchFilter').addEventListener('change', syncUI);
@@ -1571,58 +1584,34 @@ qs('#availabilitySort')?.addEventListener('change', renderAvailability);
 
 qs('#saveRpeBtn').addEventListener('click', saveRpe);
 qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
+
 qs('#saveHooperBtn').addEventListener('click', saveHooper);
 qs('#resetHooperBtn').addEventListener('click', resetHooperForm);
 qs('#savePlayerHooperBtn')?.addEventListener('click', savePlayerHooper);
 
 qs('#playerSelect').addEventListener('change', e => {
   const id = e.target.value;
-  if (!id) resetPlayerForm();
-  else loadPlayerIntoForm(id);
+
+  if (!id) {
+    resetPlayerForm();
+  } else {
+    loadPlayerIntoForm(id);
+  }
 });
 
 qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
 qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
 qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
 qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
-  
 qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF);
-  
+
 qs('#rpeDate').value = todayStr;
 qs('#hooperDate').value = todayStr;
 qs('#playerWeightDate').value = todayStr;
+
 const playerHooperDate = qs('#playerHooperDate');
-if (playerHooperDate) playerHooperDate.value = todayStr;
-
-function updateCustomDateFields() {
-  const periodFilter = qs('#periodFilter');
-  const fromField = qs('#customDateFromField');
-  const toField = qs('#customDateToField');
-
-  if (!periodFilter || !fromField || !toField) return;
-
-  const isCustom = periodFilter.value === 'custom';
-
-  fromField.style.display = isCustom ? 'grid' : 'none';
-  toField.style.display = isCustom ? 'grid' : 'none';
-}
-
-const periodFilterControl = qs('#periodFilter');
-if (periodFilterControl) {
-  periodFilterControl.addEventListener('change', () => {
-    updateCustomDateFields();
-    syncUI();
-  });
-}
-
-const customDateFromControl = qs('#customDateFrom');
-if (customDateFromControl) {
-  customDateFromControl.addEventListener('change', syncUI);
-}
-
-const customDateToControl = qs('#customDateTo');
-if (customDateToControl) {
-  customDateToControl.addEventListener('change', syncUI);
+if (playerHooperDate) {
+  playerHooperDate.value = todayStr;
 }
 
 updateCustomDateFields();
