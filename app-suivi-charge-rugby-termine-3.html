@@ -83,13 +83,16 @@
     <option value="Mardi">Mardi</option>
     <option value="Mercredi">Mercredi</option>
     <option value="Vendredi">Vendredi</option>
+    <option value="custom">Plage personnalisée</option>
   </select>
 </div>
 
+<div class="field" id="customDateFromField" style="display:none">
   <label for="customDateFrom">Du</label>
   <input id="customDateFrom" type="date">
 </div>
 
+<div class="field" id="customDateToField" style="display:none">
   <label for="customDateTo">Au</label>
   <input id="customDateTo" type="date">
 </div>
@@ -679,6 +682,18 @@ if (playerAccessSelect) {
 function matchesPeriod(entry, period) {
   if (period === 'all') return true;
 
+  if (period === 'custom') {
+    const from = qs('#customDateFrom')?.value || '';
+    const to = qs('#customDateTo')?.value || '';
+
+    if (!from && !to) return true;
+
+    if (from && entry.date < from) return false;
+    if (to && entry.date > to) return false;
+
+    return true;
+  }
+
   if (
     period === 'Mardi' ||
     period === 'Mercredi' ||
@@ -687,16 +702,28 @@ function matchesPeriod(entry, period) {
     return entry.type === period;
   }
 
+  const days = Number(period);
+
+  // Protection : une valeur inconnue n'efface jamais les données.
+  if (!Number.isFinite(days) || days <= 0) {
+    return true;
+  }
+
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
   const start = new Date();
   start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - (Number(period) - 1));
+  start.setDate(start.getDate() - (days - 1));
 
   const entryDate = new Date(entry.date + 'T12:00:00');
 
   return entryDate >= start && entryDate <= today;
+}
+  
+  function matchesStatus(entry, status) {
+  if (status === 'all') return true;
+  return entry.status === status;
 }
   
   function isRestStatus(status) {
@@ -705,6 +732,7 @@ function matchesPeriod(entry, period) {
     .toLowerCase()
     .startsWith('repos');
 }
+  
 function renderDashboard() {
   const players = filteredPlayers();
 
@@ -1565,6 +1593,39 @@ qs('#hooperDate').value = todayStr;
 qs('#playerWeightDate').value = todayStr;
 const playerHooperDate = qs('#playerHooperDate');
 if (playerHooperDate) playerHooperDate.value = todayStr;
+
+function updateCustomDateFields() {
+  const periodFilter = qs('#periodFilter');
+  const fromField = qs('#customDateFromField');
+  const toField = qs('#customDateToField');
+
+  if (!periodFilter || !fromField || !toField) return;
+
+  const isCustom = periodFilter.value === 'custom';
+
+  fromField.style.display = isCustom ? 'grid' : 'none';
+  toField.style.display = isCustom ? 'grid' : 'none';
+}
+
+const periodFilterControl = qs('#periodFilter');
+if (periodFilterControl) {
+  periodFilterControl.addEventListener('change', () => {
+    updateCustomDateFields();
+    syncUI();
+  });
+}
+
+const customDateFromControl = qs('#customDateFrom');
+if (customDateFromControl) {
+  customDateFromControl.addEventListener('change', syncUI);
+}
+
+const customDateToControl = qs('#customDateTo');
+if (customDateToControl) {
+  customDateToControl.addEventListener('change', syncUI);
+}
+
+updateCustomDateFields();
   
 activateTab('dashboard');
 loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
