@@ -83,16 +83,13 @@
     <option value="Mardi">Mardi</option>
     <option value="Mercredi">Mercredi</option>
     <option value="Vendredi">Vendredi</option>
-    <option value="custom">Plage personnalisée</option>
   </select>
 </div>
 
-<div class="field" id="customDateFromField" style="display:none">
   <label for="customDateFrom">Du</label>
   <input id="customDateFrom" type="date">
 </div>
 
-<div class="field" id="customDateToField" style="display:none">
   <label for="customDateTo">Au</label>
   <input id="customDateTo" type="date">
 </div>
@@ -682,25 +679,6 @@ if (playerAccessSelect) {
 function matchesPeriod(entry, period) {
   if (period === 'all') return true;
 
-  if (period === 'custom') {
-    const fromInput = qs('#customDateFrom');
-    const toInput = qs('#customDateTo');
-
-    const from = fromInput ? fromInput.value : '';
-    const to = toInput ? toInput.value : '';
-
-    // Si aucune date n'est encore choisie, on affiche tout.
-    if (!from && !to) return true;
-
-    // Si une date de début est choisie, on exclut les entrées avant.
-    if (from && entry.date < from) return false;
-
-    // Si une date de fin est choisie, on exclut les entrées après.
-    if (to && entry.date > to) return false;
-
-    return true;
-  }
-
   if (
     period === 'Mardi' ||
     period === 'Mercredi' ||
@@ -709,20 +687,12 @@ function matchesPeriod(entry, period) {
     return entry.type === period;
   }
 
-  const numberOfDays = Number(period);
-
-  // Protection : si la valeur n'est pas un nombre valide,
-  // on affiche les données au lieu de tout masquer.
-  if (!Number.isFinite(numberOfDays) || numberOfDays <= 0) {
-    return true;
-  }
-
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
   const start = new Date();
   start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - (numberOfDays - 1));
+  start.setDate(start.getDate() - (Number(period) - 1));
 
   const entryDate = new Date(entry.date + 'T12:00:00');
 
@@ -1548,6 +1518,7 @@ qs('#seedData').addEventListener('click', seedDemoData);
 qs('#teamFilter').addEventListener('change', syncUI);
 qs('#groupFilter').addEventListener('change', syncUI);
 qs('#positionFilter').addEventListener('change', syncUI);
+qs('#periodFilter').addEventListener('change', syncUI);
 function updateCustomDateFields() {
   const isCustom = qs('#periodFilter').value === 'custom';
 
@@ -1563,13 +1534,9 @@ function updateCustomDateFields() {
   }
 }
 
-qs('#periodFilter').addEventListener('change', () => {
-  updateCustomDateFields();
-  syncUI();
+qs('#periodFilter').addEventListener('change', syncUI();
 });
 
-qs('#customDateFrom').addEventListener('change', syncUI);
-qs('#customDateTo').addEventListener('change', syncUI);
 qs('#statusFilter').addEventListener('change', syncUI);
 qs('#searchFilter').addEventListener('change', syncUI);
 qs('#availabilitySort')?.addEventListener('change', renderAvailability);
@@ -1598,8 +1565,6 @@ qs('#hooperDate').value = todayStr;
 qs('#playerWeightDate').value = todayStr;
 const playerHooperDate = qs('#playerHooperDate');
 if (playerHooperDate) playerHooperDate.value = todayStr;
-
-updateCustomDateFields();
   
 activateTab('dashboard');
 loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
