@@ -239,8 +239,17 @@
                 <div class="field"><label for="playerWeightMeasure">Poids (kg)</label><input id="playerWeightMeasure" type="number" min="40" max="180" step="0.1"></div>
                 <div class="field"><label for="playerWeightDate">Date</label><input id="playerWeightDate" type="date"></div>
               </div>
-              <div class="actions" style="margin-top:8px"><button class="btn" id="addWeightMeasureBtn">Ajouter mesure</button></div>
-              <div class="table-wrap" style="margin-top:10px"><table class="table mini"><thead><tr><th>Date</th><th>Poids (kg)</th></tr></thead><tbody id="playerWeightHistory"></tbody></table></div>
+              <div class="actions" style="margin-top:8px"><button class="btn" id="addWeightMeasureBtn">Ajouter mesure</button>
+<button class="btn" id="cancelWeightEditBtn" style="display:none">Annuler modification</button>
+<input type="hidden" id="playerWeightEditId"></div>
+              <div class="table-wrap" style="margin-top:10px"><table class="table mini"><thead>
+  <tr>
+    <th>Date</th>
+    <th>Poids (kg)</th>
+    <th>Action</th>
+  </tr>
+</thead>
+<tbody id="playerWeightHistory"></tbody></table></div>
               <div style="margin-top:12px"><canvas id="playerWeightChart" height="120"></canvas></div>
             </div>
             <div class="actions"><button class="btn primary" id="savePlayerBtn">Enregistrer joueur</button><button class="btn" id="resetPlayerBtn">Nouveau / réinitialiser</button><button class="btn" id="deletePlayerBtn">Supprimer joueur</button></div>
@@ -1080,9 +1089,167 @@ function resetPlayerForm(){qs('#playerIdField').value=''; qs('#playerSelect').va
 function loadPlayerIntoForm(playerId){const player=state.players.find(p=>p.id===playerId); if(!player) return resetPlayerForm(); qs('#playerIdField').value=player.id; qs('#playerLastName').value=player.lastName||''; qs('#playerFirstName').value=player.firstName||''; qs('#playerTeamField').value=player.team||'Fédérale 1'; qs('#playerGroupField').value=player.group||'Avants'; qs('#playerPosition').value=player.position||''; qs('#playerNumber').value=player.number??''; renderPlayerWeightHistory(playerId); renderPlayerWeightChart(playerId)}
 async function savePlayerFromForm(){const id=qs('#playerIdField').value; const status=qs('#playerStatusMsg'); const lastName=qs('#playerLastName').value.trim(); const firstName=qs('#playerFirstName').value.trim(); const team=qs('#playerTeamField').value; const group=qs('#playerGroupField').value; const position=qs('#playerPosition').value.trim(); const number=qs('#playerNumber').value?Number(qs('#playerNumber').value):null; if(!lastName||!firstName){status.textContent='Nom et prénom obligatoires.'; return;} const payload={lastName,firstName,team,group,position,number,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; try{ if(id){ await db.collection('players').doc(id).set(payload,{merge:true}); status.textContent='Joueur mis à jour dans Firestore.'; } else { const ref=await db.collection('players').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); qs('#playerIdField').value=ref.id; status.textContent='Joueur enregistré dans Firestore.'; } await loadAllFromFirestore(); qs('#playerSelect').value=qs('#playerIdField').value; }catch(err){console.error(err); status.textContent='Erreur enregistrement joueur.'; }}
 async function deletePlayerFromForm(){const id=qs('#playerIdField').value; const status=qs('#playerStatusMsg'); if(!id){status.textContent='Sélectionne un joueur à supprimer.'; return;} try{ await db.collection('players').doc(id).delete(); const batch=db.batch(); const rpe=await db.collection('rpeEntries').where('playerId','==',id).get(); rpe.forEach(doc=>batch.delete(doc.ref)); const hoop=await db.collection('hooperEntries').where('playerId','==',id).get(); hoop.forEach(doc=>batch.delete(doc.ref)); const weights=await db.collection('playerWeights').where('playerId','==',id).get(); weights.forEach(doc=>batch.delete(doc.ref)); await batch.commit(); resetPlayerForm(); status.textContent='Joueur supprimé.'; await loadAllFromFirestore(); }catch(err){console.error(err); status.textContent='Erreur suppression joueur.'; }}
-function renderPlayerWeightHistory(playerId){const tbody=qs('#playerWeightHistory'); if(!tbody) return; const rows=state.playerWeights.filter(m=>m.playerId===playerId).sort((a,b)=>a.date.localeCompare(b.date)); tbody.innerHTML=rows.map(m=>`<tr><td>${m.date}</td><td>${Number(m.weight).toFixed(1)}</td></tr>`).join('')}
+function renderPlayerWeightHistory(playerId) {
+  const tbody = qs('#playerWeightHistory');
+
+  if (!tbody) return;
+
+  const rows = state.playerWeights
+    .filter(measure => measure.playerId === playerId)
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  tbody.innerHTML = rows.map(measure => `
+    <tr>
+      <td>${measure.date}</td>
+      <td>${Number(measure.weight).toFixed(1)}</td>
+      <td>
+        <div class="actions">
+          <button
+            class="btn"
+            data-edit-weight="${measure.id}"
+          >
+            Modifier
+          </button>
+
+          <button
+            class="btn"
+            data-delete-weight="${measure.id}"
+          >
+            Supprimer
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  qsa('[data-edit-weight]').forEach(button => {
+    button.addEventListener('click', () => {
+      editWeightMeasure(button.dataset.editWeight);
+    });
+  });
+
+  qsa('[data-delete-weight]').forEach(button => {
+    button.addEventListener('click', () => {
+      deleteWeightMeasure(button.dataset.deleteWeight);
+    });
+  });
+}
 function renderPlayerWeightChart(playerId){const canvas=qs('#playerWeightChart'); if(!canvas||typeof Chart==='undefined') return; if(playerWeightChart){playerWeightChart.destroy(); playerWeightChart=null;} const rows=state.playerWeights.filter(m=>m.playerId===playerId).sort((a,b)=>a.date.localeCompare(b.date)); if(!rows.length) return; playerWeightChart=new Chart(canvas,{type:'line',data:{labels:rows.map(r=>r.date),datasets:[{label:'Poids (kg)',data:rows.map(r=>r.weight),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.15)',tension:.25,pointRadius:3,fill:false}]},options:{responsive:true,plugins:{legend:{display:false},title:{display:true,text:'Évolution du poids'}},scales:{x:{title:{display:true,text:'Date'}},y:{title:{display:true,text:'Poids (kg)'}}}}})}
-async function addWeightMeasureFromForm(){const playerId=qs('#playerIdField').value; const date=qs('#playerWeightDate').value; const weightValue=qs('#playerWeightMeasure').value; const status=qs('#playerStatusMsg'); if(!playerId){status.textContent='Enregistre ou sélectionne d’abord un joueur.'; return;} if(!date||!weightValue){status.textContent='Date et poids obligatoires.'; return;} try{ await db.collection('playerWeights').add({playerId,date,weight:Number(weightValue),createdAt:firebase.firestore.FieldValue.serverTimestamp()}); await db.collection('players').doc(playerId).set({weight:Number(weightValue),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); status.textContent='Mesure de poids ajoutée.'; await loadAllFromFirestore(); loadPlayerIntoForm(playerId); }catch(err){console.error(err); status.textContent='Erreur ajout poids.'; }}
+async function addWeightMeasureFromForm() {
+  const playerId = qs('#playerIdField').value;
+  const date = qs('#playerWeightDate').value;
+  const weightValue = qs('#playerWeightMeasure').value;
+  const editId = qs('#playerWeightEditId').value;
+  const status = qs('#playerStatusMsg');
+
+  if (!playerId) {
+    status.textContent = 'Enregistre ou sélectionne d’abord un joueur.';
+    return;
+  }
+
+  if (!date || !weightValue) {
+    status.textContent = 'Date et poids obligatoires.';
+    return;
+  }
+
+  const weight = Number(weightValue);
+
+  try {
+    const payload = {
+      playerId,
+      date,
+      weight,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (editId) {
+      await db.collection('playerWeights').doc(editId).set(payload, {
+        merge: true
+      });
+
+      status.textContent = 'Mesure de poids modifiée.';
+    } else {
+      await db.collection('playerWeights').add({
+        ...payload,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      status.textContent = 'Mesure de poids ajoutée.';
+    }
+
+    await db.collection('players').doc(playerId).set({
+      weight,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {
+      merge: true
+    });
+
+    qs('#playerWeightEditId').value = '';
+    qs('#playerWeightMeasure').value = '';
+    qs('#playerWeightDate').value = todayStr;
+    qs('#addWeightMeasureBtn').textContent = 'Ajouter mesure';
+    qs('#cancelWeightEditBtn').style.display = 'none';
+
+    await loadAllFromFirestore();
+    loadPlayerIntoForm(playerId);
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Erreur lors de l’enregistrement du poids.';
+  }
+}
+
+  function editWeightMeasure(id) {
+  const measure = state.playerWeights.find(item => item.id === id);
+
+  if (!measure) return;
+
+  qs('#playerWeightEditId').value = measure.id;
+  qs('#playerWeightDate').value = measure.date;
+  qs('#playerWeightMeasure').value = measure.weight;
+
+  qs('#addWeightMeasureBtn').textContent = 'Enregistrer modification';
+  qs('#cancelWeightEditBtn').style.display = 'inline-block';
+
+  qs('#playerStatusMsg').textContent =
+    'Modification de la mesure du ' + measure.date + '.';
+}
+
+function cancelWeightEdit() {
+  qs('#playerWeightEditId').value = '';
+  qs('#playerWeightMeasure').value = '';
+  qs('#playerWeightDate').value = todayStr;
+
+  qs('#addWeightMeasureBtn').textContent = 'Ajouter mesure';
+  qs('#cancelWeightEditBtn').style.display = 'none';
+
+  qs('#playerStatusMsg').textContent = '';
+}
+
+async function deleteWeightMeasure(id) {
+  const measure = state.playerWeights.find(item => item.id === id);
+
+  if (!measure) return;
+
+  const confirmed = window.confirm(
+    `Supprimer la mesure de ${Number(measure.weight).toFixed(1)} kg du ${measure.date} ?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await db.collection('playerWeights').doc(id).delete();
+
+    qs('#playerStatusMsg').textContent = 'Mesure de poids supprimée.';
+
+    await loadAllFromFirestore();
+    loadPlayerIntoForm(measure.playerId);
+  } catch (err) {
+    console.error(err);
+    qs('#playerStatusMsg').textContent =
+      'Erreur lors de la suppression du poids.';
+  }
+}
+  
 async function saveRpe() {
   const id = qs('#rpeEditId').value;
   const selectedPlayerId = qs('#rpePlayer').value;
@@ -1603,6 +1770,7 @@ qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
 qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
 qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
 qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
+qs('#cancelWeightEditBtn')?.addEventListener('click', cancelWeightEdit);
 qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF);
 
 qs('#rpeDate').value = todayStr;
