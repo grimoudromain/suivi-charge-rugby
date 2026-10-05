@@ -1,780 +1,1553 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App suivi charge rugby</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
-  <style>
-    :root,[data-theme="light"]{--bg:#f7f6f2;--surface:#fbfbf9;--surface2:#f1eee9;--border:#d8d4cc;--text:#22201b;--muted:#6e6b65;--primary:#0f6c73;--primary2:#d7ece9;--success:#437a22;--warn:#da7101;--danger:#a13544;--blue:#006494;--shadow:0 10px 30px rgba(0,0,0,.08);--radius:16px;--radius-sm:10px}
-    [data-theme="dark"]{--bg:#171614;--surface:#1d1b18;--surface2:#26231f;--border:#38342f;--text:#ece7de;--muted:#a09a92;--primary:#59a7af;--primary2:#243b3d;--success:#6daa45;--warn:#fdab43;--danger:#dd6974;--blue:#6ca7cf;--shadow:none}
-    *{box-sizing:border-box} html,body{margin:0;padding:0} body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)} button,input,select,textarea{font:inherit} button{cursor:pointer}
-    .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px;position:sticky;top:0;height:100vh;overflow:auto}.brand{display:flex;align-items:center;gap:12px;margin-bottom:16px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--blue));display:grid;place-items:center;color:#fff;font-weight:800}.brand h1{font-size:1.05rem;line-height:1.2;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:.82rem}.nav{display:grid;gap:8px;margin-top:12px}.nav button{border:1px solid transparent;background:transparent;color:var(--text);padding:12px 14px;border-radius:12px;text-align:left}.nav button.active{background:var(--primary2);border-color:var(--border);font-weight:700}.nav button span.tag{font-size:.72rem;border-radius:999px;padding:2px 6px;background:var(--surface2);color:var(--muted);margin-left:8px}.sidebar-footer{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:grid;gap:10px}.theme-btn,.seed-btn{border:1px solid var(--border);background:var(--surface2);color:var(--text);padding:10px 12px;border-radius:12px;font-size:.85rem}.content{padding:24px;overflow:auto}.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}.topbar h2{margin:0;font-size:1.5rem}.topbar p{margin:6px 0 0;color:var(--muted)}.role-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 9px;font-size:.78rem;background:var(--primary2);color:var(--primary)}.filters{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;margin-bottom:18px}.field{display:grid;gap:6px}.field label{font-size:.82rem;color:var(--muted);font-weight:600}.field select,.field input,.field textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text)}.section{display:none}.section.active{display:block}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}.panel{padding:18px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}.kpi .label{font-size:.8rem;color:var(--muted);margin-bottom:8px}.kpi .value{font-size:1.6rem;font-weight:800}.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:.74rem;font-weight:700;margin-top:8px}.good{background:rgba(67,122,34,.14);color:var(--success)}.warn{background:rgba(218,113,1,.16);color:var(--warn)}.danger{background:rgba(161,53,68,.16);color:var(--danger)}.grid-2{display:grid;grid-template-columns:1.35fr .95fr;gap:16px;margin-bottom:18px}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.stack{display:grid;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:1px solid var(--border);background:var(--surface2);color:var(--text);padding:10px 12px;border-radius:12px}.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.table-wrap{overflow:auto}table.table{width:100%;border-collapse:collapse}.table th,.table td{padding:10px 8px;border-bottom:1px solid var(--border);font-size:.9rem;text-align:left;white-space:nowrap}.table th{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
-.pill.green{background:rgba(67,122,34,.14);color:var(--success)}
-.pill.orange{background:rgba(218,113,1,.16);color:var(--warn)}
-.pill.red{background:rgba(161,53,68,.16);color:var(--danger)}
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>App suivi charge rugby</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
+    <style>
+    :root, [data-theme="light"] {
+        --bg: #f7f6f2;
+        --surface: #fbfbf9;
+        --surface2: #f1eee9;
+        --border: #d8d4cc;
+        --text: #22201b;
+        --muted: #6e6b65;
+        --primary: #0f6c73;
+        --primary2: #d7ece9;
+        --success: #437a22;
+        --warn: #da7101;
+        --danger: #a13544;
+        --blue: #006494;
+        --shadow: 0 10px 30px rgba(0, 0, 0, .08);
+        --radius: 16px;
+        --radius-sm: 10px
+    }
 
-.row-green { background: rgba(67,122,34,0.06); }
-.row-orange { background: rgba(218,113,1,0.08); }
-.row-red { background: rgba(161,53,68,0.08); }.chart-wrap{height:320px}.chart-wrap.small{height:260px}.muted{color:var(--muted)}.mini{font-size:.82rem}.status{min-height:20px}.login-box{max-width:420px;margin:40px auto}@media (max-width:1100px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.filters,.kpis,.grid-2,.split{grid-template-columns:1fr}}
-  </style>
+    [data-theme="dark"] {
+        --bg: #171614;
+        --surface: #1d1b18;
+        --surface2: #26231f;
+        --border: #38342f;
+        --text: #ece7de;
+        --muted: #a09a92;
+        --primary: #59a7af;
+        --primary2: #243b3d;
+        --success: #6daa45;
+        --warn: #fdab43;
+        --danger: #dd6974;
+        --blue: #6ca7cf;
+        --shadow: none
+    }
+
+    * {
+        box-sizing:border-box
+    }
+
+    html, body {
+        margin: 0;
+        padding:0
+    }
+
+    body {
+        font-family: Inter, system-ui, sans-serif;
+        background: var(--bg);
+        color:var(--text)
+    }
+
+    button, input, select, textarea {
+        font:inherit
+    }
+
+    button {
+        cursor: pointer
+    }
+
+    .app {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        min-height:100vh
+    }
+
+    .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 20px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow:auto
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom:16px
+    }
+
+    .logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--blue));
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight:800
+    }
+
+    .brand h1 {
+        font-size: 1.05rem;
+        line-height: 1.2;
+        margin:0
+    }
+
+    .brand p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size:.82rem
+    }
+
+    .nav {
+        display: grid;
+        gap: 8px;
+        margin-top:12px
+    }
+
+    .nav button {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text);
+        padding: 12px 14px;
+        border-radius: 12px;
+        text-align:left
+    }
+
+    .nav button.active {
+        background: var(--primary2);
+        border-color: var(--border);
+        font-weight:700
+    }
+
+    .nav button span.tag {
+        font-size: .72rem;
+        border-radius: 999px;
+        padding: 2px 6px;
+        background: var(--surface2);
+        color: var(--muted);
+        margin-left:8px
+    }
+
+    .sidebar-footer {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        display: grid;
+        gap:10px
+    }
+
+    .theme-btn, .seed-btn {
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size:.85rem
+    }
+
+    .content {
+        padding: 24px;
+        overflow:auto
+    }
+
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom:18px
+    }
+
+    .topbar h2 {
+        margin: 0;
+        font-size:1.5rem
+    }
+
+    .topbar p {
+        margin: 6px 0 0;
+        color:var(--muted)
+    }
+
+    .role-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: .78rem;
+        background: var(--primary2);
+        color:var(--primary)
+    }
+
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom:18px
+    }
+
+    .field {
+        display: grid;
+        gap:6px
+    }
+
+    .field label {
+        font-size: .82rem;
+        color: var(--muted);
+        font-weight:600
+    }
+
+    .field select, .field input, .field textarea {
+        width: 100%;
+        padding: 11px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color:var(--text)
+    }
+
+    .section {
+        display:none
+    }
+
+    .section.active {
+        display:block
+    }
+
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow:var(--shadow)
+    }
+
+    .panel {
+        padding:18px
+    }
+
+    .kpis {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-bottom:18px
+    }
+
+    .kpi .label {
+        font-size: .8rem;
+        color: var(--muted);
+        margin-bottom:8px
+    }
+
+    .kpi .value {
+        font-size: 1.6rem;
+        font-weight:800
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: .74rem;
+        font-weight: 700;
+        margin-top:8px
+    }
+
+    .good {
+        background: rgba(67, 122, 34, .14);
+        color:var(--success)
+    }
+
+    .warn {
+        background: rgba(218, 113, 1, .16);
+        color:var(--warn)
+    }
+
+    .danger {
+        background: rgba(161, 53, 68, .16);
+        color:var(--danger)
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1.35fr .95fr;
+        gap: 16px;
+        margin-bottom:18px
+    }
+
+    .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap:16px
+    }
+
+    .stack {
+        display: grid;
+        gap:10px
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap:wrap
+    }
+
+    .btn {
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius:12px
+    }
+
+    .btn.primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color:#fff
+    }
+
+    .table-wrap {
+        overflow:auto
+    }
+
+    table.table {
+        width: 100%;
+        border-collapse:collapse
+    }
+
+    .table th, .table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--border);
+        font-size: .9rem;
+        text-align: left;
+        white-space:nowrap
+    }
+
+    .table th {
+        font-size: .8rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing:.04em
+    }
+
+    .pill {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: .72rem;
+        font-weight: 700
+    }
+
+    .pill.green {
+        background: rgba(67, 122, 34, .14);
+        color: var(--success)
+    }
+
+    .pill.orange {
+        background: rgba(218, 113, 1, .16);
+        color: var(--warn)
+    }
+
+    .pill.red {
+        background: rgba(161, 53, 68, .16);
+        color: var(--danger)
+    }
+
+    .row-green {
+        background: rgba(67, 122, 34, 0.06);
+    }
+
+    .row-orange {
+        background: rgba(218, 113, 1, 0.08);
+    }
+
+    .row-red {
+        background: rgba(161, 53, 68, 0.08);
+    }
+
+    .chart-wrap {
+        height:320px
+    }
+
+    .chart-wrap.small {
+        height:260px
+    }
+
+    .muted {
+        color:var(--muted)
+    }
+
+    .mini {
+        font-size:.82rem
+    }
+
+    .status {
+        min-height:20px
+    }
+
+    .login-box {
+        max-width: 420px;
+        margin:40px auto
+    }
+
+    @media (max-width: 1100px) {
+        .app {
+            grid-template-columns:1fr
+        }
+
+        .sidebar {
+            position: relative;
+            height:auto
+        }
+
+        .filters, .kpis, .grid-2, .split {
+            grid-template-columns: 1fr
+        }
+    }
+    </style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="logo"><img src="logo-club.png" alt="Logo du club" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;"></div>
-      <div><h1>Suivi charge rugby</h1><p>Staff + joueurs</p></div>
-    </div>
-    <div class="nav">
-      <button data-tab="dashboard" class="active"><span>Dashboard</span><span class="tag">Staff</span></button>
-      <button data-tab="disponibilites"><span>Disponibilités</span><span class="tag">Staff</span></button>
-      <button data-tab="vue-coach"><span>Vue coach</span><span class="tag">Staff</span></button>
-      <button data-tab="joueurs"><span>Joueurs</span><span class="tag">Staff</span></button>
-      <button data-tab="rpe"><span>RPE</span><span class="tag">Staff</span></button>
-      <button data-tab="hooper"><span>Hooper</span><span class="tag">Staff</span></button>
-      <button data-tab="player-access" data-role="player">
-  <span>Accès joueur</span>
-  <span class="tag">Joueur</span>
-</button>
-    </div>
-    <div class="sidebar-footer">
-      <button class="theme-btn" id="themeToggle">Changer thème</button>
-      <button class="seed-btn" id="seedData">Charger données démo</button>
-    </div>
-  </aside>
-  <main class="content">
-    <div class="topbar"><div><h2 id="pageTitle">Dashboard</h2><p id="pageIntro">Vue centrale charge interne, disponibilité et synthèse staff.</p></div><div class="role-pill" id="rolePill">Rôle : Staff</div></div>
-    <div class="filters" id="staffFilters">
-  <div class="field">
-    <label>Équipe</label>
-    <select id="teamFilter">
-      <option value="all">Toutes</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Groupe</label>
-    <select id="groupFilter">
-      <option value="all">Tous</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Poste</label>
-    <select id="positionFilter">
-      <option value="all">Tous les postes</option>
-    </select>
-  </div>
-
-  <div class="field">
-  <label>Période</label>
-  <select id="periodFilter">
-    <option value="all">Depuis le début</option>
-    <option value="7">7 jours</option>
-    <option value="14">14 jours</option>
-    <option value="28" selected>28 jours</option>
-    <option value="Mardi">Mardi</option>
-    <option value="Mercredi">Mercredi</option>
-    <option value="Vendredi">Vendredi</option>
-    <option value="custom">Plage personnalisée</option>
-  </select>
-</div>
-
-<div class="field" id="customDateFromField" style="display:none">
-  <label for="customDateFrom">Du</label>
-  <input id="customDateFrom" type="date">
-</div>
-
-<div class="field" id="customDateToField" style="display:none">
-  <label for="customDateTo">Au</label>
-  <input id="customDateTo" type="date">
-</div>
-
-  <div class="field">
-    <label>Statut</label>
-    <select id="statusFilter">
-      <option value="all">Tous</option>
-      <option value="Présent">Présent</option>
-      <option value="Absent">Absent</option>
-      <option value="Blessé">Blessé</option>
-      <option value="Partiel">Partiel</option>
-      <option value="Repos">Repos</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Joueur</label>
-    <select id="searchFilter">
-      <option value="">Tous les joueurs</option>
-    </select>
-  </div>
-</div>
-
-    <section class="section active" id="dashboard">
-      <div class="kpis">
-        <div class="card panel kpi"><div class="label">Joueurs</div><div class="value" id="kpiPlayers">0</div></div>
-        <div class="card panel kpi"><div class="label">Charge moyenne 7j</div><div class="value" id="kpiLoad">0</div></div>
-        <div class="card panel kpi"><div class="label">Blessés</div><div class="value" id="kpiInj">0</div></div>
-        <div class="card panel kpi"><div class="label">Présence moyenne</div><div class="value" id="kpiPresence">0%</div></div>
-        <div class="card panel kpi"><div class="label">Alertes</div><div class="value" id="kpiAlerts">0</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="card panel"><h3>Évolution charge et EWMA</h3><div class="chart-wrap"><canvas id="loadChart"></canvas></div></div>
-        <div class="card panel"><h3>Répartition des alertes</h3><div class="chart-wrap small"><canvas id="alertsChart"></canvas></div></div>
-      </div>
-            <div class="card panel">
-        <h3>Comparaison des semaines par type de séance</h3>
-        <div class="chart-wrap">
-          <canvas id="weeklyRpeChart"></canvas>
-        </div>
-      </div>
-     <div class="card panel">
-  <h3>Tableau récapitulatif joueurs</h3>
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-  <tr>
-    <th>Joueur</th>
-    <th>Équipe</th>
-    <th>Groupe</th>
-    <th>Statut</th>
-    <th>Poste</th>
-    <th>Charge 7j</th>
-    <th>EWMA</th>
-    <th>ACWR</th>
-    <th>RPE moyen</th>
-    <th>Dispo</th>
-    <th>Blessés</th>
-    <th>Monotonie</th>
-    <th>Strain</th>
-    <th>Hooper</th>
-    <th>Risque</th>
-    <th>Alerte</th>
-  </tr>
-</thead>
-      <tbody id="summaryTable"></tbody>
-    </table>
-  </div>
-</div>
-
-<div class="card panel" style="margin-top:18px">
-  <h3>Comparaison par poste</h3>
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Poste</th>
-          <th>Joueurs</th>
-          <th>Charge moyenne 7j</th>
-          <th>EWMA moyen</th>
-          <th>ACWR moyen</th>
-          <th>RPE moyen</th>
-          <th>Disponibilité moyenne</th>
-          <th>Blessés</th>
-          <th>Hooper moyen</th>
-          <th>Alertes</th>
-        </tr>
-      </thead>
-      <tbody id="positionComparisonTable"></tbody>
-    </table>
-  </div>
-</div>
-    </section>
-
-    <section class="section" id="disponibilites">
-  <div class="card panel">
-    <h3>Disponibilité par joueur</h3>
-    <div class="actions" style="margin-bottom:12px">
-  <select id="availabilitySort" class="btn">
-    <option value="name">Trier par nom</option>
-    <option value="position">Trier par poste</option>
-  </select>
-  <button class="btn primary" id="exportAvailabilityPdfBtn">Exporter en PDF</button>
-</div>
-
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-  <tr>
-    <th>Joueur</th>
-    <th>Poste</th>
-    <th>Total séances</th>
-    <th>Présent</th>
-    <th>Absent</th>
-    <th>Blessé</th>
-    <th>Partiel</th>
-    <th>% présence</th>
-  </tr>
-</thead>
-        <tbody id="availabilityTable"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-    <section class="section" id="vue-coach"><div class="card panel"><h3>Joueurs à surveiller</h3><div class="table-wrap"><table class="table"><thead><tr><th>Joueur</th><th>Charge</th><th>ACWR</th><th>Hooper</th><th>Alerte</th></tr></thead><tbody id="coachTable"></tbody></table></div></div></section>
-
-    <section class="section" id="joueurs">
-      <div class="split">
-        <div class="card panel">
-          <h3>Fiche joueur</h3><p class="muted mini">Créer, modifier et supprimer des joueurs.</p>
-          <div class="stack" style="margin-top:10px">
-            <div class="field"><label for="playerSelect">Joueur existant</label><select id="playerSelect"><option value="">Nouveau joueur</option></select></div>
-            <div class="field"><label for="playerLastName">Nom</label><input id="playerLastName" type="text"></div>
-            <div class="field"><label for="playerFirstName">Prénom</label><input id="playerFirstName" type="text"></div>
-            <div class="field"><label for="playerTeamField">Équipe</label><select id="playerTeamField"><option value="Fédérale 1">Fédérale 1</option><option value="Espoirs">Espoirs</option></select></div>
-            <div class="field"><label for="playerGroupField">Groupe</label><select id="playerGroupField"><option value="Avants">Avants</option><option value="Arrières">Arrières</option></select></div>
-            <div class="field"><label for="playerPosition">Poste</label><input id="playerPosition" type="text"></div>
-            <div class="field"><label for="playerNumber">Numéro</label><input id="playerNumber" type="number" min="1" max="99"></div>
-            <input type="hidden" id="playerIdField">
-            <div class="card" style="padding:12px">
-              <h4>Suivi du poids</h4>
-              <div class="split" style="margin-top:8px">
-                <div class="field"><label for="playerWeightMeasure">Poids (kg)</label><input id="playerWeightMeasure" type="number" min="40" max="180" step="0.1"></div>
-                <div class="field"><label for="playerWeightDate">Date</label><input id="playerWeightDate" type="date"></div>
-              </div>
-              <div class="actions" style="margin-top:8px"><button class="btn" id="addWeightMeasureBtn">Ajouter mesure</button>
-<button class="btn" id="cancelWeightEditBtn" style="display:none">Annuler modification</button>
-<input type="hidden" id="playerWeightEditId"></div>
-              <div class="table-wrap" style="margin-top:10px"><table class="table mini"><thead>
-  <tr>
-    <th>Date</th>
-    <th>Poids (kg)</th>
-    <th>Action</th>
-  </tr>
-</thead>
-<tbody id="playerWeightHistory"></tbody></table></div>
-              <div style="margin-top:12px"><canvas id="playerWeightChart" height="120"></canvas></div>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo">
+                    <img src="logo-club.png" alt="Logo du club" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;">
+                </div>
+                <div>
+                    <h1>Suivi charge rugby</h1>
+                    <p>Staff + joueurs</p>
+                </div>
             </div>
-            <div class="actions"><button class="btn primary" id="savePlayerBtn">Enregistrer joueur</button><button class="btn" id="resetPlayerBtn">Nouveau / réinitialiser</button><button class="btn" id="deletePlayerBtn">Supprimer joueur</button></div>
-            <div class="status mini" id="playerStatusMsg"></div>
-          </div>
-        </div>
-        <div class="card panel"><h3>Liste des joueurs</h3><div class="table-wrap"><table class="table"><thead><tr><th>Nom</th><th>Prénom</th><th>Équipe</th><th>Groupe</th><th>Poste</th><th>N°</th></tr></thead><tbody id="playersTable"></tbody></table></div></div>
-      </div>
-    </section>
+            <div class="nav">
+                <button data-tab="dashboard" class="active">
+                    <span>Dashboard</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="disponibilites">
+                    <span>Disponibilités</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="vue-coach">
+                    <span>Vue coach</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="joueurs">
+                    <span>Joueurs</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="rpe">
+                    <span>RPE</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="hooper">
+                    <span>Hooper</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="player-access" data-role="player">
+                    <span>Accès joueur</span>
+                    <span class="tag">Joueur</span>
+                </button>
+            </div>
+            <div class="sidebar-footer">
+                <button class="theme-btn" id="themeToggle">Changer thème</button>
+                <button class="seed-btn" id="seedData">Charger données démo</button>
+            </div>
+        </aside>
+        <main class="content">
+            <div class="topbar">
+                <div>
+                    <h2 id="pageTitle">Dashboard</h2>
+                    <p id="pageIntro">Vue centrale charge interne, disponibilité et synthèse staff.</p>
+                </div>
+                <div class="role-pill" id="rolePill">Rôle : Staff</div>
+            </div>
+            <div class="filters" id="staffFilters">
+                <div class="field">
+                    <label>Équipe</label>
+                    <select id="teamFilter">
+                        <option value="all">Toutes</option>
+                    </select>
+                </div>
 
-    <section class="section" id="rpe"><div class="split"><div class="card panel"><h3>Ajouter / modifier un RPE</h3><div class="stack"><input type="hidden" id="rpeEditId"><div class="field"><label>Joueur</label><select id="rpePlayer"></select></div><div class="field"><label>Date</label><input id="rpeDate" type="date"></div><div class="field"><label>Type</label><select id="rpeType"><option>Mardi</option><option>Mercredi</option><option>Vendredi</option><option>Match</option></select></div><div class="field"><label>Statut</label><select id="rpeStatus"><option>Présent</option><option>Absent</option><option>Blessé</option><option>Partiel</option><option>Repos</option</select></div><div class="field"><label>RPE</label><input id="rpeValue" type="number" min="0" max="10"></div><div class="field"><label>Durée</label><input id="rpeDuration" type="number" min="0" max="180"></div><div class="actions"><button class="btn primary" id="saveRpeBtn">Enregistrer</button><button class="btn" id="resetRpeBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique RPE</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Joueur</th><th>Type</th><th>Statut</th><th>RPE</th><th>Durée</th><th>Charge</th><th>Actions</th></tr></thead><tbody id="rpeTable"></tbody></table></div></div></div></section>
+                <div class="field">
+                    <label>Groupe</label>
+                    <select id="groupFilter">
+                        <option value="all">Tous</option>
+                    </select>
+                </div>
 
-    <section class="section" id="hooper"><div class="split"><div class="card panel"><h3>Ajouter / modifier un Hooper</h3><div class="stack"><input type="hidden" id="hooperEditId"><div class="field"><label>Joueur</label><select id="hooperPlayer"></select></div><div class="field"><label>Date</label><input id="hooperDate" type="date"></div><div class="field"><label>Sommeil</label><input id="sleep" type="number" min="1" max="5"></div><div class="field"><label>Humeur</label><input id="mood" type="number" min="1" max="5"></div><div class="field"><label>Énergie</label><input id="energy" type="number" min="1" max="5"></div><div class="field"><label>Courbatures</label><input id="soreness" type="number" min="1" max="5"></div><div class="field"><label>Bien-être</label><input id="wellbeing" type="number" min="1" max="5"></div><div class="actions"><button class="btn primary" id="saveHooperBtn">Enregistrer</button><button class="btn" id="resetHooperBtn">Réinitialiser</button></div></div></div><div class="card panel"><h3>Historique Hooper</h3><div class="table-wrap"><table class="table">
-<thead>
-  <tr>
-    <th>Date</th>
-    <th>Joueur</th>
-    <th>Sommeil</th>
-    <th>Humeur</th>
-    <th>Énergie</th>
-    <th>Courbatures</th>
-    <th>Bien-être</th>
-    <th>Total</th>
-    <th>Source</th>
-    <th>Actions</th>
-  </tr>
-</thead><tbody id="hooperTable"></tbody></table></div></div></div></section>
-    <section class="section" id="player-access">
-  <div class="card panel login-box">
-    <h3>Questionnaire Hooper joueur</h3>
+                <div class="field">
+                    <label>Poste</label>
+                    <select id="positionFilter">
+                        <option value="all">Tous les postes</option>
+                    </select>
+                </div>
 
-    <p class="muted mini">
-      Sélectionne ton nom, choisis la date et renseigne les cinq critères.
-      Le questionnaire sera visible par le staff dans l’onglet Hooper.
-    </p>
+                <div class="field">
+                    <label>Période</label>
+                    <select id="periodFilter">
+                        <option value="all">Depuis le début</option>
+                        <option value="7">7 jours</option>
+                        <option value="14">14 jours</option>
+                        <option value="28" selected>28 jours</option>
+                        <option value="Mardi">Mardi</option>
+                        <option value="Mercredi">Mercredi</option>
+                        <option value="Vendredi">Vendredi</option>
+                        <option value="custom">Plage personnalisée</option>
+                    </select>
+                </div>
 
-    <div class="stack" style="margin-top:16px">
-      <div class="field">
-        <label for="playerAccessSelect">Joueur</label>
-        <select id="playerAccessSelect">
-          <option value="">Sélectionner mon nom</option>
-        </select>
-      </div>
+                <div class="field" id="customDateFromField" style="display:none">
+                    <label for="customDateFrom">Du</label>
+                    <input id="customDateFrom" type="date">
+                </div>
 
-      <div class="field">
-        <label for="playerHooperDate">Date</label>
-        <input id="playerHooperDate" type="date">
-      </div>
+                <div class="field" id="customDateToField" style="display:none">
+                    <label for="customDateTo">Au</label>
+                    <input id="customDateTo" type="date">
+                </div>
 
-      <div class="field">
-        <label for="playerSleep">Sommeil</label>
-        <input id="playerSleep" type="number" min="1" max="5" placeholder="De 1 à 5">
-      </div>
+                <div class="field">
+                    <label>Statut</label>
+                    <select id="statusFilter">
+                        <option value="all">Tous</option>
+                        <option value="Présent">Présent</option>
+                        <option value="Absent">Absent</option>
+                        <option value="Blessé">Blessé</option>
+                        <option value="Partiel">Partiel</option>
+                        <option value="Repos">Repos</option>
+                    </select>
+                </div>
 
-      <div class="field">
-        <label for="playerMood">Humeur</label>
-        <input id="playerMood" type="number" min="1" max="5" placeholder="De 1 à 5">
-      </div>
+                <div class="field">
+                    <label>Joueur</label>
+                    <select id="searchFilter">
+                        <option value="">Tous les joueurs</option>
+                    </select>
+                </div>
+            </div>
 
-      <div class="field">
-        <label for="playerEnergy">Énergie</label>
-        <input id="playerEnergy" type="number" min="1" max="5" placeholder="De 1 à 5">
-      </div>
+            <section class="section active" id="dashboard">
+                <div class="kpis">
+                    <div class="card panel kpi">
+                        <div class="label">Joueurs</div>
+                        <div class="value" id="kpiPlayers">0</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Charge moyenne 7j</div>
+                        <div class="value" id="kpiLoad">0</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Blessés</div>
+                        <div class="value" id="kpiInj">0</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Présence moyenne</div>
+                        <div class="value" id="kpiPresence">0%</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Alertes</div>
+                        <div class="value" id="kpiAlerts">0</div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card panel">
+                        <h3>Évolution charge et EWMA</h3>
+                        <div class="chart-wrap">
+                            <canvas id="loadChart">
+                            </canvas>
+                        </div>
+                    </div>
+                    <div class="card panel">
+                        <h3>Répartition des alertes</h3>
+                        <div class="chart-wrap small">
+                            <canvas id="alertsChart">
+                            </canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card panel">
+                    <h3>Comparaison des semaines par type de séance</h3>
+                    <div class="chart-wrap">
+                        <canvas id="weeklyRpeChart">
+                        </canvas>
+                    </div>
+                </div>
+                <div class="card panel">
+                    <h3>Tableau récapitulatif joueurs</h3>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Joueur</th>
+                                    <th>Équipe</th>
+                                    <th>Groupe</th>
+                                    <th>Statut</th>
+                                    <th>Poste</th>
+                                    <th>Charge 7j</th>
+                                    <th title="Calculé sur les 28 derniers jours calendaires réels, indépendamment du filtre Période ci-dessus">EWMA</th>
+                                    <th title="Calculé sur les 7/28 derniers jours calendaires réels, indépendamment du filtre Période ci-dessus">ACWR</th>
+                                    <th>RPE moyen</th>
+                                    <th>Dispo</th>
+                                    <th>Blessés</th>
+                                    <th>Monotonie</th>
+                                    <th>Strain</th>
+                                    <th>Hooper</th>
+                                    <th>Risque</th>
+                                    <th>Alerte</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryTable"></tbody>
+                        </table>
+                    </div>
+                </div>
 
-      <div class="field">
-        <label for="playerSoreness">Courbatures</label>
-        <input id="playerSoreness" type="number" min="1" max="5" placeholder="De 1 à 5">
-      </div>
+                <div class="card panel" style="margin-top:18px">
+                    <h3>Comparaison par poste</h3>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Poste</th>
+                                    <th>Joueurs</th>
+                                    <th>Charge moyenne 7j</th>
+                                    <th>EWMA moyen</th>
+                                    <th>ACWR moyen</th>
+                                    <th>RPE moyen</th>
+                                    <th>Disponibilité moyenne</th>
+                                    <th>Blessés</th>
+                                    <th>Hooper moyen</th>
+                                    <th>Alertes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positionComparisonTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-      <div class="field">
-        <label for="playerWellbeing">Bien-être</label>
-        <input id="playerWellbeing" type="number" min="1" max="5" placeholder="De 1 à 5">
-      </div>
+            <section class="section" id="disponibilites">
+                <div class="card panel">
+                    <h3>Disponibilité par joueur</h3>
+                    <div class="actions" style="margin-bottom:12px">
+                        <select id="availabilitySort" class="btn">
+                            <option value="name">Trier par nom</option>
+                            <option value="position">Trier par poste</option>
+                        </select>
+                        <button class="btn primary" id="exportAvailabilityPdfBtn">Exporter en PDF</button>
+                    </div>
 
-      <div class="actions">
-        <button class="btn primary" id="savePlayerHooperBtn">
-          Enregistrer mon Hooper
-        </button>
-      </div>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Joueur</th>
+                                    <th>Poste</th>
+                                    <th>Total séances</th>
+                                    <th>Présent</th>
+                                    <th>Absent</th>
+                                    <th>Blessé</th>
+                                    <th>Partiel</th>
+                                    <th>% présence</th>
+                                </tr>
+                            </thead>
+                            <tbody id="availabilityTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="vue-coach">
+                <div class="card panel">
+                    <h3>Joueurs à surveiller</h3>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Joueur</th>
+                                    <th>Charge</th>
+                                    <th>ACWR</th>
+                                    <th>Hooper</th>
+                                    <th>Alerte</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coachTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-      <div class="status mini" id="playerHooperStatusMsg"></div>
+            <section class="section" id="joueurs">
+                <div class="split">
+                    <div class="card panel">
+                        <h3>Fiche joueur</h3>
+                        <p class="muted mini">Créer, modifier et supprimer des joueurs.</p>
+                        <div class="stack" style="margin-top:10px">
+                            <div class="field">
+                                <label for="playerSelect">Joueur existant</label>
+                                <select id="playerSelect">
+                                    <option value="">Nouveau joueur</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="playerLastName">Nom</label>
+                                <input id="playerLastName" type="text">
+                            </div>
+                            <div class="field">
+                                <label for="playerFirstName">Prénom</label>
+                                <input id="playerFirstName" type="text">
+                            </div>
+                            <div class="field">
+                                <label for="playerTeamField">Équipe</label>
+                                <select id="playerTeamField">
+                                    <option value="Fédérale 1">Fédérale 1</option>
+                                    <option value="Espoirs">Espoirs</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="playerGroupField">Groupe</label>
+                                <select id="playerGroupField">
+                                    <option value="Avants">Avants</option>
+                                    <option value="Arrières">Arrières</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="playerPosition">Poste</label>
+                                <input id="playerPosition" type="text">
+                            </div>
+                            <div class="field">
+                                <label for="playerNumber">Numéro</label>
+                                <input id="playerNumber" type="number" min="1" max="99">
+                            </div>
+                            <input type="hidden" id="playerIdField">
+                            <div class="card" style="padding:12px">
+                                <h4>Suivi du poids</h4>
+                                <div class="split" style="margin-top:8px">
+                                    <div class="field">
+                                        <label for="playerWeightMeasure">Poids (kg)</label>
+                                        <input id="playerWeightMeasure" type="number" min="40" max="180" step="0.1">
+                                    </div>
+                                    <div class="field">
+                                        <label for="playerWeightDate">Date</label>
+                                        <input id="playerWeightDate" type="date">
+                                    </div>
+                                </div>
+                                <div class="actions" style="margin-top:8px">
+                                    <button class="btn" id="addWeightMeasureBtn">Ajouter mesure</button>
+                                    <button class="btn" id="cancelWeightEditBtn" style="display:none">Annuler modification</button>
+                                    <input type="hidden" id="playerWeightEditId">
+                                </div>
+                                <div class="table-wrap" style="margin-top:10px">
+                                    <table class="table mini">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Poids (kg)</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="playerWeightHistory"></tbody>
+                                    </table>
+                                </div>
+                                <div style="margin-top:12px">
+                                    <canvas id="playerWeightChart" height="120">
+                                    </canvas>
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <button class="btn primary" id="savePlayerBtn">Enregistrer joueur</button>
+                                <button class="btn" id="resetPlayerBtn">Nouveau / réinitialiser</button>
+                                <button class="btn" id="deletePlayerBtn">Supprimer joueur</button>
+                            </div>
+                            <div class="status mini" id="playerStatusMsg"></div>
+                        </div>
+                    </div>
+                    <div class="card panel">
+                        <h3>Liste des joueurs</h3>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Prénom</th>
+                                        <th>Équipe</th>
+                                        <th>Groupe</th>
+                                        <th>Poste</th>
+                                        <th>N°</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="playersTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="rpe">
+                <div class="split">
+                    <div class="card panel">
+                        <h3>Ajouter / modifier un RPE</h3>
+                        <div class="stack">
+                            <input type="hidden" id="rpeEditId">
+                            <div class="field">
+                                <label>Joueur</label>
+                                <select id="rpePlayer"></select>
+                            </div>
+                            <div class="field">
+                                <label>Date</label>
+                                <input id="rpeDate" type="date">
+                            </div>
+                            <div class="field">
+                                <label>Type</label>
+                                <select id="rpeType">
+                                    <option>Mardi</option>
+                                    <option>Mercredi</option>
+                                    <option>Vendredi</option>
+                                    <option>Match</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Statut</label>
+                                <select id="rpeStatus">
+                                    <option>Présent</option>
+                                    <option>Absent</option>
+                                    <option>Blessé</option>
+                                    <option>Partiel</option>
+                                    <option>
+                                        Repos</option</select>
+                            </div>
+                            <div class="field">
+                                <label>RPE</label>
+                                <input id="rpeValue" type="number" min="0" max="10">
+                            </div>
+                            <div class="field">
+                                <label>Durée</label>
+                                <input id="rpeDuration" type="number" min="0" max="180">
+                            </div>
+                            <div class="actions">
+                                <button class="btn primary" id="saveRpeBtn">Enregistrer</button>
+                                <button class="btn" id="resetRpeBtn">Réinitialiser</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card panel">
+                        <h3>Historique RPE</h3>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Joueur</th>
+                                        <th>Type</th>
+                                        <th>Statut</th>
+                                        <th>RPE</th>
+                                        <th>Durée</th>
+                                        <th>Charge</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rpeTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="hooper">
+                <div class="split">
+                    <div class="card panel">
+                        <h3>Ajouter / modifier un Hooper</h3>
+                        <div class="stack">
+                            <input type="hidden" id="hooperEditId">
+                            <div class="field">
+                                <label>Joueur</label>
+                                <select id="hooperPlayer"></select>
+                            </div>
+                            <div class="field">
+                                <label>Date</label>
+                                <input id="hooperDate" type="date">
+                            </div>
+                            <div class="field">
+                                <label>Sommeil</label>
+                                <input id="sleep" type="number" min="1" max="5">
+                            </div>
+                            <div class="field">
+                                <label>Humeur</label>
+                                <input id="mood" type="number" min="1" max="5">
+                            </div>
+                            <div class="field">
+                                <label>Énergie</label>
+                                <input id="energy" type="number" min="1" max="5">
+                            </div>
+                            <div class="field">
+                                <label>Courbatures</label>
+                                <input id="soreness" type="number" min="1" max="5">
+                            </div>
+                            <div class="field">
+                                <label>Bien-être</label>
+                                <input id="wellbeing" type="number" min="1" max="5">
+                            </div>
+                            <div class="actions">
+                                <button class="btn primary" id="saveHooperBtn">Enregistrer</button>
+                                <button class="btn" id="resetHooperBtn">Réinitialiser</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card panel">
+                        <h3>Historique Hooper</h3>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Joueur</th>
+                                        <th>Sommeil</th>
+                                        <th>Humeur</th>
+                                        <th>Énergie</th>
+                                        <th>Courbatures</th>
+                                        <th>Bien-être</th>
+                                        <th>Total</th>
+                                        <th>Source</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hooperTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="player-access">
+                <div class="card panel login-box">
+                    <h3>Questionnaire Hooper joueur</h3>
+
+                    <p class="muted mini">
+                          Sélectionne ton nom, choisis la date et renseigne les cinq critères.
+                          Le questionnaire sera visible par le staff dans l’onglet Hooper.
+                        </p>
+
+                    <div class="stack" style="margin-top:16px">
+                        <div class="field">
+                            <label for="playerAccessSelect">Joueur</label>
+                            <select id="playerAccessSelect">
+                                <option value="">Sélectionner mon nom</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="playerHooperDate">Date</label>
+                            <input id="playerHooperDate" type="date">
+                        </div>
+
+                        <div class="field">
+                            <label for="playerSleep">Sommeil</label>
+                            <input id="playerSleep" type="number" min="1" max="5" placeholder="De 1 à 5">
+                        </div>
+
+                        <div class="field">
+                            <label for="playerMood">Humeur</label>
+                            <input id="playerMood" type="number" min="1" max="5" placeholder="De 1 à 5">
+                        </div>
+
+                        <div class="field">
+                            <label for="playerEnergy">Énergie</label>
+                            <input id="playerEnergy" type="number" min="1" max="5" placeholder="De 1 à 5">
+                        </div>
+
+                        <div class="field">
+                            <label for="playerSoreness">Courbatures</label>
+                            <input id="playerSoreness" type="number" min="1" max="5" placeholder="De 1 à 5">
+                        </div>
+
+                        <div class="field">
+                            <label for="playerWellbeing">Bien-être</label>
+                            <input id="playerWellbeing" type="number" min="1" max="5" placeholder="De 1 à 5">
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn primary" id="savePlayerHooperBtn">
+                                      Enregistrer mon Hooper
+                                    </button>
+                        </div>
+
+                        <div class="status mini" id="playerHooperStatusMsg"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
-  </div>
-</section>
-  </main>
-</div>
-<script>
-const qs=s=>document.querySelector(s), qsa=s=>[...document.querySelectorAll(s)];
-const todayStr=new Date().toISOString().slice(0,10);
-const fmt=n=>Number.isFinite(n)?Math.round(n):0;
-// ==== Utilitaires pour les calculs de charge ====
+    <script>
+    const qs = s => document.querySelector(s),
+        qsa = s => [...document.querySelectorAll(s)];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const fmt = n => Number.isFinite(n) ? Math.round(n) : 0;
+    // ==== Utilitaires pour les calculs de charge ====
 
-function dateKey(dateStr) {
-  // On suppose dateStr au format YYYY-MM-DD
-  return dateStr;
-}
+    function dateKey(dateStr) {
+        // On suppose dateStr au format YYYY-MM-DD
+        return dateStr;
+    }
 
-function aggregateDailyLoad(entries) {
-  // Regroupe les charges par jour (RPE × durée)
-  const daily = {};
-  entries.forEach(e => {
-    const key = dateKey(e.date);
-    const load = Number(e.load || 0);
-    if (!daily[key]) daily[key] = 0;
-    daily[key] += load;
-  });
-  return Object.entries(daily)
-    .map(([date, load]) => ({ date, load }))
-    .sort((a, b) => a.date.localeCompare(b.date));
-}
+    function aggregateDailyLoad(entries) {
+        // Regroupe les charges par jour (RPE × durée)
+        const daily = {};
+        entries.forEach(e => {
+            const key = dateKey(e.date);
+            const load = Number(e.load || 0);
+            if (!daily[key])
+                daily[key] = 0;
+            daily[key] += load;
+        });
+        return Object.entries(daily)
+        .map(([date, load]) => ({
+            date,
+            load
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
 
-function mean(arr) {
-  if (!arr.length) return 0;
-  return arr.reduce((s, x) => s + x, 0) / arr.length;
-}
+    function buildZeroFilledDailySeries(entries) {
+        // Comme aggregateDailyLoad, mais complète les jours sans séance avec une
+        // charge de 0 entre la première entrée et aujourd'hui : indispensable pour
+        // que les fenêtres "7 derniers jours" / "28 derniers jours" et les EWMA
+        // correspondent à de vrais jours calendaires, pas aux N dernières séances.
+        const aggregated = aggregateDailyLoad(entries);
+        if (!aggregated.length)
+            return [];
 
-function stdDev(arr) {
-  if (arr.length < 2) return 0;
-  const m = mean(arr);
-  const v = arr.reduce((s, x) => s + Math.pow(x - m, 2), 0) / arr.length;
-  return Math.sqrt(v);
-}
+        const byDate = {};
+        aggregated.forEach(d => {
+            byDate[d.date] = d.load;
+        });
 
-// EWMA exponentielle sur une série {date, load}
-function calcEWMA(series, lambda) {
-  if (!series.length) return 0;
-  let ewma = series[0].load;
-  for (let i = 1; i < series.length; i++) {
-    ewma = lambda * series[i].load + (1 - lambda) * ewma;
-  }
-  return ewma;
-}
+        const cursor = new Date(aggregated[0].date + 'T12:00:00');
+        const end = new Date(todayStr + 'T12:00:00');
+        const series = [];
 
-// Retourne les N derniers jours d'une série déjà triée par date
-function lastNDays(series, n) {
-  return series.slice(-n);
-}
-  
-const POSITION_ORDER = [
-  'Pilier G',
-  'Talonneur',
-  'Pilier D',
-  '2nd ligne',
-  '3eme ligne',
-  'Demi de mêlée',
-  "Demi d'ouverture",
-  'Centre',
-  'Ailier',
-  'Arrière'
-];
+        while (cursor <= end) {
+            const key = cursor.toISOString().slice(0, 10);
+            series.push({
+                date: key,
+                load: byDate[key] || 0
+            });
+            cursor.setDate(cursor.getDate() + 1);
+        }
 
-function normalizePosition(value) {
-  return (value || '').trim();
-}
+        return series;
+    }
 
-function getPositionOrder(position) {
-  const normalized = normalizePosition(position);
-  const index = POSITION_ORDER.indexOf(normalized);
-  return index === -1 ? 999 : index;
-}
+    function mean(arr) {
+        if (!arr.length)
+            return 0;
+        return arr.reduce((s, x) => s + x, 0) / arr.length;
+    }
 
-function sortByRugbyPosition(a, b) {
-  const diff = getPositionOrder(a) - getPositionOrder(b);
-  if (diff !== 0) return diff;
-  return normalizePosition(a).localeCompare(normalizePosition(b), 'fr', { sensitivity: 'base' });
-}
-  function positionColor(position) {
-  const p = normalizePosition(position);
+    function stdDev(arr) {
+        if (arr.length < 2)
+            return 0;
+        const m = mean(arr);
+        const v = arr.reduce((s, x) => s + Math.pow(x - m, 2), 0) / arr.length;
+        return Math.sqrt(v);
+    }
 
-  if (['Pilier G', 'Pilier D'].includes(p)) return '#dbeafe';
-  if (p === 'Talonneur') return '#fed7aa';
-  if (p === '2nd ligne') return '#e9d5ff';
-  if (p === '3eme ligne') return '#d1fae5';
-  if (p === 'Demi de mêlée') return '#fef3c7';
-  if (p === "Demi d'ouverture") return '#fde68a';
-  if (p === 'Centre') return '#fecaca';
-  if (p === 'Ailier') return '#cffafe';
-  if (p === 'Arrière') return '#bbf7d0';
+    // EWMA exponentielle sur une série {date, load}
+    function calcEWMA(series, lambda) {
+        if (!series.length)
+            return 0;
+        let ewma = series[0].load;
+        for (let i = 1; i < series.length; i++) {
+            ewma = lambda * series[i].load + (1 - lambda) * ewma;
+        }
+        return ewma;
+    }
 
-  return '#f3f4f6';
-}
+    // Retourne les N derniers jours d'une série déjà triée par date
+    function lastNDays(series, n) {
+        return series.slice(-n);
+    }
 
-function positionTextColor(position) {
-  const p = normalizePosition(position);
+    const POSITION_ORDER = [
+    'Pilier G',
+    'Talonneur',
+    'Pilier D',
+    '2nd ligne',
+    '3eme ligne',
+    'Demi de mêlée',
+    "Demi d'ouverture",
+    'Centre',
+    'Ailier',
+    'Arrière'
+    ];
 
-  if (['Pilier G', 'Pilier D', 'Talonneur', '2nd ligne', '3eme ligne', 'Demi de mêlée', "Demi d'ouverture", 'Centre', 'Ailier', 'Arrière'].includes(p)) {
-    return '#111827';
-  }
+    function normalizePosition(value) {
+        return (value || '').trim();
+    }
 
-  return '#374151';
-}
+    function getPositionOrder(position) {
+        const normalized = normalizePosition(position);
+        const index = POSITION_ORDER.indexOf(normalized);
+        return index === -1 ? 999 : index;
+    }
 
-function positionBadgeStyle(position) {
-  return `background:${positionColor(position)};color:${positionTextColor(position)};padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700;display:inline-block;`;
-}
-const firebaseConfig = {
-  apiKey: "AIzaSyAqydtSfdYTxKkcmm5cYXg3aZ_3MvJGmsI",
-  authDomain: "suivi-charge-rugby-734c5.firebaseapp.com",
-  projectId: "suivi-charge-rugby-734c5",
-  storageBucket: "suivi-charge-rugby-734c5.firebasestorage.app",
-  messagingSenderId: "666633039168",
-  appId: "1:666633039168:web:68368a8ebbbaab75e51ea5"
-};
-firebase.initializeApp(firebaseConfig); const db=firebase.firestore();
-const state={
-  players:[],
-  rpeEntries:[],
-  hooperEntries:[],
-  injuries:[],
-  playerWeights:[],
-  charts:{
-    load:null,
-    alerts:null,
-    weeklyRpe:null
-  }
-};
-let playerWeightChart=null;
-function splitHooper(total){let rem=total;const keys=['sleep','mood','energy','soreness','wellbeing'];const out={};keys.forEach((k,idx)=>{const minLeft=keys.length-idx-1;const max=Math.min(5,rem-minLeft);const val=Math.max(1,Math.min(5,max));out[k]=val;rem-=val});return out}
-async function seedDemoData(){const players=[{firstName:'Arthur',lastName:'Bernard',team:'Fédérale 1',group:'Avants',position:'Pilier',number:1},{firstName:'Baptiste',lastName:'Colin',team:'Fédérale 1',group:'Arrières',position:'Ailier',number:14},{firstName:'Clément',lastName:'Dupuy',team:'Espoirs',group:'Avants',position:'Talonneur',number:2},{firstName:'Dorian',lastName:'Le Roux',team:'Espoirs',group:'Arrières',position:'Centre',number:12},{firstName:'Enzo',lastName:'Martin',team:'Fédérale 1',group:'Avants',position:'Deuxième ligne',number:5},{firstName:'Florian',lastName:'Rousseau',team:'Espoirs',group:'Arrières',position:'Arrière',number:15}];
-for(const p of players){await db.collection('players').add(p)}
-await loadAllFromFirestore(); qs('#playerStatusMsg').textContent='Données démo ajoutées dans Firestore.';}
-function filteredPlayers() {
-  const team = qs('#teamFilter')?.value || 'all';
-  const group = qs('#groupFilter')?.value || 'all';
-  const position = qs('#positionFilter')?.value || 'all';
-  const selectedPlayerId = qs('#searchFilter')?.value || '';
+    function sortByRugbyPosition(a, b) {
+        const diff = getPositionOrder(a) - getPositionOrder(b);
+        if (diff !== 0)
+            return diff;
+        return normalizePosition(a).localeCompare(normalizePosition(b), 'fr', {
+            sensitivity: 'base'
+        });
+    }
+    function positionColor(position) {
+        const p = normalizePosition(position);
 
-  return state.players.filter(p =>
-    (team === 'all' || p.team === team) &&
-    (group === 'all' || p.group === group) &&
-    (position === 'all' || (p.position || '') === position) &&
-    (!selectedPlayerId || p.id === selectedPlayerId)
-  );
-}
-function filteredPlayerIds(){
-  return new Set(filteredPlayers().map(p=>p.id));
-}
-  
- function playerMetrics(player) {
-  const period = qs('#periodFilter')?.value || '28';
-  const status = qs('#statusFilter')?.value || 'all';
+        if (['Pilier G', 'Pilier D'].includes(p))
+            return '#dbeafe';
+        if (p === 'Talonneur')
+            return '#fed7aa';
+        if (p === '2nd ligne')
+            return '#e9d5ff';
+        if (p === '3eme ligne')
+            return '#d1fae5';
+        if (p === 'Demi de mêlée')
+            return '#fef3c7';
+        if (p === "Demi d'ouverture")
+            return '#fde68a';
+        if (p === 'Centre')
+            return '#fecaca';
+        if (p === 'Ailier')
+            return '#cffafe';
+        if (p === 'Arrière')
+            return '#bbf7d0';
 
-  // Toutes les entrées RPE du joueur, triées
-  const entries = state.rpeEntries
-    .filter(e => e.playerId === player.id)
-    .sort((a, b) => a.date.localeCompare(b.date));
+        return '#f3f4f6';
+    }
 
-  // Entrées filtrées par période et statut (pour les KPI / présence / blessures)
-  const periodEntries = entries
-    .filter(e => matchesPeriod(e, period))
-    .filter(e => matchesStatus(e, status));
+    function positionTextColor(position) {
+        const p = normalizePosition(position);
 
-  // Charges journalières sur toutes les entrées (pour le EWMA et monotony/strain)
-  const dailySeries = aggregateDailyLoad(entries);
-  const dailyLoads = dailySeries.map(d => d.load);
+        if (['Pilier G', 'Pilier D', 'Talonneur', '2nd ligne', '3eme ligne', 'Demi de mêlée', "Demi d'ouverture", 'Centre', 'Ailier', 'Arrière'].includes(p)) {
+            return '#111827';
+        }
 
-  // Charge aiguë : somme des charges des 7 derniers jours (calendaires)
-  const acuteWindow = lastNDays(dailySeries, 7);
-  const acuteLoad = acuteWindow.reduce((s, d) => s + d.load, 0);
+        return '#374151';
+    }
 
-  // EWMA chronique sur les 28 derniers jours
-  const chronicWindow = lastNDays(dailySeries, 28);
-  const lambda = 2 / (28 + 1); // fenêtre 28 jours
-  const chronicEWMA = chronicWindow.length ? calcEWMA(chronicWindow, lambda) : 0;
+    function positionBadgeStyle(position) {
+        return `background:${positionColor(position)};color:${positionTextColor(position)};padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700;display:inline-block;`;
+    }
+    const firebaseConfig = {
+        apiKey: "AIzaSyAqydtSfdYTxKkcmm5cYXg3aZ_3MvJGmsI",
+        authDomain: "suivi-charge-rugby-734c5.firebaseapp.com",
+        projectId: "suivi-charge-rugby-734c5",
+        storageBucket: "suivi-charge-rugby-734c5.firebasestorage.app",
+        messagingSenderId: "666633039168",
+        appId: "1:666633039168:web:68368a8ebbbaab75e51ea5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const state = {
+        players: [],
+        rpeEntries: [],
+        hooperEntries: [],
+        injuries: [],
+        playerWeights: [],
+        charts: {
+            load: null,
+            alerts: null,
+            weeklyRpe: null
+        }
+    };
+    let playerWeightChart = null;
+    async function seedDemoData() {
+        const players = [{
+            firstName: 'Arthur',
+            lastName: 'Bernard',
+            team: 'Fédérale 1',
+            group: 'Avants',
+            position: 'Pilier',
+            number: 1
+        }, {
+            firstName: 'Baptiste',
+            lastName: 'Colin',
+            team: 'Fédérale 1',
+            group: 'Arrières',
+            position: 'Ailier',
+            number: 14
+        }, {
+            firstName: 'Clément',
+            lastName: 'Dupuy',
+            team: 'Espoirs',
+            group: 'Avants',
+            position: 'Talonneur',
+            number: 2
+        }, {
+            firstName: 'Dorian',
+            lastName: 'Le Roux',
+            team: 'Espoirs',
+            group: 'Arrières',
+            position: 'Centre',
+            number: 12
+        }, {
+            firstName: 'Enzo',
+            lastName: 'Martin',
+            team: 'Fédérale 1',
+            group: 'Avants',
+            position: 'Deuxième ligne',
+            number: 5
+        }, {
+            firstName: 'Florian',
+            lastName: 'Rousseau',
+            team: 'Espoirs',
+            group: 'Arrières',
+            position: 'Arrière',
+            number: 15
+        }];
+        for (const p of players) {
+            await db.collection('players').add(p)
+        }
+        await loadAllFromFirestore();
+        qs('#playerStatusMsg').textContent = 'Données démo ajoutées dans Firestore.';
+    }
+    function filteredPlayers() {
+        const team = qs('#teamFilter')?.value || 'all';
+        const group = qs('#groupFilter')?.value || 'all';
+        const position = qs('#positionFilter')?.value || 'all';
+        const selectedPlayerId = qs('#searchFilter')?.value || '';
 
-  // ACWR = charge aiguë / charge chronique EWMA
-  const acwr = chronicEWMA ? acuteLoad / chronicEWMA : 0;
+        return state.players.filter(p =>
+        (team === 'all' || p.team === team) &&
+        (group === 'all' || p.group === group) &&
+        (position === 'all' || (p.position || '') === position) &&
+        (!selectedPlayerId || p.id === selectedPlayerId)
+        );
+    }
+    function filteredPlayerIds() {
+        return new Set(filteredPlayers().map(p => p.id));
+    }
 
-  // RPE moyen sur les entrées filtrées (période/statut)
-  const rpeAvg = periodEntries.length
-    ? periodEntries.reduce((s, e) => s + (e.rpe || 0), 0) / periodEntries.length
-    : 0;
+    function playerMetrics(player) {
+        const period = qs('#periodFilter')?.value || '28';
+        const status = qs('#statusFilter')?.value || 'all';
 
-  // Disponibilité (% présent) sur la période sélectionnée
- const availabilityEntries = entries
-  .filter(e => matchesPeriod(e, period))
-  .filter(e => !isRestStatus(e.status));
+        // Toutes les entrées RPE du joueur, triées
+        const entries = state.rpeEntries
+        .filter(e => e.playerId === player.id)
+        .sort((a, b) => a.date.localeCompare(b.date));
 
-const total = availabilityEntries.length;
+        // Entrées filtrées par période et statut (pour les KPI / présence / blessures)
+        const periodEntries = entries
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => matchesStatus(e, status));
 
-const present = availabilityEntries.filter(
-  e => e.status === 'Présent'
-).length;
+        // Charges journalières sur toutes les entrées, jours sans séance à 0
+        // (indispensable pour que l'ACWR/EWMA reflètent de vrais jours calendaires
+        // et non les N dernières séances enregistrées)
+        const dailySeries = buildZeroFilledDailySeries(entries);
+        const dailyLoads = dailySeries.map(d => d.load);
 
-const dispo = total ? (present / total) * 100 : 0;
+        // Charge aiguë : somme des charges des 7 derniers jours calendaires réels
+        const acuteWindow = lastNDays(dailySeries, 7);
+        const acuteLoad = acuteWindow.reduce((s, d) => s + d.load, 0);
 
-  // Blessé = dernier statut de la période filtrée
-  const latestEntry = periodEntries.length ? periodEntries[periodEntries.length - 1] : null;
-  const inj = latestEntry ? latestEntry.status === 'Blessé' : false;
+        // ACWR = ratio EWMA aiguë (7j) / EWMA chronique (28j) — même méthode et
+        // même unité des deux côtés (charge journalière lissée), calculées sur
+        // tout l'historique calendaire pour que la décroissance soit correcte
+        // (méthode EWMA couplée, Williams et al. 2016)
+        const lambdaAcute = 2 / (7 + 1);
+        const lambdaChronic = 2 / (28 + 1);
+        const acuteEWMA = calcEWMA(dailySeries, lambdaAcute);
+        const chronicEWMA = calcEWMA(dailySeries, lambdaChronic);
+        const acwr = chronicEWMA ? acuteEWMA / chronicEWMA : 0;
 
-  // Dernier Hooper
-  const h = state.hooperEntries
-    .filter(e => e.playerId === player.id)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .at(-1);
-  const hooper = h ? h.total : null;
+        // RPE moyen sur les entrées filtrées (période/statut)
+        const rpeAvg = periodEntries.length
+        ? periodEntries.reduce((s, e) => s + (e.rpe || 0), 0) / periodEntries.length
+        : 0;
 
-  // Monotonie et strain sur les 7 derniers jours de charges journalières
-  const monotonyWindow = acuteWindow;
-  const monotonyLoads = monotonyWindow.map(d => d.load);
-  const monoMean = mean(monotonyLoads);
-  const monoSd = stdDev(monotonyLoads);
-  const monotony = monoSd ? monoMean / monoSd : 0;
-  const strain = acuteLoad * monotony;
+        // Disponibilité (% présent) sur la période sélectionnée
+        const availabilityEntries = entries
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => !isRestStatus(e.status));
 
-  // Alerte (tu gardes ta logique actuelle)
-  let alert = 'RAS';
-  if (inj || acwr > 1.6 || (hooper !== null && hooper < 13)) {
-    alert = 'Élevée';
-  } else if (acwr > 1.3 || (hooper !== null && hooper < 16)) {
-    alert = 'Modérée';
-  }
-  
-  let riskReason = 'RAS';
-  let risk = 'green';
+        const total = availabilityEntries.length;
 
-  if (inj) {
-    risk = 'red';
-    riskReason = 'Blessure';
-  } else if (acwr > 1.6) {
-    risk = 'red';
-    riskReason = 'ACWR élevé';
-  } else if (hooper !== null && hooper < 13) {
-    risk = 'red';
-    riskReason = 'Hooper bas';
-  } else if (acwr > 1.3) {
-    risk = 'orange';
-    riskReason = 'ACWR vigilance';
-  } else if (hooper !== null && hooper < 16) {
-    risk = 'orange';
-    riskReason = 'Hooper vigilance';
-  } 
-   
-   return {
-    load7: acuteLoad,
-    ewma: chronicEWMA,
-    acwr,
-    rpeAvg,
-    dispo,
-    inj,
-    hooper,
-    alert,
-    monotony,
-    strain,
-    risk,
-    riskReason
-  };
-}
-  
+        const present = availabilityEntries.filter(
+        e => e.status === 'Présent'
+        ).length;
+
+        const dispo = total ? (present / total) * 100 : 0;
+
+        // Blessé = dernier statut réel du joueur, indépendant des filtres Période/Statut
+        // (sinon sélectionner un Statut autre que "Blessé" masquait les blessures en cours)
+        const latestEntry = entries.length ? entries[entries.length - 1] : null;
+        const inj = latestEntry ? latestEntry.status === 'Blessé' : false;
+
+        // Dernier Hooper
+        const h = state.hooperEntries
+        .filter(e => e.playerId === player.id)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .at(-1);
+        const hooper = h ? h.total : null;
+
+        // Monotonie et strain sur les 7 derniers jours de charges journalières
+        const monotonyWindow = acuteWindow;
+        const monotonyLoads = monotonyWindow.map(d => d.load);
+        const monoMean = mean(monotonyLoads);
+        const monoSd = stdDev(monotonyLoads);
+        const monotony = monoSd ? monoMean / monoSd : 0;
+        const strain = acuteLoad * monotony;
+
+        // Alerte (tu gardes ta logique actuelle)
+        let alert = 'RAS';
+        if (inj || acwr > 1.6 || (hooper !== null && hooper < 13)) {
+            alert = 'Élevée';
+        } else if (acwr > 1.3 || (hooper !== null && hooper < 16)) {
+            alert = 'Modérée';
+        }
+
+        let riskReason = 'RAS';
+        let risk = 'green';
+
+        if (inj) {
+            risk = 'red';
+            riskReason = 'Blessure';
+        } else if (acwr > 1.6) {
+            risk = 'red';
+            riskReason = 'ACWR élevé';
+        } else if (hooper !== null && hooper < 13) {
+            risk = 'red';
+            riskReason = 'Hooper bas';
+        } else if (acwr > 1.3) {
+            risk = 'orange';
+            riskReason = 'ACWR vigilance';
+        } else if (hooper !== null && hooper < 16) {
+            risk = 'orange';
+            riskReason = 'Hooper vigilance';
+        }
+
+        return {
+            load7: acuteLoad,
+            ewma: chronicEWMA,
+            acwr,
+            rpeAvg,
+            dispo,
+            inj,
+            hooper,
+            alert,
+            monotony,
+            strain,
+            risk,
+            riskReason
+        };
+    }
+
     function setFilters() {
-  const teamSel = qs('#teamFilter');
-  const groupSel = qs('#groupFilter');
-  const positionSel = qs('#positionFilter');
-  const searchSel = qs('#searchFilter');
+        const teamSel = qs('#teamFilter');
+        const groupSel = qs('#groupFilter');
+        const positionSel = qs('#positionFilter');
+        const searchSel = qs('#searchFilter');
 
-  if (!teamSel || !groupSel || !positionSel || !searchSel) return;
+        if (!teamSel || !groupSel || !positionSel || !searchSel)
+            return;
 
-  const playersSorted = [...state.players].sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    )
-  );
+        const playersSorted = [...state.players].sort((a, b) =>
+        `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+        `${b.lastName || ''} ${b.firstName || ''}`,
+        'fr',
+        {
+            sensitivity: 'base'
+        }
+        )
+        );
 
-  const teams = [...new Set(playersSorted.map(p => p.team).filter(Boolean))];
-  const groups = [...new Set(playersSorted.map(p => p.group).filter(Boolean))];
+        const teams = [...new Set(playersSorted.map(p => p.team).filter(Boolean))];
+        const groups = [...new Set(playersSorted.map(p => p.group).filter(Boolean))];
 
-  const positionsRaw = [...new Set(playersSorted.map(p => normalizePosition(p.position)).filter(Boolean))];
-  const positionsOrdered = [
-    ...POSITION_ORDER.filter(pos => positionsRaw.includes(pos)),
-    ...positionsRaw.filter(pos => !POSITION_ORDER.includes(pos)).sort((a, b) =>
-      a.localeCompare(b, 'fr', { sensitivity: 'base' })
-    )
-  ];
+        const positionsRaw = [...new Set(playersSorted.map(p => normalizePosition(p.position)).filter(Boolean))];
+        const positionsOrdered = [
+        ...POSITION_ORDER.filter(pos => positionsRaw.includes(pos)),
+        ...positionsRaw.filter(pos => !POSITION_ORDER.includes(pos)).sort((a, b) =>
+        a.localeCompare(b, 'fr', {
+            sensitivity: 'base'
+        })
+        )
+        ];
 
-  const teamVal = teamSel.value || 'all';
-  const groupVal = groupSel.value || 'all';
-  const positionVal = positionSel.value || 'all';
-  const searchVal = searchSel.value || '';
+        const teamVal = teamSel.value || 'all';
+        const groupVal = groupSel.value || 'all';
+        const positionVal = positionSel.value || 'all';
+        const searchVal = searchSel.value || '';
 
-  teamSel.innerHTML =
-    '<option value="all">Toutes</option>' +
-    teams.map(x => `<option value="${x}">${x}</option>`).join('');
+        teamSel.innerHTML =
+        '<option value="all">Toutes</option>' +
+        teams.map(x => `<option value="${x}">${x}</option>`).join('');
 
-  groupSel.innerHTML =
-    '<option value="all">Tous</option>' +
-    groups.map(x => `<option value="${x}">${x}</option>`).join('');
+        groupSel.innerHTML =
+        '<option value="all">Tous</option>' +
+        groups.map(x => `<option value="${x}">${x}</option>`).join('');
 
-  positionSel.innerHTML =
-    '<option value="all">Tous les postes</option>' +
-    positionsOrdered.map(x => `<option value="${x}">${x}</option>`).join('');
+        positionSel.innerHTML =
+        '<option value="all">Tous les postes</option>' +
+        positionsOrdered.map(x => `<option value="${x}">${x}</option>`).join('');
 
-  searchSel.innerHTML =
-    '<option value="">Tous les joueurs</option>' +
-    playersSorted.map(p =>
-      `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
-    ).join('');
-
-  teamSel.value = teams.includes(teamVal) ? teamVal : 'all';
-  groupSel.value = groups.includes(groupVal) ? groupVal : 'all';
-  positionSel.value = positionsOrdered.includes(positionVal) ? positionVal : 'all';
-  searchSel.value = playersSorted.some(p => p.id === searchVal) ? searchVal : '';
-
-  const rpePlayer = qs('#rpePlayer');
-if (rpePlayer) {
-  rpePlayer.innerHTML =
-    playersSorted
-      .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
-      .join('') +
-    '<option value="all">Tous les joueurs</option>';
-}
-
-const hooperPlayer = qs('#hooperPlayer');
-if (hooperPlayer) {
-  hooperPlayer.innerHTML = playersSorted
-    .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
-    .join('');
-}
-const playerAccessSelect = qs('#playerAccessSelect');
-if (playerAccessSelect) {
-  const selectedValue = playerAccessSelect.value || '';
-
-  playerAccessSelect.innerHTML =
-    '<option value="">Sélectionner mon nom</option>' +
-    playersSorted
-      .map(p =>
+        searchSel.innerHTML =
+        '<option value="">Tous les joueurs</option>' +
+        playersSorted.map(p =>
         `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
-      )
-      .join('');
+        ).join('');
 
-  playerAccessSelect.value = playersSorted.some(p => p.id === selectedValue)
-    ? selectedValue
-    : '';
-}
+        teamSel.value = teams.includes(teamVal) ? teamVal : 'all';
+        groupSel.value = groups.includes(groupVal) ? groupVal : 'all';
+        positionSel.value = positionsOrdered.includes(positionVal) ? positionVal : 'all';
+        searchSel.value = playersSorted.some(p => p.id === searchVal) ? searchVal : '';
 
-}
+        const rpePlayer = qs('#rpePlayer');
+        if (rpePlayer) {
+            rpePlayer.innerHTML =
+            playersSorted
+            .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
+            .join('') +
+            '<option value="all">Tous les joueurs</option>';
+        }
 
-function matchesPeriod(entry, period) {
-  if (period === 'all') return true;
+        const hooperPlayer = qs('#hooperPlayer');
+        if (hooperPlayer) {
+            hooperPlayer.innerHTML = playersSorted
+            .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
+            .join('');
+        }
+        const playerAccessSelect = qs('#playerAccessSelect');
+        if (playerAccessSelect) {
+            const selectedValue = playerAccessSelect.value || '';
 
-  if (period === 'custom') {
-    const from = qs('#customDateFrom')?.value || '';
-    const to = qs('#customDateTo')?.value || '';
+            playerAccessSelect.innerHTML =
+            '<option value="">Sélectionner mon nom</option>' +
+            playersSorted
+            .map(p =>
+            `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
+            )
+            .join('');
 
-    if (!from && !to) return true;
+            playerAccessSelect.value = playersSorted.some(p => p.id === selectedValue)
+            ? selectedValue
+            : '';
+        }
 
-    if (from && entry.date < from) return false;
-    if (to && entry.date > to) return false;
+    }
 
-    return true;
-  }
+    function matchesPeriod(entry, period) {
+        if (period === 'all')
+            return true;
 
-  if (
-    period === 'Mardi' ||
-    period === 'Mercredi' ||
-    period === 'Vendredi'
-  ) {
-    return entry.type === period;
-  }
+        if (period === 'custom') {
+            const from = qs('#customDateFrom')?.value || '';
+            const to = qs('#customDateTo')?.value || '';
 
-  const days = Number(period);
+            if (!from && !to)
+                return true;
 
-  // Protection : une valeur inconnue n'efface jamais les données.
-  if (!Number.isFinite(days) || days <= 0) {
-    return true;
-  }
+            if (from && entry.date < from)
+                return false;
+            if (to && entry.date > to)
+                return false;
 
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
+            return true;
+        }
 
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - (days - 1));
+        if (
+        period === 'Mardi' ||
+        period === 'Mercredi' ||
+        period === 'Vendredi'
+        ) {
+            return entry.type === period;
+        }
 
-  const entryDate = new Date(entry.date + 'T12:00:00');
+        const days = Number(period);
 
-  return entryDate >= start && entryDate <= today;
-}
-  
-  function matchesStatus(entry, status) {
-  if (status === 'all') return true;
-  return entry.status === status;
-}
-  
-  function isRestStatus(status) {
-  return String(status || '')
-    .trim()
-    .toLowerCase()
-    .startsWith('repos');
-}
-  
-function renderDashboard() {
-  const players = filteredPlayers();
+        // Protection : une valeur inconnue n'efface jamais les données.
+        if (!Number.isFinite(days) || days <= 0) {
+            return true;
+        }
 
-  qs('#kpiPlayers').textContent = players.length;
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
 
-  const metrics = players.map(playerMetrics);
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - (days - 1));
 
-  qs('#kpiLoad').textContent =
-    fmt(metrics.reduce((s, m) => s + m.load7, 0) / Math.max(1, metrics.length));
+        const entryDate = new Date(entry.date + 'T12:00:00');
 
-  qs('#kpiInj').textContent = metrics.filter(m => m.inj).length;
+        return entryDate >= start && entryDate <= today;
+    }
 
-  qs('#kpiPresence').textContent =
-    fmt(metrics.reduce((s, m) => s + m.dispo, 0) / Math.max(1, metrics.length)) + '%';
+    function matchesStatus(entry, status) {
+        if (status === 'all')
+            return true;
+        return entry.status === status;
+    }
 
-  qs('#kpiAlerts').textContent = metrics.filter(m => m.alert !== 'RAS').length;
+    function isRestStatus(status) {
+        return String(status || '')
+        .trim()
+        .toLowerCase()
+        .startsWith('repos');
+    }
 
-  const summaryPlayers = [...players].sort((a, b) => {
-    const positionDiff = sortByRugbyPosition(a.position, b.position);
-    if (positionDiff !== 0) return positionDiff;
+    function renderDashboard() {
+        const players = filteredPlayers();
 
-    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    );
-  });
+        qs('#kpiPlayers').textContent = players.length;
 
-  qs('#summaryTable').innerHTML = summaryPlayers.map(p => {
-    const m = playerMetrics(p);
-    const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+        const metrics = players.map(playerMetrics);
 
-          return `
+        qs('#kpiLoad').textContent =
+        fmt(metrics.reduce((s, m) => s + m.load7, 0) / Math.max(1, metrics.length));
+
+        qs('#kpiInj').textContent = metrics.filter(m => m.inj).length;
+
+        qs('#kpiPresence').textContent =
+        fmt(metrics.reduce((s, m) => s + m.dispo, 0) / Math.max(1, metrics.length)) + '%';
+
+        qs('#kpiAlerts').textContent = metrics.filter(m => m.alert !== 'RAS').length;
+
+        const summaryPlayers = [...players].sort((a, b) => {
+            const positionDiff = sortByRugbyPosition(a.position, b.position);
+            if (positionDiff !== 0)
+                return positionDiff;
+
+            return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+            `${b.lastName || ''} ${b.firstName || ''}`,
+            'fr',
+            {
+                sensitivity: 'base'
+            }
+            );
+        });
+
+        qs('#summaryTable').innerHTML = summaryPlayers.map(p => {
+            const m = playerMetrics(p);
+            const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+
+            return `
       <tr class="row-${m.risk}">
         <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
         <td>${p.team || ''}</td>
@@ -791,86 +1564,100 @@ function renderDashboard() {
         <td>${fmt(m.strain)}</td>
         <td>${m.hooper ?? '-'}</td>
                 <td>
-          <span class="pill ${m.risk}">
+          <span class="pill ${
+            m.risk}">
             ${m.risk === 'green' ? 'Vert' : m.risk === 'orange' ? 'Orange' : 'Rouge'}
           </span>
-          <div class="mini muted">${m.riskReason}</div>
+          <div class="mini muted">${
+            m.riskReason}</div>
         </td>
-        <td><span class="pill ${pill}">${m.alert}</span></td>
+        <td><span class="pill ${
+            pill}">${m.alert}</span></td>
       </tr>
-    `;
-  }).join('');
+    `
 
-  const coachPlayers = [...players].sort((a, b) => {
-    const positionDiff = sortByRugbyPosition(a.position, b.position);
-    if (positionDiff !== 0) return positionDiff;
+            ;
+        }).join('');
 
-    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    );
-  });
+        const coachPlayers = [...players].sort((a, b) => {
+            const positionDiff = sortByRugbyPosition(a.position, b.position);
+            if (positionDiff !== 0)
+                return positionDiff;
 
-  qs('#coachTable').innerHTML = coachPlayers.map(p => {
-    const m = playerMetrics(p);
-    const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+            return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+            `${b.lastName || ''} ${b.firstName || ''}`,
+            'fr',
+            {
+                sensitivity: 'base'
+            }
+            );
+        });
 
-    return `
+        qs('#coachTable').innerHTML = coachPlayers.map(p => {
+            const m = playerMetrics(p);
+            const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
+
+            return `
       <tr>
-        <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+        <td>${
+            (p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
         <td>${fmt(m.load7)}</td>
         <td>${m.acwr.toFixed(2)}</td>
         <td>${m.hooper ?? '-'}</td>
         <td><span class="pill ${pill}">${m.alert}</span></td>
       </tr>
-    `;
-  }).join('');
+    `
 
-  renderLoadChart(players);
-  renderAlertsChart(players);
-  renderWeeklyRpeChart(players);
-}
+            ;
+        }).join('');
 
-function renderPositionComparison() {
-  const tbody = qs('#positionComparisonTable');
-  if (!tbody) return;
+        renderLoadChart(players);
+        renderAlertsChart(players);
+        renderWeeklyRpeChart(players);
+    }
 
-  const players = filteredPlayers();
+    function renderPositionComparison() {
+        const tbody = qs('#positionComparisonTable');
+        if (!tbody)
+            return;
 
-  const byPosition = {};
-  players.forEach(player => {
-    const key = normalizePosition(player.position) || 'Non renseigné';
-    if (!byPosition[key]) byPosition[key] = [];
-    byPosition[key].push(player);
-  });
+        const players = filteredPlayers();
 
-  const rows = Object.entries(byPosition)
-    .sort((a, b) => sortByRugbyPosition(a[0], b[0]))
-    .map(([position, positionPlayers]) => {
-      const metrics = positionPlayers.map(playerMetrics);
+        const byPosition = {};
+        players.forEach(player => {
+            const key = normalizePosition(player.position) || 'Non renseigné';
+            if (!byPosition[key])
+                byPosition[key] = [];
+            byPosition[key].push(player);
+        });
 
-      const count = positionPlayers.length;
-      const loadAvg = count ? metrics.reduce((s, m) => s + m.load7, 0) / count : 0;
-      const ewmaAvg = count ? metrics.reduce((s, m) => s + m.ewma, 0) / count : 0;
-      const acwrAvg = count ? metrics.reduce((s, m) => s + m.acwr, 0) / count : 0;
-      const rpeAvg = count ? metrics.reduce((s, m) => s + m.rpeAvg, 0) / count : 0;
-      const dispoAvg = count ? metrics.reduce((s, m) => s + m.dispo, 0) / count : 0;
-      const injured = metrics.filter(m => m.inj).length;
+        const rows = Object.entries(byPosition)
+        .sort((a, b) => sortByRugbyPosition(a[0], b[0]))
+        .map(([position, positionPlayers]) => {
+            const metrics = positionPlayers.map(playerMetrics);
 
-      const hooperValues = metrics
-        .map(m => m.hooper)
-        .filter(v => v !== null && v !== undefined);
+            const count = positionPlayers.length;
+            const loadAvg = count ? metrics.reduce((s, m) => s + m.load7, 0) / count : 0;
+            const ewmaAvg = count ? metrics.reduce((s, m) => s + m.ewma, 0) / count : 0;
+            const acwrAvg = count ? metrics.reduce((s, m) => s + m.acwr, 0) / count : 0;
+            const rpeAvg = count ? metrics.reduce((s, m) => s + m.rpeAvg, 0) / count : 0;
+            const dispoAvg = count ? metrics.reduce((s, m) => s + m.dispo, 0) / count : 0;
+            const injured = metrics.filter(m => m.inj).length;
 
-      const hooperAvg = hooperValues.length
-        ? hooperValues.reduce((s, v) => s + v, 0) / hooperValues.length
-        : null;
+            const hooperValues = metrics
+            .map(m => m.hooper)
+            .filter(v => v !== null && v !== undefined);
 
-      const alerts = metrics.filter(m => m.alert !== 'RAS').length;
+            const hooperAvg = hooperValues.length
+            ? hooperValues.reduce((s, v) => s + v, 0) / hooperValues.length
+            : null;
 
-      return `
+            const alerts = metrics.filter(m => m.alert !== 'RAS').length;
+
+            return `
         <tr>
-          <td>${position}</td>
+          <td>${
+            position}</td>
           <td>${count}</td>
           <td>${fmt(loadAvg)}</td>
           <td>${fmt(ewmaAvg)}</td>
@@ -881,47 +1668,54 @@ function renderPositionComparison() {
           <td>${hooperAvg !== null ? hooperAvg.toFixed(1) : '-'}</td>
           <td>${alerts}</td>
         </tr>
-      `;
-    });
+      `
 
-  tbody.innerHTML = rows.join('');
-}
-  
-function renderAvailability() {
-  const period = qs('#periodFilter')?.value || '28';
-  const status = qs('#statusFilter')?.value || 'all';
-  const sortMode = qs('#availabilitySort')?.value || 'name';
+            ;
+        });
 
-  const players = [...filteredPlayers()].sort((a, b) => {
-    if (sortMode === 'position') {
-      const d = sortByRugbyPosition(a.position, b.position);
-      if (d !== 0) return d;
+        tbody.innerHTML = rows.join('');
     }
 
-    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    );
-  });
+    function renderAvailability() {
+        const period = qs('#periodFilter')?.value || '28';
+        const sortMode = qs('#availabilitySort')?.value || 'name';
 
-  qs('#availabilityTable').innerHTML = players.map(p => {
-    const entries = state.rpeEntries
-  .filter(e => e.playerId === p.id)
-  .filter(e => matchesPeriod(e, period))
-  .filter(e => matchesStatus(e, status))
-  .filter(e => !isRestStatus(e.status));
+        const players = [...filteredPlayers()].sort((a, b) => {
+            if (sortMode === 'position') {
+                const d = sortByRugbyPosition(a.position, b.position);
+                if (d !== 0)
+                    return d;
+            }
 
-    const total = entries.length;
-    const present = entries.filter(e => e.status === 'Présent').length;
-    const absent = entries.filter(e => e.status === 'Absent').length;
-    const bless = entries.filter(e => e.status === 'Blessé').length;
-    const partial = entries.filter(e => e.status === 'Partiel').length;
-    const presence = total ? Math.round((present / total) * 100) : 0;
+            return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+            `${b.lastName || ''} ${b.firstName || ''}`,
+            'fr',
+            {
+                sensitivity: 'base'
+            }
+            );
+        });
 
-    return `
+        // Le % de présence n'est pas filtré par Statut : filtrer une mesure de
+        // présence par un statut particulier n'aurait pas de sens (ex. filtrer sur
+        // "Absent" ramènerait toujours la présence à ~0%). Cohérent avec le Dashboard.
+        qs('#availabilityTable').innerHTML = players.map(p => {
+            const entries = state.rpeEntries
+            .filter(e => e.playerId === p.id)
+            .filter(e => matchesPeriod(e, period))
+            .filter(e => !isRestStatus(e.status));
+
+            const total = entries.length;
+            const present = entries.filter(e => e.status === 'Présent').length;
+            const absent = entries.filter(e => e.status === 'Absent').length;
+            const bless = entries.filter(e => e.status === 'Blessé').length;
+            const partial = entries.filter(e => e.status === 'Partiel').length;
+            const presence = total ? Math.round((present / total) * 100) : 0;
+
+            return `
       <tr>
-        <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+        <td>${
+            (p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
         <td><span style="${positionBadgeStyle(p.position)}">${p.position || 'Non renseigné'}</span></td>
         <td>${total}</td>
         <td>${present}</td>
@@ -930,36 +1724,42 @@ function renderAvailability() {
         <td>${partial}</td>
         <td>${presence}%</td>
       </tr>
-    `;
-  }).join('');
-}
-  
-function renderRpeTable() {
-  const visibleIds = filteredPlayerIds();
-  const period = qs('#periodFilter')?.value || '28';
-  const status = qs('#statusFilter')?.value || 'all';
+    `
 
-  qs('#rpeTable').innerHTML = [...state.rpeEntries]
-    .filter(e => visibleIds.has(e.playerId))
-    .filter(e => matchesPeriod(e, period))
-    .filter(e => matchesStatus(e, status))
-    .sort((a, b) => {
-      const dateCompare = b.date.localeCompare(a.date);
-      if (dateCompare !== 0) return dateCompare;
+            ;
+        }).join('');
+    }
 
-      const playerA = state.players.find(x => x.id === a.playerId);
-      const playerB = state.players.find(x => x.id === b.playerId);
+    function renderRpeTable() {
+        const visibleIds = filteredPlayerIds();
+        const period = qs('#periodFilter')?.value || '28';
+        const status = qs('#statusFilter')?.value || 'all';
 
-      const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
-      const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+        qs('#rpeTable').innerHTML = [...state.rpeEntries]
+        .filter(e => visibleIds.has(e.playerId))
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => matchesStatus(e, status))
+        .sort((a, b) => {
+            const dateCompare = b.date.localeCompare(a.date);
+            if (dateCompare !== 0)
+                return dateCompare;
 
-      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
-    })
-    .map(e => {
-      const p = state.players.find(x => x.id === e.playerId);
-      return `
+            const playerA = state.players.find(x => x.id === a.playerId);
+            const playerB = state.players.find(x => x.id === b.playerId);
+
+            const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+            const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+
+            return nameA.localeCompare(nameB, 'fr', {
+                sensitivity: 'base'
+            });
+        })
+        .map(e => {
+            const p = state.players.find(x => x.id === e.playerId);
+            return `
         <tr>
-          <td>${e.date}</td>
+          <td>${
+            e.date}</td>
           <td>${p ? `${(p.lastName || '').toUpperCase()} ${p.firstName || ''}` : (e.playerName || e.playerId)}</td>
           <td>${e.type}</td>
           <td>${e.status}</td>
@@ -968,56 +1768,65 @@ function renderRpeTable() {
           <td>${e.load}</td>
           <td>
             <div class="actions">
-              <button class="btn" data-edit-rpe="${e.id}">Modifier</button>
+              <button class="btn" data-edit-rpe="${
+
+            e.id}">Modifier</button>
               <button class="btn" data-delete-rpe="${e.id}">Supprimer</button>
             </div>
           </td>
         </tr>
-      `;
-    })
-    .join('');
+      `
 
-  qsa('[data-edit-rpe]').forEach(btn =>
-    btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
-  );
 
-  qsa('[data-delete-rpe]').forEach(btn =>
-    btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
-  );
-}
-function renderHooperTable() {
-  const tbody = qs('#hooperTable');
-  if (!tbody) return;
 
-  const entries = [...state.hooperEntries].sort((a, b) => {
-    // Date la plus récente en premier
-    const dateCompare = (b.date || '').localeCompare(a.date || '');
-    if (dateCompare !== 0) return dateCompare;
+            ;
+        })
+        .join('');
 
-    // Pour une même date : joueurs classés par ordre alphabétique
-    const playerA = state.players.find(player => player.id === a.playerId);
-    const playerB = state.players.find(player => player.id === b.playerId);
+        qsa('[data-edit-rpe]').forEach(btn =>
+        btn.addEventListener('click', () => editRpe(btn.dataset.editRpe))
+        );
 
-    const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
-    const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
+        qsa('[data-delete-rpe]').forEach(btn =>
+        btn.addEventListener('click', () => deleteRpe(btn.dataset.deleteRpe))
+        );
+    }
+    function renderHooperTable() {
+        const tbody = qs('#hooperTable');
+        if (!tbody)
+            return;
 
-    return nameA.localeCompare(nameB, 'fr', {
-      sensitivity: 'base'
-    });
-  });
+        const entries = [...state.hooperEntries].sort((a, b) => {
+            // Date la plus récente en premier
+            const dateCompare = (b.date || '').localeCompare(a.date || '');
+            if (dateCompare !== 0)
+                return dateCompare;
 
-  tbody.innerHTML = entries.map(entry => {
-    const player = state.players.find(player => player.id === entry.playerId);
+            // Pour une même date : joueurs classés par ordre alphabétique
+            const playerA = state.players.find(player => player.id === a.playerId);
+            const playerB = state.players.find(player => player.id === b.playerId);
 
-    const playerName = player
-      ? `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`
-      : (entry.playerName || `Joueur introuvable (${entry.playerId})`);
+            const nameA = `${playerA?.lastName || ''} ${playerA?.firstName || ''}`;
+            const nameB = `${playerB?.lastName || ''} ${playerB?.firstName || ''}`;
 
-    const source = entry.source === 'player' ? 'Joueur' : 'Staff';
+            return nameA.localeCompare(nameB, 'fr', {
+                sensitivity: 'base'
+            });
+        });
 
-    return `
+        tbody.innerHTML = entries.map(entry => {
+            const player = state.players.find(player => player.id === entry.playerId);
+
+            const playerName = player
+            ? `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`
+            : (entry.playerName || `Joueur introuvable (${entry.playerId})`);
+
+            const source = entry.source === 'player' ? 'Joueur' : 'Staff';
+
+            return `
       <tr>
-        <td>${entry.date || ''}</td>
+        <td>${
+            entry.date || ''}</td>
         <td>${playerName}</td>
         <td>${entry.sleep ?? '-'}</td>
         <td>${entry.mood ?? '-'}</td>
@@ -1028,774 +1837,1137 @@ function renderHooperTable() {
         <td>${source}</td>
         <td>
           <div class="actions">
-            <button class="btn" data-edit-hooper="${entry.id}">Modifier</button>
+            <button class="btn" data-edit-hooper="${
+
+            entry.id}">Modifier</button>
             <button class="btn" data-delete-hooper="${entry.id}">Supprimer</button>
           </div>
         </td>
       </tr>
-    `;
-  }).join('');
+    `
 
-  qsa('[data-edit-hooper]').forEach(button =>
-    button.addEventListener('click', () => editHooper(button.dataset.editHooper))
-  );
 
-  qsa('[data-delete-hooper]').forEach(button =>
-    button.addEventListener('click', () => deleteHooper(button.dataset.deleteHooper))
-  );
-}
-function renderPlayersAdmin() {
-  const select = qs('#playerSelect');
-  const table = qs('#playersTable');
-  if (!select || !table) return;
 
-  const allPlayers = [...state.players].sort((a, b) =>
-    `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    )
-  );
+            ;
+        }).join('');
 
-  const visiblePlayers = [...filteredPlayers()].sort((a, b) => {
-    const positionDiff = sortByRugbyPosition(a.position, b.position);
-    if (positionDiff !== 0) return positionDiff;
+        qsa('[data-edit-hooper]').forEach(button =>
+        button.addEventListener('click', () => editHooper(button.dataset.editHooper))
+        );
 
-    return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-      `${b.lastName || ''} ${b.firstName || ''}`,
-      'fr',
-      { sensitivity: 'base' }
-    );
-  });
+        qsa('[data-delete-hooper]').forEach(button =>
+        button.addEventListener('click', () => deleteHooper(button.dataset.deleteHooper))
+        );
+    }
+    function renderPlayersAdmin() {
+        const select = qs('#playerSelect');
+        const table = qs('#playersTable');
+        if (!select || !table)
+            return;
 
-  select.innerHTML =
-    '<option value="">Nouveau joueur</option>' +
-    allPlayers.map(p =>
-      `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
-    ).join('');
+        const allPlayers = [...state.players].sort((a, b) =>
+        `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+        `${b.lastName || ''} ${b.firstName || ''}`,
+        'fr',
+        {
+            sensitivity: 'base'
+        }
+        )
+        );
 
-  table.innerHTML = visiblePlayers.map(p => `
+        const visiblePlayers = [...filteredPlayers()].sort((a, b) => {
+            const positionDiff = sortByRugbyPosition(a.position, b.position);
+            if (positionDiff !== 0)
+                return positionDiff;
+
+            return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+            `${b.lastName || ''} ${b.firstName || ''}`,
+            'fr',
+            {
+                sensitivity: 'base'
+            }
+            );
+        });
+
+        select.innerHTML =
+        '<option value="">Nouveau joueur</option>' +
+        allPlayers.map(p =>
+        `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`
+        ).join('');
+
+        table.innerHTML = visiblePlayers.map(p => `
     <tr>
-      <td>${(p.lastName || '').toUpperCase()}</td>
+      <td>${
+        (p.lastName || '').toUpperCase()}</td>
       <td>${p.firstName || ''}</td>
       <td>${p.team || ''}</td>
       <td>${p.group || ''}</td>
       <td>${p.position || ''}</td>
       <td>${p.number ?? ''}</td>
     </tr>
-  `).join('');
-}
-function resetPlayerForm(){qs('#playerIdField').value=''; qs('#playerSelect').value=''; qs('#playerLastName').value=''; qs('#playerFirstName').value=''; qs('#playerTeamField').value='Fédérale 1'; qs('#playerGroupField').value='Avants'; qs('#playerPosition').value=''; qs('#playerNumber').value=''; qs('#playerStatusMsg').textContent=''; qs('#playerWeightMeasure').value=''; qs('#playerWeightDate').value=todayStr; qs('#playerWeightHistory').innerHTML=''; if(playerWeightChart){playerWeightChart.destroy(); playerWeightChart=null;}}
-function loadPlayerIntoForm(playerId){const player=state.players.find(p=>p.id===playerId); if(!player) return resetPlayerForm(); qs('#playerIdField').value=player.id; qs('#playerLastName').value=player.lastName||''; qs('#playerFirstName').value=player.firstName||''; qs('#playerTeamField').value=player.team||'Fédérale 1'; qs('#playerGroupField').value=player.group||'Avants'; qs('#playerPosition').value=player.position||''; qs('#playerNumber').value=player.number??''; renderPlayerWeightHistory(playerId); renderPlayerWeightChart(playerId)}
-async function savePlayerFromForm(){const id=qs('#playerIdField').value; const status=qs('#playerStatusMsg'); const lastName=qs('#playerLastName').value.trim(); const firstName=qs('#playerFirstName').value.trim(); const team=qs('#playerTeamField').value; const group=qs('#playerGroupField').value; const position=qs('#playerPosition').value.trim(); const number=qs('#playerNumber').value?Number(qs('#playerNumber').value):null; if(!lastName||!firstName){status.textContent='Nom et prénom obligatoires.'; return;} const payload={lastName,firstName,team,group,position,number,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}; try{ if(id){ await db.collection('players').doc(id).set(payload,{merge:true}); status.textContent='Joueur mis à jour dans Firestore.'; } else { const ref=await db.collection('players').add({...payload,createdAt:firebase.firestore.FieldValue.serverTimestamp()}); qs('#playerIdField').value=ref.id; status.textContent='Joueur enregistré dans Firestore.'; } await loadAllFromFirestore(); qs('#playerSelect').value=qs('#playerIdField').value; }catch(err){console.error(err); status.textContent='Erreur enregistrement joueur.'; }}
-async function deletePlayerFromForm(){const id=qs('#playerIdField').value; const status=qs('#playerStatusMsg'); if(!id){status.textContent='Sélectionne un joueur à supprimer.'; return;} try{ await db.collection('players').doc(id).delete(); const batch=db.batch(); const rpe=await db.collection('rpeEntries').where('playerId','==',id).get(); rpe.forEach(doc=>batch.delete(doc.ref)); const hoop=await db.collection('hooperEntries').where('playerId','==',id).get(); hoop.forEach(doc=>batch.delete(doc.ref)); const weights=await db.collection('playerWeights').where('playerId','==',id).get(); weights.forEach(doc=>batch.delete(doc.ref)); await batch.commit(); resetPlayerForm(); status.textContent='Joueur supprimé.'; await loadAllFromFirestore(); }catch(err){console.error(err); status.textContent='Erreur suppression joueur.'; }}
-function renderPlayerWeightHistory(playerId) {
-  const tbody = qs('#playerWeightHistory');
+  `
 
-  if (!tbody) return;
+        ).join('');
+    }
+    function resetPlayerForm() {
+        qs('#playerIdField').value = '';
+        qs('#playerSelect').value = '';
+        qs('#playerLastName').value = '';
+        qs('#playerFirstName').value = '';
+        qs('#playerTeamField').value = 'Fédérale 1';
+        qs('#playerGroupField').value = 'Avants';
+        qs('#playerPosition').value = '';
+        qs('#playerNumber').value = '';
+        qs('#playerStatusMsg').textContent = '';
+        qs('#playerWeightMeasure').value = '';
+        qs('#playerWeightDate').value = todayStr;
+        qs('#playerWeightHistory').innerHTML = '';
+        if (playerWeightChart) {
+            playerWeightChart.destroy();
+            playerWeightChart = null;
+        }
+    }
+    function loadPlayerIntoForm(playerId) {
+        const player = state.players.find(p => p.id === playerId);
+        if (!player)
+            return resetPlayerForm();
+        qs('#playerIdField').value = player.id;
+        qs('#playerLastName').value = player.lastName || '';
+        qs('#playerFirstName').value = player.firstName || '';
+        qs('#playerTeamField').value = player.team || 'Fédérale 1';
+        qs('#playerGroupField').value = player.group || 'Avants';
+        qs('#playerPosition').value = player.position || '';
+        qs('#playerNumber').value = player.number ?? '';
+        renderPlayerWeightHistory(playerId);
+        renderPlayerWeightChart(playerId)
+    }
+    async function savePlayerFromForm() {
+        const id = qs('#playerIdField').value;
+        const status = qs('#playerStatusMsg');
+        const lastName = qs('#playerLastName').value.trim();
+        const firstName = qs('#playerFirstName').value.trim();
+        const team = qs('#playerTeamField').value;
+        const group = qs('#playerGroupField').value;
+        const position = qs('#playerPosition').value.trim();
+        const number = qs('#playerNumber').value ? Number(qs('#playerNumber').value) : null;
+        if (!lastName || !firstName) {
+            status.textContent = 'Nom et prénom obligatoires.';
+            return;
+        }
+        const payload = {
+            lastName,
+            firstName,
+            team,
+            group,
+            position,
+            number,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        try {
+            if (id) {
+                await db.collection('players').doc(id).set(payload, {
+                    merge: true
+                });
+                status.textContent = 'Joueur mis à jour dans Firestore.';
+            } else {
+                const ref = await db.collection('players').add({
+                    ...payload,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                qs('#playerIdField').value = ref.id;
+                status.textContent = 'Joueur enregistré dans Firestore.';
+            }
+            await loadAllFromFirestore();
+            qs('#playerSelect').value = qs('#playerIdField').value;
+        } catch (err) {
+            console.error(err);
+            status.textContent = 'Erreur enregistrement joueur.';
+        }
+    }
+    async function deletePlayerFromForm() {
+        const id = qs('#playerIdField').value;
+        const status = qs('#playerStatusMsg');
+        if (!id) {
+            status.textContent = 'Sélectionne un joueur à supprimer.';
+            return;
+        }
+        try {
+            await db.collection('players').doc(id).delete();
+            const batch = db.batch();
+            const rpe = await db.collection('rpeEntries').where('playerId', '==', id).get();
+            rpe.forEach(doc => batch.delete(doc.ref));
+            const hoop = await db.collection('hooperEntries').where('playerId', '==', id).get();
+            hoop.forEach(doc => batch.delete(doc.ref));
+            const weights = await db.collection('playerWeights').where('playerId', '==', id).get();
+            weights.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            resetPlayerForm();
+            status.textContent = 'Joueur supprimé.';
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error(err);
+            status.textContent = 'Erreur suppression joueur.';
+        }
+    }
+    function renderPlayerWeightHistory(playerId) {
+        const tbody = qs('#playerWeightHistory');
 
-  const rows = state.playerWeights
-    .filter(measure => measure.playerId === playerId)
-    .sort((a, b) => b.date.localeCompare(a.date));
+        if (!tbody)
+            return;
 
-  tbody.innerHTML = rows.map(measure => `
+        const rows = state.playerWeights
+        .filter(measure => measure.playerId === playerId)
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+        tbody.innerHTML = rows.map(measure => `
     <tr>
-      <td>${measure.date}</td>
+      <td>${
+        measure.date}</td>
       <td>${Number(measure.weight).toFixed(1)}</td>
       <td>
         <div class="actions">
           <button
             class="btn"
-            data-edit-weight="${measure.id}"
+            data-edit-weight="${
+
+
+
+        measure.id}"
           >
             Modifier
           </button>
 
           <button
             class="btn"
-            data-delete-weight="${measure.id}"
+            data-delete-weight="${
+
+
+
+
+
+        measure.id}"
           >
             Supprimer
           </button>
         </div>
       </td>
     </tr>
-  `).join('');
+  `
 
-  qsa('[data-edit-weight]').forEach(button => {
-    button.addEventListener('click', () => {
-      editWeightMeasure(button.dataset.editWeight);
-    });
-  });
 
-  qsa('[data-delete-weight]').forEach(button => {
-    button.addEventListener('click', () => {
-      deleteWeightMeasure(button.dataset.deleteWeight);
-    });
-  });
-}
-function renderPlayerWeightChart(playerId){const canvas=qs('#playerWeightChart'); if(!canvas||typeof Chart==='undefined') return; if(playerWeightChart){playerWeightChart.destroy(); playerWeightChart=null;} const rows=state.playerWeights.filter(m=>m.playerId===playerId).sort((a,b)=>a.date.localeCompare(b.date)); if(!rows.length) return; playerWeightChart=new Chart(canvas,{type:'line',data:{labels:rows.map(r=>r.date),datasets:[{label:'Poids (kg)',data:rows.map(r=>r.weight),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.15)',tension:.25,pointRadius:3,fill:false}]},options:{responsive:true,plugins:{legend:{display:false},title:{display:true,text:'Évolution du poids'}},scales:{x:{title:{display:true,text:'Date'}},y:{title:{display:true,text:'Poids (kg)'}}}}})}
-async function addWeightMeasureFromForm() {
-  const playerId = qs('#playerIdField').value;
-  const date = qs('#playerWeightDate').value;
-  const weightValue = qs('#playerWeightMeasure').value;
-  const editId = qs('#playerWeightEditId').value;
-  const status = qs('#playerStatusMsg');
 
-  if (!playerId) {
-    status.textContent = 'Enregistre ou sélectionne d’abord un joueur.';
-    return;
-  }
 
-  if (!date || !weightValue) {
-    status.textContent = 'Date et poids obligatoires.';
-    return;
-  }
 
-  const weight = Number(weightValue);
 
-  try {
-    const payload = {
-      playerId,
-      date,
-      weight,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+        ).join('');
 
-    if (editId) {
-      await db.collection('playerWeights').doc(editId).set(payload, {
-        merge: true
-      });
+        qsa('[data-edit-weight]').forEach(button => {
+            button.addEventListener('click', () => {
+                editWeightMeasure(button.dataset.editWeight);
+            });
+        });
 
-      status.textContent = 'Mesure de poids modifiée.';
-    } else {
-      await db.collection('playerWeights').add({
-        ...payload,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+        qsa('[data-delete-weight]').forEach(button => {
+            button.addEventListener('click', () => {
+                deleteWeightMeasure(button.dataset.deleteWeight);
+            });
+        });
+    }
+    function renderPlayerWeightChart(playerId) {
+        const canvas = qs('#playerWeightChart');
+        if (!canvas || typeof Chart === 'undefined')
+            return;
+        if (playerWeightChart) {
+            playerWeightChart.destroy();
+            playerWeightChart = null;
+        }
+        const rows = state.playerWeights.filter(m => m.playerId === playerId).sort((a, b) => a.date.localeCompare(b.date));
+        if (!rows.length)
+            return;
+        playerWeightChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: rows.map(r => r.date),
+                datasets: [{
+                    label: 'Poids (kg)',
+                    data: rows.map(r => r.weight),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,.15)',
+                    tension: .25,
+                    pointRadius: 3,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Évolution du poids'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Poids (kg)'
+                        }
+                    }
+                }
+            }
+        })
+    }
+    async function addWeightMeasureFromForm() {
+        const playerId = qs('#playerIdField').value;
+        const date = qs('#playerWeightDate').value;
+        const weightValue = qs('#playerWeightMeasure').value;
+        const editId = qs('#playerWeightEditId').value;
+        const status = qs('#playerStatusMsg');
 
-      status.textContent = 'Mesure de poids ajoutée.';
+        if (!playerId) {
+            status.textContent = 'Enregistre ou sélectionne d’abord un joueur.';
+            return;
+        }
+
+        if (!date || !weightValue) {
+            status.textContent = 'Date et poids obligatoires.';
+            return;
+        }
+
+        const weight = Number(weightValue);
+
+        try {
+            const payload = {
+                playerId,
+                date,
+                weight,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (editId) {
+                await db.collection('playerWeights').doc(editId).set(payload, {
+                    merge: true
+                });
+
+                status.textContent = 'Mesure de poids modifiée.';
+            } else {
+                await db.collection('playerWeights').add({
+                    ...payload,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                status.textContent = 'Mesure de poids ajoutée.';
+            }
+
+            // Le poids "courant" du joueur ne doit refléter que sa mesure la plus
+            // récente : sinon, corriger une ancienne mesure écrasait ce champ avec
+            // une valeur obsolète.
+            const otherDates = state.playerWeights
+            .filter(m => m.playerId === playerId && m.id !== editId)
+            .map(m => m.date);
+            const isLatestMeasure = !otherDates.length || date >= [...otherDates].sort().slice(-1)[0];
+
+            if (isLatestMeasure) {
+                await db.collection('players').doc(playerId).set({
+                    weight,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, {
+                    merge: true
+                });
+            }
+
+            qs('#playerWeightEditId').value = '';
+            qs('#playerWeightMeasure').value = '';
+            qs('#playerWeightDate').value = todayStr;
+            qs('#addWeightMeasureBtn').textContent = 'Ajouter mesure';
+            qs('#cancelWeightEditBtn').style.display = 'none';
+
+            await loadAllFromFirestore();
+            loadPlayerIntoForm(playerId);
+        } catch (err) {
+            console.error(err);
+            status.textContent = 'Erreur lors de l’enregistrement du poids.';
+        }
     }
 
-    await db.collection('players').doc(playerId).set({
-      weight,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, {
-      merge: true
-    });
+    function editWeightMeasure(id) {
+        const measure = state.playerWeights.find(item => item.id === id);
 
-    qs('#playerWeightEditId').value = '';
-    qs('#playerWeightMeasure').value = '';
-    qs('#playerWeightDate').value = todayStr;
-    qs('#addWeightMeasureBtn').textContent = 'Ajouter mesure';
-    qs('#cancelWeightEditBtn').style.display = 'none';
+        if (!measure)
+            return;
 
-    await loadAllFromFirestore();
-    loadPlayerIntoForm(playerId);
-  } catch (err) {
-    console.error(err);
-    status.textContent = 'Erreur lors de l’enregistrement du poids.';
-  }
-}
+        qs('#playerWeightEditId').value = measure.id;
+        qs('#playerWeightDate').value = measure.date;
+        qs('#playerWeightMeasure').value = measure.weight;
 
-  function editWeightMeasure(id) {
-  const measure = state.playerWeights.find(item => item.id === id);
+        qs('#addWeightMeasureBtn').textContent = 'Enregistrer modification';
+        qs('#cancelWeightEditBtn').style.display = 'inline-block';
 
-  if (!measure) return;
+        qs('#playerStatusMsg').textContent =
+        'Modification de la mesure du ' + measure.date + '.';
+    }
 
-  qs('#playerWeightEditId').value = measure.id;
-  qs('#playerWeightDate').value = measure.date;
-  qs('#playerWeightMeasure').value = measure.weight;
+    function cancelWeightEdit() {
+        qs('#playerWeightEditId').value = '';
+        qs('#playerWeightMeasure').value = '';
+        qs('#playerWeightDate').value = todayStr;
 
-  qs('#addWeightMeasureBtn').textContent = 'Enregistrer modification';
-  qs('#cancelWeightEditBtn').style.display = 'inline-block';
+        qs('#addWeightMeasureBtn').textContent = 'Ajouter mesure';
+        qs('#cancelWeightEditBtn').style.display = 'none';
 
-  qs('#playerStatusMsg').textContent =
-    'Modification de la mesure du ' + measure.date + '.';
-}
+        qs('#playerStatusMsg').textContent = '';
+    }
 
-function cancelWeightEdit() {
-  qs('#playerWeightEditId').value = '';
-  qs('#playerWeightMeasure').value = '';
-  qs('#playerWeightDate').value = todayStr;
+    async function deleteWeightMeasure(id) {
+        const measure = state.playerWeights.find(item => item.id === id);
 
-  qs('#addWeightMeasureBtn').textContent = 'Ajouter mesure';
-  qs('#cancelWeightEditBtn').style.display = 'none';
+        if (!measure)
+            return;
 
-  qs('#playerStatusMsg').textContent = '';
-}
-
-async function deleteWeightMeasure(id) {
-  const measure = state.playerWeights.find(item => item.id === id);
-
-  if (!measure) return;
-
-  const confirmed = window.confirm(
-    `Supprimer la mesure de ${Number(measure.weight).toFixed(1)} kg du ${measure.date} ?`
-  );
-
-  if (!confirmed) return;
-
-  try {
-    await db.collection('playerWeights').doc(id).delete();
-
-    qs('#playerStatusMsg').textContent = 'Mesure de poids supprimée.';
-
-    await loadAllFromFirestore();
-    loadPlayerIntoForm(measure.playerId);
-  } catch (err) {
-    console.error(err);
-    qs('#playerStatusMsg').textContent =
-      'Erreur lors de la suppression du poids.';
-  }
-}
-  
-async function saveRpe() {
-  const id = qs('#rpeEditId').value;
-  const selectedPlayerId = qs('#rpePlayer').value;
-  const date = qs('#rpeDate').value;
-  const type = qs('#rpeType').value;
-  const status = qs('#rpeStatus').value;
-
-  const isRest = status === 'Repos';
-  const isAllPlayers = selectedPlayerId === 'all';
-
-  if (!selectedPlayerId) {
-    alert('Sélectionne un joueur ou "Tous les joueurs — Repos collectif".');
-    return;
-  }
-
-  if (!date) {
-    alert('Sélectionne une date.');
-    return;
-  }
-
-  const rpe = isRest ? 0 : Number(qs('#rpeValue').value || 0);
-  const duration = isRest ? 0 : Number(qs('#rpeDuration').value || 0);
-  const load = rpe * duration;
-
-  try {
-    // CAS 1 : Repos appliqué à tous les joueurs
-    if (isAllPlayers) {
-      const batch = db.batch();
-
-      state.players.forEach(player => {
-        const existingEntry = state.rpeEntries.find(entry =>
-          entry.playerId === player.id &&
-          entry.date === date &&
-          entry.type === type
+        const confirmed = window.confirm(
+        `Supprimer la mesure de ${Number(measure.weight).toFixed(1)} kg du ${measure.date} ?`
         );
 
-        if (status === 'Repos' && existingEntry) {
-  return;
-}
+        if (!confirmed)
+            return;
+
+        try {
+            await db.collection('playerWeights').doc(id).delete();
+
+            qs('#playerStatusMsg').textContent = 'Mesure de poids supprimée.';
+
+            await loadAllFromFirestore();
+            loadPlayerIntoForm(measure.playerId);
+        } catch (err) {
+            console.error(err);
+            qs('#playerStatusMsg').textContent =
+            'Erreur lors de la suppression du poids.';
+        }
+    }
+
+    async function saveRpe() {
+        const id = qs('#rpeEditId').value;
+        const selectedPlayerId = qs('#rpePlayer').value;
+        const date = qs('#rpeDate').value;
+        const type = qs('#rpeType').value;
+        const status = qs('#rpeStatus').value;
+
+        const isRest = status === 'Repos';
+        const isAllPlayers = selectedPlayerId === 'all';
+
+        if (!selectedPlayerId) {
+            alert('Sélectionne un joueur ou "Tous les joueurs — Repos collectif".');
+            return;
+        }
+
+        if (!date) {
+            alert('Sélectionne une date.');
+            return;
+        }
+
+        const rpe = isRest ? 0 : Number(qs('#rpeValue').value || 0);
+        const duration = isRest ? 0 : Number(qs('#rpeDuration').value || 0);
+        const load = rpe * duration;
+
+        try {
+            // CAS 1 : Repos appliqué à tous les joueurs
+            if (isAllPlayers) {
+                const batch = db.batch();
+
+                state.players.forEach(player => {
+                    const existingEntry = state.rpeEntries.find(entry =>
+                    entry.playerId === player.id &&
+                    entry.date === date &&
+                    entry.type === type
+                    );
+
+                    // Un "repos collectif" doit s'appliquer à tout le monde, y compris
+                    // aux joueurs ayant déjà une entrée ce jour-là (elle est écrasée),
+                    // sinon certains joueurs gardaient silencieusement leur ancien statut.
+                    const payload = {
+                        playerId: player.id,
+                        date: date,
+                        type: type,
+                        status: status,
+                        rpe: rpe,
+                        duration: duration,
+                        load: load,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    if (existingEntry) {
+                        batch.set(
+                        db.collection('rpeEntries').doc(existingEntry.id),
+                        payload,
+                        {
+                            merge: true
+                        }
+                        );
+                    } else {
+                        const newRef = db.collection('rpeEntries').doc();
+
+                        batch.set(newRef, {
+                            ...payload,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
+
+                await batch.commit();
+
+                alert(`Saisie enregistré pour ${state.players.length} joueur(s).`);
+                resetRpeForm();
+                await loadAllFromFirestore();
+                return;
+            }
+
+            // CAS 2 : Saisie pour un seul joueur
+            const payload = {
+                playerId: selectedPlayerId,
+                date: date,
+                type: type,
+                status: status,
+                rpe: rpe,
+                duration: duration,
+                load: load,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (id) {
+                await db.collection('rpeEntries').doc(id).set(payload, {
+                    merge: true
+                });
+            } else {
+                const existingEntry = state.rpeEntries.find(entry =>
+                entry.playerId === selectedPlayerId &&
+                entry.date === date &&
+                entry.type === type
+                );
+
+                if (existingEntry) {
+                    await db.collection('rpeEntries').doc(existingEntry.id).set(payload, {
+                        merge: true
+                    });
+                } else {
+                    await db.collection('rpeEntries').add({
+                        ...payload,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            }
+
+            resetRpeForm();
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur enregistrement RPE', err);
+            alert('Erreur lors de l’enregistrement du RPE.');
+        }
+    }
+    function resetRpeForm() {
+        qs('#rpeEditId').value = '';
+        qs('#rpeDate').value = todayStr;
+        qs('#rpeType').value = 'Mardi';
+        qs('#rpeStatus').value = 'Présent';
+        qs('#rpeValue').value = '';
+        qs('#rpeDuration').value = ''
+    }
+    function editRpe(id) {
+        const e = state.rpeEntries.find(x => x.id === id);
+        if (!e)
+            return;
+        activateTab('rpe');
+        qs('#rpeEditId').value = e.id;
+        qs('#rpePlayer').value = e.playerId;
+        qs('#rpeDate').value = e.date;
+        qs('#rpeType').value = e.type;
+        qs('#rpeStatus').value = e.status;
+        qs('#rpeValue').value = e.rpe;
+        qs('#rpeDuration').value = e.duration
+    }
+    async function deleteRpe(id) {
+        const entry = state.rpeEntries.find(x => x.id === id);
+        if (!entry)
+            return;
+
+        const confirmed = window.confirm(
+        `Supprimer le RPE du ${entry.date} ?`
+        );
+        if (!confirmed)
+            return;
+
+        try {
+            // 1. suppression dans Firestore
+            await db.collection('rpeEntries').doc(id).delete();
+
+            // 2. mise à jour de l'état local
+            state.rpeEntries = state.rpeEntries.filter(x => x.id !== id);
+
+            // 3. si le formulaire était en édition sur cette entrée, on le réinitialise
+            if (qs('#rpeEditId').value === id) {
+                resetRpeForm();
+            }
+
+            // 4. recharge propre depuis Firestore pour être sûr que tout est aligné
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur suppression RPE', err);
+            alert('Erreur lors de la suppression du RPE.');
+        }
+    }
+    async function saveHooper() {
+        const id = qs('#hooperEditId').value;
+        const playerId = qs('#hooperPlayer').value;
+        const date = qs('#hooperDate').value;
+
+        const sleepValue = qs('#sleep').value;
+        const moodValue = qs('#mood').value;
+        const energyValue = qs('#energy').value;
+        const sorenessValue = qs('#soreness').value;
+        const wellbeingValue = qs('#wellbeing').value;
+
+        if (!playerId) {
+            alert('Sélectionne un joueur.');
+            return;
+        }
+
+        if (!date) {
+            alert('Sélectionne une date.');
+            return;
+        }
+
+        if (
+        sleepValue === '' ||
+        moodValue === '' ||
+        energyValue === '' ||
+        sorenessValue === '' ||
+        wellbeingValue === ''
+        ) {
+            alert('Remplis les cinq critères Hooper avant d’enregistrer.');
+            return;
+        }
 
         const payload = {
-  playerId: player.id,
-  date: date,
-  type: type,
-  status: status,
-  rpe: rpe,
-  duration: duration,
-  load: load,
-  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-};
+            playerId: playerId,
+            date: date,
+            sleep: Number(sleepValue),
+            mood: Number(moodValue),
+            energy: Number(energyValue),
+            soreness: Number(sorenessValue),
+            wellbeing: Number(wellbeingValue),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-        if (existingEntry) {
-          batch.set(
-            db.collection('rpeEntries').doc(existingEntry.id),
-            payload,
-            { merge: true }
-          );
+        payload.total =
+        payload.sleep +
+        payload.mood +
+        payload.energy +
+        payload.soreness +
+        payload.wellbeing;
+
+        try {
+            if (id) {
+                await db.collection('hooperEntries').doc(id).set(payload, {
+                    merge: true
+                });
+            } else {
+                const existingEntry = state.hooperEntries.find(entry =>
+                entry.playerId === playerId &&
+                entry.date === date
+                );
+
+                if (existingEntry) {
+                    await db.collection('hooperEntries')
+                    .doc(existingEntry.id)
+                    .set(payload, {
+                        merge: true
+                    });
+                } else {
+                    await db.collection('hooperEntries').add({
+                        ...payload,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            }
+
+            resetHooperForm();
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur enregistrement Hooper', err);
+            alert('Erreur lors de l’enregistrement du Hooper.');
+        }
+    }
+    async function savePlayerHooper() {
+        const playerId = qs('#playerAccessSelect').value;
+        const date = qs('#playerHooperDate').value;
+
+        const sleepValue = qs('#playerSleep').value;
+        const moodValue = qs('#playerMood').value;
+        const energyValue = qs('#playerEnergy').value;
+        const sorenessValue = qs('#playerSoreness').value;
+        const wellbeingValue = qs('#playerWellbeing').value;
+
+        const statusMessage = qs('#playerHooperStatusMsg');
+
+        if (!playerId) {
+            statusMessage.textContent = 'Sélectionne ton nom.';
+            return;
+        }
+
+        if (!date) {
+            statusMessage.textContent = 'Sélectionne une date.';
+            return;
+        }
+
+        if (
+        sleepValue === '' ||
+        moodValue === '' ||
+        energyValue === '' ||
+        sorenessValue === '' ||
+        wellbeingValue === ''
+        ) {
+            statusMessage.textContent = 'Remplis les cinq critères avant d’enregistrer.';
+            return;
+        }
+
+        const player = state.players.find(p => p.id === playerId);
+
+        if (!player) {
+            statusMessage.textContent = 'Joueur introuvable. Recharge la page puis recommence.';
+            return;
+        }
+
+        const payload = {
+            playerId: playerId,
+            playerName: `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`,
+            date: date,
+            sleep: Number(sleepValue),
+            mood: Number(moodValue),
+            energy: Number(energyValue),
+            soreness: Number(sorenessValue),
+            wellbeing: Number(wellbeingValue),
+            source: 'player',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        payload.total =
+        payload.sleep +
+        payload.mood +
+        payload.energy +
+        payload.soreness +
+        payload.wellbeing;
+
+        try {
+            const existingEntry = state.hooperEntries.find(entry =>
+            entry.playerId === playerId &&
+            entry.date === date &&
+            entry.source === 'player'
+            );
+
+            if (existingEntry) {
+                await db.collection('hooperEntries')
+                .doc(existingEntry.id)
+                .set(payload, {
+                    merge: true
+                });
+
+                statusMessage.textContent = 'Ton Hooper a été mis à jour.';
+            } else {
+                await db.collection('hooperEntries').add({
+                    ...payload,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                statusMessage.textContent = 'Ton Hooper a bien été enregistré.';
+            }
+
+            qs('#playerSleep').value = '';
+            qs('#playerMood').value = '';
+            qs('#playerEnergy').value = '';
+            qs('#playerSoreness').value = '';
+            qs('#playerWellbeing').value = '';
+
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur enregistrement Hooper joueur', err);
+            statusMessage.textContent = 'Erreur lors de l’enregistrement. Réessaie.';
+        }
+    }
+    function resetHooperForm() {
+        qs('#hooperEditId').value = '';
+        qs('#hooperDate').value = todayStr;
+        qs('#sleep').value = '';
+        qs('#mood').value = '';
+        qs('#energy').value = '';
+        qs('#soreness').value = '';
+        qs('#wellbeing').value = ''
+    }
+    function editHooper(id) {
+        const e = state.hooperEntries.find(x => x.id === id);
+        if (!e)
+            return;
+        activateTab('hooper');
+        qs('#hooperEditId').value = e.id;
+        qs('#hooperPlayer').value = e.playerId;
+        qs('#hooperDate').value = e.date;
+        qs('#sleep').value = e.sleep;
+        qs('#mood').value = e.mood;
+        qs('#energy').value = e.energy;
+        qs('#soreness').value = e.soreness;
+        qs('#wellbeing').value = e.wellbeing
+    }
+    async function deleteHooper(id) {
+        const entry = state.hooperEntries.find(x => x.id === id);
+        if (!entry)
+            return;
+
+        const confirmed = window.confirm(
+        `Supprimer le Hooper du ${entry.date} ?`
+        );
+        if (!confirmed)
+            return;
+
+        try {
+            await db.collection('hooperEntries').doc(id).delete();
+
+            state.hooperEntries = state.hooperEntries.filter(x => x.id !== id);
+
+            if (qs('#hooperEditId').value === id) {
+                resetHooperForm();
+            }
+
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur suppression Hooper', err);
+            alert('Erreur lors de la suppression du Hooper.');
+        }
+    }
+    function renderLoadChart(players) {
+        const ctx = qs('#loadChart');
+        if (!ctx || typeof Chart === 'undefined')
+            return;
+        if (state.charts.load)
+            state.charts.load.destroy();
+        state.charts.load = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: players.map(p => `${p.lastName} ${p.firstName}`),
+                datasets: [{
+                    label: 'Charge 7j',
+                    data: players.map(p => playerMetrics(p).load7),
+                    backgroundColor: 'rgba(15,108,115,.55)'
+                }, {
+                    label: 'EWMA',
+                    data: players.map(p => playerMetrics(p).ewma),
+                    backgroundColor: 'rgba(0,100,148,.45)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        })
+    }
+    function renderAlertsChart(players) {
+        const ctx = qs('#alertsChart');
+        if (!ctx || typeof Chart === 'undefined')
+            return;
+        if (state.charts.alerts)
+            state.charts.alerts.destroy();
+        const counts = {
+            'RAS': 0,
+            'Modérée': 0,
+            'Élevée': 0
+        };
+        players.forEach(p => counts[playerMetrics(p).alert]++);
+        state.charts.alerts = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(counts),
+                datasets: [{
+                    data: Object.values(counts),
+                    backgroundColor: ['#437a22', '#da7101', '#a13544']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        })
+    }
+    function getWeekLabel(dateStr) {
+        const d = new Date(dateStr + 'T12:00:00');
+        const day = d.getDay(); // 0 dimanche, 1 lundi...
+        const diff = day === 0 ? -6 : 1 - day; // remonter jusqu'au lundi
+        const monday = new Date(d);
+        monday.setDate(d.getDate() + diff);
+        return monday.toISOString().slice(0, 10); // YYYY-MM-DD du lundi
+    }
+    function renderWeeklyRpeChart(players) {
+        const ctx = qs('#weeklyRpeChart');
+        if (!ctx || typeof Chart === 'undefined')
+            return;
+
+        if (state.charts.weeklyRpe)
+            state.charts.weeklyRpe.destroy();
+
+        const period = qs('#periodFilter')?.value || '28';
+        const status = qs('#statusFilter')?.value || 'all';
+        const visibleIds = new Set(players.map(p => p.id));
+
+        const entries = state.rpeEntries
+        .filter(e => visibleIds.has(e.playerId))
+        .filter(e => ['Mardi', 'Mercredi', 'Vendredi', 'Match', 'Autre'].includes(e.type))
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => matchesStatus(e, status));
+
+        const byWeek = {};
+
+        entries.forEach(e => {
+            const week = getWeekLabel(e.date);
+            if (!byWeek[week]) {
+                byWeek[week] = {
+                    Mardi: 0,
+                    Mercredi: 0,
+                    Vendredi: 0,
+                    Match: 0,
+                    Autre: 0
+                };
+            }
+            byWeek[week][e.type] += Number(e.load || 0);
+        });
+
+        const labels = Object.keys(byWeek).sort((a, b) => a.localeCompare(b));
+
+        state.charts.weeklyRpe = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                {
+                    label: 'Mardi',
+                    data: labels.map(w => byWeek[w].Mardi),
+                    backgroundColor: 'rgba(15,108,115,0.75)'
+                },
+                {
+                    label: 'Mercredi',
+                    data: labels.map(w => byWeek[w].Mercredi),
+                    backgroundColor: 'rgba(0,100,148,0.75)'
+                },
+                {
+                    label: 'Vendredi',
+                    data: labels.map(w => byWeek[w].Vendredi),
+                    backgroundColor: 'rgba(218,113,1,0.75)'
+                },
+                {
+                    label: 'Match',
+                    data: labels.map(w => byWeek[w].Match),
+                    backgroundColor: 'rgba(161,53,68,0.75)'
+                },
+                {
+                    label: 'Autre',
+                    data: labels.map(w => byWeek[w].Autre),
+                    backgroundColor: 'rgba(110,107,101,0.75)'
+                }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Semaine (lundi)'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Charge totale (RPE × durée)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    function activateTab(id) {
+        qsa('.section').forEach(sec => sec.classList.toggle('active', sec.id === id));
+        qsa('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === id));
+        const titleMap = {
+            dashboard: 'Dashboard',
+            disponibilites: 'Disponibilités',
+            'vue-coach': 'Vue coach',
+            joueurs: 'Joueurs',
+            rpe: 'RPE',
+            hooper: 'Hooper',
+            'player-access': 'Interface joueurs'
+        };
+        const introMap = {
+            dashboard: 'Vue centrale charge interne, disponibilité et synthèse staff.',
+            disponibilites: 'Présence, absence et blessure par joueur.',
+            'vue-coach': 'Liste des joueurs à surveiller.',
+            joueurs: 'Création, modification et suppression des fiches joueurs.',
+            rpe: 'Gestion des RPE par joueur.',
+            hooper: 'Gestion des scores Hooper.',
+            'player-access': 'Interface dédiée aux joueurs.'
+        };
+        qs('#pageTitle').textContent = titleMap[id];
+        qs('#pageIntro').textContent = introMap[id]
+    }
+    function syncUI() {
+        renderDashboard();
+        renderPositionComparison();
+        renderAvailability();
+        renderRpeTable();
+        renderHooperTable();
+        renderPlayersAdmin();
+    }
+
+    async function loadAllFromFirestore() {
+        const [playersSnap, rpeSnap, hooperSnap, weightsSnap] = await Promise.all([
+        db.collection('players').get(),
+        db.collection('rpeEntries').get(),
+        db.collection('hooperEntries').get(),
+        db.collection('playerWeights').get()
+        ]);
+        state.players = playersSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        state.rpeEntries = rpeSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        state.hooperEntries = hooperSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        state.playerWeights = weightsSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        setFilters();
+        syncUI();
+    }
+
+    qsa('.nav button').forEach(btn => {
+        btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+
+    qs('#themeToggle').addEventListener('click', () => {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme') || 'light';
+        html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+    });
+
+    qs('#seedData').addEventListener('click', seedDemoData);
+
+    function updateCustomDateFields() {
+        const periodFilter = qs('#periodFilter');
+        const fromField = qs('#customDateFromField');
+        const toField = qs('#customDateToField');
+
+        if (!periodFilter)
+            return;
+
+        const isCustom = periodFilter.value === 'custom';
+
+        if (fromField) {
+            fromField.style.display = isCustom ? 'grid' : 'none';
+        }
+
+        if (toField) {
+            toField.style.display = isCustom ? 'grid' : 'none';
+        }
+    }
+
+    qs('#teamFilter').addEventListener('change', syncUI);
+    qs('#groupFilter').addEventListener('change', syncUI);
+    qs('#positionFilter').addEventListener('change', syncUI);
+
+    qs('#periodFilter').addEventListener('change', () => {
+        updateCustomDateFields();
+        syncUI();
+    });
+
+    qs('#customDateFrom')?.addEventListener('change', syncUI);
+    qs('#customDateTo')?.addEventListener('change', syncUI);
+
+    qs('#statusFilter').addEventListener('change', syncUI);
+    qs('#searchFilter').addEventListener('change', syncUI);
+    qs('#availabilitySort')?.addEventListener('change', renderAvailability);
+
+    qs('#saveRpeBtn').addEventListener('click', saveRpe);
+    qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
+
+    qs('#saveHooperBtn').addEventListener('click', saveHooper);
+    qs('#resetHooperBtn').addEventListener('click', resetHooperForm);
+    qs('#savePlayerHooperBtn')?.addEventListener('click', savePlayerHooper);
+
+    qs('#playerSelect').addEventListener('change', e => {
+        const id = e.target.value;
+
+        if (!id) {
+            resetPlayerForm();
         } else {
-          const newRef = db.collection('rpeEntries').doc();
-
-          batch.set(newRef, {
-            ...payload,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+            loadPlayerIntoForm(id);
         }
-      });
+    });
 
-      await batch.commit();
+    qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
+    qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
+    qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
+    qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
+    qs('#cancelWeightEditBtn')?.addEventListener('click', cancelWeightEdit);
+    qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF);
 
-      alert(`Saisie enregistré pour ${state.players.length} joueur(s).`);
-      resetRpeForm();
-      await loadAllFromFirestore();
-      return;
+    qs('#rpeDate').value = todayStr;
+    qs('#hooperDate').value = todayStr;
+    qs('#playerWeightDate').value = todayStr;
+
+    const playerHooperDate = qs('#playerHooperDate');
+    if (playerHooperDate) {
+        playerHooperDate.value = todayStr;
     }
 
-    // CAS 2 : Saisie pour un seul joueur
-    const payload = {
-      playerId: selectedPlayerId,
-      date: date,
-      type: type,
-      status: status,
-      rpe: rpe,
-      duration: duration,
-      load: load,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+    updateCustomDateFields();
 
-    if (id) {
-      await db.collection('rpeEntries').doc(id).set(payload, { merge: true });
-    } else {
-      const existingEntry = state.rpeEntries.find(entry =>
-        entry.playerId === selectedPlayerId &&
-        entry.date === date &&
-        entry.type === type
-      );
+    activateTab('dashboard');
+    loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
 
-      if (existingEntry) {
-        await db.collection('rpeEntries').doc(existingEntry.id).set(payload, { merge: true });
-      } else {
-        await db.collection('rpeEntries').add({
-          ...payload,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    }
+    function exportAvailabilityPDF() {
+        const rows = [...document.querySelectorAll('#availabilityTable tr')].map(tr =>
+        [...tr.querySelectorAll('td')].map(td => td.innerText.trim())
+        );
 
-    resetRpeForm();
-    await loadAllFromFirestore();
-  } catch (err) {
-    console.error('Erreur enregistrement RPE', err);
-    alert('Erreur lors de l’enregistrement du RPE.');
-  }
-}
-function resetRpeForm(){qs('#rpeEditId').value=''; qs('#rpeDate').value=todayStr; qs('#rpeType').value='Mardi'; qs('#rpeStatus').value='Présent'; qs('#rpeValue').value=''; qs('#rpeDuration').value=''}
-function editRpe(id){const e=state.rpeEntries.find(x=>x.id===id); if(!e) return; activateTab('rpe'); qs('#rpeEditId').value=e.id; qs('#rpePlayer').value=e.playerId; qs('#rpeDate').value=e.date; qs('#rpeType').value=e.type; qs('#rpeStatus').value=e.status; qs('#rpeValue').value=e.rpe; qs('#rpeDuration').value=e.duration}
-  async function deleteRpe(id) {
-  const entry = state.rpeEntries.find(x => x.id === id);
-  if (!entry) return;
+        const headers = ['Joueur', 'Poste', 'Total séances', 'Présent', 'Absent', 'Blessé', 'Partiel', '% présence'];
 
-  const confirmed = window.confirm(
-    `Supprimer le RPE du ${entry.date} ?`
-  );
-  if (!confirmed) return;
-
-  try {
-    // 1. suppression dans Firestore
-    await db.collection('rpeEntries').doc(id).delete();
-
-    // 2. mise à jour de l'état local
-    state.rpeEntries = state.rpeEntries.filter(x => x.id !== id);
-
-    // 3. si le formulaire était en édition sur cette entrée, on le réinitialise
-    if (qs('#rpeEditId').value === id) {
-      resetRpeForm();
-    }
-
-    // 4. recharge propre depuis Firestore pour être sûr que tout est aligné
-    await loadAllFromFirestore();
-  } catch (err) {
-    console.error('Erreur suppression RPE', err);
-    alert('Erreur lors de la suppression du RPE.');
-  }
-}
-async function saveHooper() {
-  const id = qs('#hooperEditId').value;
-  const playerId = qs('#hooperPlayer').value;
-  const date = qs('#hooperDate').value;
-
-  const sleepValue = qs('#sleep').value;
-  const moodValue = qs('#mood').value;
-  const energyValue = qs('#energy').value;
-  const sorenessValue = qs('#soreness').value;
-  const wellbeingValue = qs('#wellbeing').value;
-
-  if (!playerId) {
-    alert('Sélectionne un joueur.');
-    return;
-  }
-
-  if (!date) {
-    alert('Sélectionne une date.');
-    return;
-  }
-
-  if (
-    sleepValue === '' ||
-    moodValue === '' ||
-    energyValue === '' ||
-    sorenessValue === '' ||
-    wellbeingValue === ''
-  ) {
-    alert('Remplis les cinq critères Hooper avant d’enregistrer.');
-    return;
-  }
-
-  const payload = {
-    playerId: playerId,
-    date: date,
-    sleep: Number(sleepValue),
-    mood: Number(moodValue),
-    energy: Number(energyValue),
-    soreness: Number(sorenessValue),
-    wellbeing: Number(wellbeingValue),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  payload.total =
-    payload.sleep +
-    payload.mood +
-    payload.energy +
-    payload.soreness +
-    payload.wellbeing;
-
-  try {
-    if (id) {
-      await db.collection('hooperEntries').doc(id).set(payload, { merge: true });
-    } else {
-      const existingEntry = state.hooperEntries.find(entry =>
-        entry.playerId === playerId &&
-        entry.date === date
-      );
-
-      if (existingEntry) {
-        await db.collection('hooperEntries')
-          .doc(existingEntry.id)
-          .set(payload, { merge: true });
-      } else {
-        await db.collection('hooperEntries').add({
-          ...payload,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    }
-
-    resetHooperForm();
-    await loadAllFromFirestore();
-  } catch (err) {
-    console.error('Erreur enregistrement Hooper', err);
-    alert('Erreur lors de l’enregistrement du Hooper.');
-  }
-}
-  async function savePlayerHooper() {
-  const playerId = qs('#playerAccessSelect').value;
-  const date = qs('#playerHooperDate').value;
-
-  const sleepValue = qs('#playerSleep').value;
-  const moodValue = qs('#playerMood').value;
-  const energyValue = qs('#playerEnergy').value;
-  const sorenessValue = qs('#playerSoreness').value;
-  const wellbeingValue = qs('#playerWellbeing').value;
-
-  const statusMessage = qs('#playerHooperStatusMsg');
-
-  if (!playerId) {
-    statusMessage.textContent = 'Sélectionne ton nom.';
-    return;
-  }
-
-  if (!date) {
-    statusMessage.textContent = 'Sélectionne une date.';
-    return;
-  }
-
-  if (
-    sleepValue === '' ||
-    moodValue === '' ||
-    energyValue === '' ||
-    sorenessValue === '' ||
-    wellbeingValue === ''
-  ) {
-    statusMessage.textContent = 'Remplis les cinq critères avant d’enregistrer.';
-    return;
-  }
-
-  const player = state.players.find(p => p.id === playerId);
-
-  if (!player) {
-    statusMessage.textContent = 'Joueur introuvable. Recharge la page puis recommence.';
-    return;
-  }
-
-  const payload = {
-    playerId: playerId,
-    playerName: `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`,
-    date: date,
-    sleep: Number(sleepValue),
-    mood: Number(moodValue),
-    energy: Number(energyValue),
-    soreness: Number(sorenessValue),
-    wellbeing: Number(wellbeingValue),
-    source: 'player',
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  payload.total =
-    payload.sleep +
-    payload.mood +
-    payload.energy +
-    payload.soreness +
-    payload.wellbeing;
-
-  try {
-    const existingEntry = state.hooperEntries.find(entry =>
-      entry.playerId === playerId &&
-      entry.date === date &&
-      entry.source === 'player'
-    );
-
-    if (existingEntry) {
-      await db.collection('hooperEntries')
-        .doc(existingEntry.id)
-        .set(payload, { merge: true });
-
-      statusMessage.textContent = 'Ton Hooper a été mis à jour.';
-    } else {
-      await db.collection('hooperEntries').add({
-        ...payload,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      statusMessage.textContent = 'Ton Hooper a bien été enregistré.';
-    }
-
-    qs('#playerSleep').value = '';
-    qs('#playerMood').value = '';
-    qs('#playerEnergy').value = '';
-    qs('#playerSoreness').value = '';
-    qs('#playerWellbeing').value = '';
-
-    await loadAllFromFirestore();
-  } catch (err) {
-    console.error('Erreur enregistrement Hooper joueur', err);
-    statusMessage.textContent = 'Erreur lors de l’enregistrement. Réessaie.';
-  }
-}
-function resetHooperForm(){qs('#hooperEditId').value=''; qs('#hooperDate').value=todayStr; qs('#sleep').value=''; qs('#mood').value=''; qs('#energy').value=''; qs('#soreness').value=''; qs('#wellbeing').value=''}
-function editHooper(id){const e=state.hooperEntries.find(x=>x.id===id); if(!e) return; activateTab('hooper'); qs('#hooperEditId').value=e.id; qs('#hooperPlayer').value=e.playerId; qs('#hooperDate').value=e.date; qs('#sleep').value=e.sleep; qs('#mood').value=e.mood; qs('#energy').value=e.energy; qs('#soreness').value=e.soreness; qs('#wellbeing').value=e.wellbeing}
-async function deleteHooper(id) {
-  const entry = state.hooperEntries.find(x => x.id === id);
-  if (!entry) return;
-
-  const confirmed = window.confirm(
-    `Supprimer le Hooper du ${entry.date} ?`
-  );
-  if (!confirmed) return;
-
-  try {
-    await db.collection('hooperEntries').doc(id).delete();
-
-    state.hooperEntries = state.hooperEntries.filter(x => x.id !== id);
-
-    if (qs('#hooperEditId').value === id) {
-      resetHooperForm();
-    }
-
-    await loadAllFromFirestore();
-  } catch (err) {
-    console.error('Erreur suppression Hooper', err);
-    alert('Erreur lors de la suppression du Hooper.');
-  }
-}
-  function renderLoadChart(players){const ctx=qs('#loadChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.load) state.charts.load.destroy(); state.charts.load=new Chart(ctx,{type:'bar',data:{labels:players.map(p=>`${p.lastName} ${p.firstName}`),datasets:[{label:'Charge 7j',data:players.map(p=>playerMetrics(p).load7),backgroundColor:'rgba(15,108,115,.55)'},{label:'EWMA',data:players.map(p=>playerMetrics(p).ewma),backgroundColor:'rgba(0,100,148,.45)'}]},options:{responsive:true,maintainAspectRatio:false}})}
-function renderAlertsChart(players){const ctx=qs('#alertsChart'); if(!ctx||typeof Chart==='undefined') return; if(state.charts.alerts) state.charts.alerts.destroy(); const counts={'RAS':0,'Modérée':0,'Élevée':0}; players.forEach(p=>counts[playerMetrics(p).alert]++); state.charts.alerts=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:['#437a22','#da7101','#a13544']}]},options:{responsive:true,maintainAspectRatio:false}})}
-  function getWeekLabel(dateStr){
-  const d = new Date(dateStr + 'T12:00:00');
-  const day = d.getDay(); // 0 dimanche, 1 lundi...
-  const diff = day === 0 ? -6 : 1 - day; // remonter jusqu'au lundi
-  const monday = new Date(d);
-  monday.setDate(d.getDate() + diff);
-  return monday.toISOString().slice(0,10); // YYYY-MM-DD du lundi
-}
-function renderWeeklyRpeChart(players){
-  const ctx = qs('#weeklyRpeChart');
-  if(!ctx || typeof Chart === 'undefined') return;
-
-  if(state.charts.weeklyRpe) state.charts.weeklyRpe.destroy();
-
-  const period = qs('#periodFilter')?.value || '28';
-const status = qs('#statusFilter')?.value || 'all';
-const visibleIds = new Set(players.map(p => p.id));
-
-const entries = state.rpeEntries
-  .filter(e => visibleIds.has(e.playerId))
-  .filter(e => ['Mardi','Mercredi','Vendredi','Match'].includes(e.type))
-  .filter(e => matchesPeriod(e, period))
-  .filter(e => matchesStatus(e, status));
-
-  const byWeek = {};
-
-  entries.forEach(e => {
-    const week = getWeekLabel(e.date);
-    if(!byWeek[week]){
-      byWeek[week] = { Mardi:0, Mercredi:0, Vendredi:0, Match:0 };
-    }
-    byWeek[week][e.type] += Number(e.load || 0);
-  });
-
-  const labels = Object.keys(byWeek).sort((a,b) => a.localeCompare(b));
-
-  state.charts.weeklyRpe = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Mardi',
-          data: labels.map(w => byWeek[w].Mardi),
-          backgroundColor: 'rgba(15,108,115,0.75)'
-        },
-        {
-          label: 'Mercredi',
-          data: labels.map(w => byWeek[w].Mercredi),
-          backgroundColor: 'rgba(0,100,148,0.75)'
-        },
-        {
-          label: 'Vendredi',
-          data: labels.map(w => byWeek[w].Vendredi),
-          backgroundColor: 'rgba(218,113,1,0.75)'
-        },
-        {
-          label: 'Match',
-          data: labels.map(w => byWeek[w].Match),
-          backgroundColor: 'rgba(161,53,68,0.75)'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { enabled: true }
-      },
-      scales: {
-        x: {
-          stacked: true,
-          title: { display: true, text: 'Semaine (lundi)' }
-        },
-        y: {
-          stacked: true,
-          beginAtZero: true,
-          title: { display: true, text: 'Charge totale (RPE × durée)' }
-        }
-      }
-    }
-  });
-}
-function activateTab(id){qsa('.section').forEach(sec=>sec.classList.toggle('active',sec.id===id)); qsa('.nav button').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===id)); const titleMap={dashboard:'Dashboard',disponibilites:'Disponibilités', 'vue-coach':'Vue coach', joueurs:'Joueurs', rpe:'RPE', hooper:'Hooper', 'player-access':'Interface joueurs'}; const introMap={dashboard:'Vue centrale charge interne, disponibilité et synthèse staff.',disponibilites:'Présence, absence et blessure par joueur.','vue-coach':'Liste des joueurs à surveiller.',joueurs:'Création, modification et suppression des fiches joueurs.',rpe:'Gestion des RPE par joueur.',hooper:'Gestion des scores Hooper.','player-access':'Interface dédiée aux joueurs.'}; qs('#pageTitle').textContent=titleMap[id]; qs('#pageIntro').textContent=introMap[id]}
-function syncUI() {
-  renderDashboard();
-  renderPositionComparison();
-  renderAvailability();
-  renderRpeTable();
-  renderHooperTable();
-  renderPlayersAdmin();
-}
-
-async function loadAllFromFirestore() {
-  const [playersSnap, rpeSnap, hooperSnap, weightsSnap] = await Promise.all([
-    db.collection('players').get(),
-    db.collection('rpeEntries').get(),
-    db.collection('hooperEntries').get(),
-    db.collection('playerWeights').get()
-  ]);
-  state.players = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  state.rpeEntries = rpeSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  state.hooperEntries = hooperSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  state.playerWeights = weightsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  setFilters();
-  syncUI();
-}
-
-qsa('.nav button').forEach(btn => {
-  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
-});
-
-qs('#themeToggle').addEventListener('click', () => {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'light';
-  html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
-});
-
-qs('#seedData').addEventListener('click', seedDemoData);
-
-function updateCustomDateFields() {
-  const periodFilter = qs('#periodFilter');
-  const fromField = qs('#customDateFromField');
-  const toField = qs('#customDateToField');
-
-  if (!periodFilter) return;
-
-  const isCustom = periodFilter.value === 'custom';
-
-  if (fromField) {
-    fromField.style.display = isCustom ? 'grid' : 'none';
-  }
-
-  if (toField) {
-    toField.style.display = isCustom ? 'grid' : 'none';
-  }
-}
-
-qs('#teamFilter').addEventListener('change', syncUI);
-qs('#groupFilter').addEventListener('change', syncUI);
-qs('#positionFilter').addEventListener('change', syncUI);
-
-qs('#periodFilter').addEventListener('change', () => {
-  updateCustomDateFields();
-  syncUI();
-});
-
-qs('#customDateFrom')?.addEventListener('change', syncUI);
-qs('#customDateTo')?.addEventListener('change', syncUI);
-
-qs('#statusFilter').addEventListener('change', syncUI);
-qs('#searchFilter').addEventListener('change', syncUI);
-qs('#availabilitySort')?.addEventListener('change', renderAvailability);
-
-qs('#saveRpeBtn').addEventListener('click', saveRpe);
-qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
-
-qs('#saveHooperBtn').addEventListener('click', saveHooper);
-qs('#resetHooperBtn').addEventListener('click', resetHooperForm);
-qs('#savePlayerHooperBtn')?.addEventListener('click', savePlayerHooper);
-
-qs('#playerSelect').addEventListener('change', e => {
-  const id = e.target.value;
-
-  if (!id) {
-    resetPlayerForm();
-  } else {
-    loadPlayerIntoForm(id);
-  }
-});
-
-qs('#savePlayerBtn').addEventListener('click', savePlayerFromForm);
-qs('#resetPlayerBtn').addEventListener('click', resetPlayerForm);
-qs('#deletePlayerBtn').addEventListener('click', deletePlayerFromForm);
-qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
-qs('#cancelWeightEditBtn')?.addEventListener('click', cancelWeightEdit);
-qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF);
-
-qs('#rpeDate').value = todayStr;
-qs('#hooperDate').value = todayStr;
-qs('#playerWeightDate').value = todayStr;
-
-const playerHooperDate = qs('#playerHooperDate');
-if (playerHooperDate) {
-  playerHooperDate.value = todayStr;
-}
-
-updateCustomDateFields();
-  
-activateTab('dashboard');
-loadAllFromFirestore().catch(err => console.error('Erreur chargement Firestore', err));
-  
-function exportAvailabilityPDF() {
-  const rows = [...document.querySelectorAll('#availabilityTable tr')].map(tr =>
-    [...tr.querySelectorAll('td')].map(td => td.innerText.trim())
-  );
-
-  const headers = ['Joueur', 'Poste', 'Total séances', 'Présent', 'Absent', 'Blessé', 'Partiel', '% présence'];
-
-  const w = window.open('', '_blank');
-  w.document.write(`
+        const w = window.open('', '_blank');
+        w.document.write(`
     <html>
     <head>
       <meta charset="utf-8">
@@ -1813,20 +2985,31 @@ th { background: #f2f2f2; }
       <h1>Tableau de disponibilités joueurs</h1>
       <table>
         <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+          <tr>${
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        headers.map(h => `<th>${h}</th>`).join('')}</tr>
         </thead>
         <tbody>
-          ${rows.map(r => {
-  const pos = r[1] || '';
-  const bg = positionColor(pos);
-  const fg = positionTextColor(pos);
-  return `<tr>
-    ${r.map((c, idx) => idx === 1
-      ? `<td><span class="badge" style="background:${bg};color:${fg}">${c}</span></td>`
-      : `<td>${c}</td>`
-    ).join('')}
-  </tr>`;
-}).join('')}
+          ${
+
+        rows.map(r => {const pos = r[1] || '';const bg = positionColor(pos);const fg = positionTextColor(pos);return `<tr>
+    ${r.map((c, idx) => idx === 1 ? `<td><span class="badge" style="background:${bg};color:${fg}">${c}</span></td>` : `<td>${c}</td>`).join('')}
+  </tr>`;}).join('')}
         </tbody>
       </table>
       <script>
@@ -1834,9 +3017,17 @@ th { background: #f2f2f2; }
       <\/script>
     </body>
     </html>
-  `);
-  w.document.close();
-}
-</script>
+  `
+
+
+
+
+
+
+
+        );
+        w.document.close();
+    }
+    </script>
 </body>
 </html>
