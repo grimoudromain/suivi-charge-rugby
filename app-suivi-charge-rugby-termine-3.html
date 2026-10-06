@@ -520,6 +520,14 @@
                     <span>Hooper</span>
                     <span class="tag">Staff</span>
                 </button>
+                <button data-tab="blessures">
+                    <span>Blessures</span>
+                    <span class="tag">Staff</span>
+                </button>
+                <button data-tab="bilan">
+                    <span>Bilan saison</span>
+                    <span class="tag">Staff</span>
+                </button>
                 <button data-tab="player-access" data-role="player">
                     <span>Accès joueur</span>
                     <span class="tag">Joueur</span>
@@ -929,12 +937,51 @@
                                         <th>RPE</th>
                                         <th>Durée</th>
                                         <th>Charge</th>
+                                        <th>Commentaire</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="rpeTable"></tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+                <div class="card panel" style="margin-top:18px">
+                    <h3>Objectifs RPE par type de séance</h3>
+                    <p class="muted mini">Cible d'intensité perçue fixée par le staff, comparée au RPE moyen réellement enregistré (sur la période sélectionnée en haut de page).</p>
+                    <div class="filters" style="grid-template-columns:repeat(4,minmax(120px,1fr))">
+                        <div class="field">
+                            <label>Mardi</label>
+                            <input id="rpeTargetMardi" type="number" min="0" max="10" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label>Mercredi</label>
+                            <input id="rpeTargetMercredi" type="number" min="0" max="10" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label>Vendredi</label>
+                            <input id="rpeTargetVendredi" type="number" min="0" max="10" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label>Match</label>
+                            <input id="rpeTargetMatch" type="number" min="0" max="10" step="0.5">
+                        </div>
+                    </div>
+                    <div class="actions" style="margin-bottom:14px">
+                        <button class="btn primary" id="saveRpeTargetsBtn">Enregistrer les objectifs</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>RPE cible</th>
+                                    <th>RPE moyen réel</th>
+                                    <th>Écart</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rpeTargetsComparison"></tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -993,6 +1040,7 @@
                                         <th>Courbatures</th>
                                         <th>Bien-être</th>
                                         <th>Total</th>
+                                        <th>Commentaire</th>
                                         <th>Source</th>
                                         <th>Actions</th>
                                     </tr>
@@ -1000,6 +1048,170 @@
                                 <tbody id="hooperTable"></tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="blessures">
+                <div class="split">
+                    <div class="card panel">
+                        <h3>Déclarer / modifier une blessure</h3>
+                        <div class="stack">
+                            <input type="hidden" id="injuryEditId">
+                            <div class="field">
+                                <label>Joueur</label>
+                                <select id="injuryPlayer"></select>
+                            </div>
+                            <div class="field">
+                                <label>Date de survenue</label>
+                                <input id="injuryDate" type="date">
+                            </div>
+                            <div class="field">
+                                <label>Zone corporelle</label>
+                                <select id="injuryBodyPart">
+                                    <option>Tête/cou</option>
+                                    <option>Épaule</option>
+                                    <option>Bras/coude</option>
+                                    <option>Main/poignet</option>
+                                    <option>Tronc/dos</option>
+                                    <option>Hanche/aine</option>
+                                    <option>Cuisse</option>
+                                    <option>Genou</option>
+                                    <option>Jambe/mollet</option>
+                                    <option>Cheville</option>
+                                    <option>Pied</option>
+                                    <option>Autre</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Type de blessure</label>
+                                <select id="injuryType">
+                                    <option>Musculaire</option>
+                                    <option>Articulaire/ligamentaire</option>
+                                    <option>Osseuse/fracture</option>
+                                    <option>Commotion</option>
+                                    <option>Contusion</option>
+                                    <option>Tendineuse</option>
+                                    <option>Autre</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Mécanisme</label>
+                                <select id="injuryMechanism">
+                                    <option>Contact</option>
+                                    <option>Sans contact</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Statut</label>
+                                <select id="injuryStatus">
+                                    <option>En cours</option>
+                                    <option>Terminée</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Retour prévu</label>
+                                <input id="injuryExpectedReturn" type="date">
+                            </div>
+                            <div class="field">
+                                <label>Retour réel</label>
+                                <input id="injuryActualReturn" type="date">
+                            </div>
+                            <div class="field">
+                                <label>Notes</label>
+                                <textarea id="injuryNotes" rows="2" style="width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit"></textarea>
+                            </div>
+                            <div class="actions">
+                                <button class="btn primary" id="saveInjuryBtn">Enregistrer</button>
+                                <button class="btn" id="resetInjuryBtn">Nouvelle / réinitialiser</button>
+                                <button class="btn" id="deleteInjuryBtn">Supprimer</button>
+                            </div>
+                            <div class="status mini" id="injuryStatusMsg"></div>
+                        </div>
+                    </div>
+                    <div class="card panel">
+                        <h3>Historique des blessures</h3>
+                        <p class="muted mini">Toutes les blessures déclarées, en cours et terminées — l'historique n'est jamais effacé, même après guérison.</p>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Joueur</th>
+                                        <th>Date</th>
+                                        <th>Zone</th>
+                                        <th>Type</th>
+                                        <th>Mécanisme</th>
+                                        <th>Statut</th>
+                                        <th>Retour prévu</th>
+                                        <th>Jours</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="injuriesTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="bilan">
+                <p class="muted mini" id="bilanScopeNote">Vue d'ensemble de l'équipe. Sélectionnez un joueur dans le filtre "Joueur" ci-dessus pour voir son bilan individuel.</p>
+                <div class="kpis">
+                    <div class="card panel kpi">
+                        <div class="label">Blessures (saison)</div>
+                        <div class="value" id="bilanInjCount">0</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Jours perdus cumulés</div>
+                        <div class="value" id="bilanDaysLost">0</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Blessures en cours</div>
+                        <div class="value" id="bilanInjOngoing">0</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Taux d'incidence /1000h</div>
+                        <div class="value" id="bilanIncidence">0</div>
+                    </div>
+                </div>
+                <div class="card panel" id="bilanPlayerCard" style="display:none">
+                    <h3 id="bilanPlayerName"></h3>
+                    <div id="bilanPlayerDetail"></div>
+                </div>
+                <div class="grid-2" id="bilanTeamBreakdowns">
+                    <div class="card panel">
+                        <h3>Blessures par zone corporelle</h3>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Zone</th>
+                                        <th>Nombre</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bilanByBodyPart"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card panel">
+                        <h3>Blessures par poste</h3>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Poste</th>
+                                        <th>Nombre</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bilanByPosition"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card panel" id="bilanChartCard">
+                    <h3>Évolution de la charge moyenne d'équipe</h3>
+                    <div class="chart-wrap">
+                        <canvas id="seasonLoadChart">
+                        </canvas>
                     </div>
                 </div>
             </section>
@@ -1237,11 +1449,13 @@
         hooperEntries: [],
         injuries: [],
         playerWeights: [],
+        rpeTargets: {},
         charts: {
             load: null,
             alerts: null,
             weeklyRpe: null,
-            playerTrend: null
+            playerTrend: null,
+            seasonLoad: null
         }
     };
     let playerWeightChart = null;
@@ -1560,7 +1774,7 @@
         // Disponibilité (% présent) sur la période sélectionnée
         const availabilityEntries = entries
         .filter(e => matchesPeriod(e, period))
-        .filter(e => !isRestStatus(e.status));
+        .filter(e => countsTowardAvailability(e.status));
 
         const total = availabilityEntries.length;
 
@@ -1575,12 +1789,18 @@
         const latestEntry = entries.length ? entries[entries.length - 1] : null;
         const inj = latestEntry ? latestEntry.status === 'Blessé' : false;
 
-        // Dernier Hooper
-        const h = state.hooperEntries
+        // Deux derniers Hooper (pour détecter une chute brutale d'un questionnaire à l'autre)
+        const hooperHistory = state.hooperEntries
         .filter(e => e.playerId === player.id)
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .at(-1);
+        .sort((a, b) => a.date.localeCompare(b.date));
+        const h = hooperHistory.at(-1);
+        const hPrev = hooperHistory.length > 1 ? hooperHistory.at(-2) : null;
         const hooper = h ? h.total : null;
+
+        // Variation en % entre les deux derniers Hooper (négatif = dégradation)
+        const hooperVariationPct = (hooper !== null && hPrev && hPrev.total)
+        ? ((hooper - hPrev.total) / hPrev.total) * 100
+        : null;
 
         // Monotonie et strain sur les 7 derniers jours de charges journalières
         const monotonyWindow = acuteWindow;
@@ -1589,14 +1809,6 @@
         const monoSd = stdDev(monotonyLoads);
         const monotony = monoSd ? monoMean / monoSd : 0;
         const strain = acuteLoad * monotony;
-
-        // Alerte (tu gardes ta logique actuelle)
-        let alert = 'RAS';
-        if (inj || acwr > 1.6 || (hooper !== null && hooper < 13)) {
-            alert = 'Élevée';
-        } else if (acwr > 1.3 || (hooper !== null && hooper < 16)) {
-            alert = 'Modérée';
-        }
 
         // Liste tous les facteurs qui contribuent au risque (pas seulement le
         // premier détecté), avec les valeurs et seuils réels, pour que le staff
@@ -1639,12 +1851,33 @@
             });
         }
 
+        // Chute brutale entre les deux derniers Hooper (indépendant du niveau absolu) :
+        // un joueur peut partir d'un très bon score et quand même signaler une
+        // dégradation nette d'un questionnaire à l'autre.
+        if (hooperVariationPct !== null && hooperVariationPct <= -20) {
+            riskFactors.push({
+                severity: 'red',
+                text: `Hooper en forte baisse (${hPrev.total} → ${hooper}, ${hooperVariationPct.toFixed(0)}%)`,
+                advice: 'Chute marquée du bien-être : entretien individuel rapide recommandé'
+            });
+        } else if (hooperVariationPct !== null && hooperVariationPct <= -10) {
+            riskFactors.push({
+                severity: 'orange',
+                text: `Hooper en baisse (${hPrev.total} → ${hooper}, ${hooperVariationPct.toFixed(0)}%)`,
+                advice: "Surveiller l'évolution, pas encore critique"
+            });
+        }
+
         let risk = 'green';
         if (riskFactors.some(f => f.severity === 'red')) {
             risk = 'red';
         } else if (riskFactors.some(f => f.severity === 'orange')) {
             risk = 'orange';
         }
+
+        // "alert" est dérivé directement de "risk" : une seule logique de
+        // sévérité, pas deux calculs parallèles qui pourraient diverger.
+        const alert = risk === 'red' ? 'Élevée' : risk === 'orange' ? 'Modérée' : 'RAS';
 
         const riskReason = riskFactors.length
         ? riskFactors.map(f => f.text).join(' · ')
@@ -1749,6 +1982,12 @@
             .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
             .join('');
         }
+        const injuryPlayer = qs('#injuryPlayer');
+        if (injuryPlayer) {
+            injuryPlayer.innerHTML = playersSorted
+            .map(p => `<option value="${p.id}">${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</option>`)
+            .join('');
+        }
         const playerAccessSelect = qs('#playerAccessSelect');
         if (playerAccessSelect) {
             const selectedValue = playerAccessSelect.value || '';
@@ -1825,6 +2064,13 @@
         .trim()
         .toLowerCase()
         .startsWith('repos');
+    }
+
+    // Les séances "Repos" et "Blessé" sont exclues du calcul de présence :
+    // un joueur blessé qui vient se faire soigner ne doit pas voir son % de
+    // disponibilité baisser à cause de ça (ce n'est pas un manquement de sa part).
+    function countsTowardAvailability(status) {
+        return !isRestStatus(status) && status !== 'Blessé';
     }
 
     function renderDashboard() {
@@ -2041,8 +2287,11 @@
             .filter(e => matchesPeriod(e, period))
             .filter(e => !isRestStatus(e.status));
 
-            const total = entries.length;
-            const present = entries.filter(e => e.status === 'Présent').length;
+            // "Blessé" est affiché (bless) mais exclu du calcul de présence : voir
+            // countsTowardAvailability.
+            const presenceEntries = entries.filter(e => countsTowardAvailability(e.status));
+            const total = presenceEntries.length;
+            const present = presenceEntries.filter(e => e.status === 'Présent').length;
             const absent = entries.filter(e => e.status === 'Absent').length;
             const bless = entries.filter(e => e.status === 'Blessé').length;
             const partial = entries.filter(e => e.status === 'Partiel').length;
@@ -2102,6 +2351,7 @@
           <td>${e.rpe}</td>
           <td>${e.duration}</td>
           <td>${e.load}</td>
+          <td class="mini">${e.comment || ''}</td>
           <td>
             <div class="actions">
               <button class="btn" data-edit-rpe="${
@@ -2170,6 +2420,7 @@
         <td>${entry.soreness ?? '-'}</td>
         <td>${entry.wellbeing ?? '-'}</td>
         <td>${entry.total ?? '-'}</td>
+        <td class="mini">${entry.comment || ''}</td>
         <td>${source}</td>
         <td>
           <div class="actions">
@@ -2986,6 +3237,439 @@
             alert('Erreur lors de la suppression du Hooper.');
         }
     }
+    function resetInjuryForm() {
+        qs('#injuryEditId').value = '';
+        qs('#injuryPlayer').value = '';
+        qs('#injuryDate').value = todayStr;
+        qs('#injuryBodyPart').value = 'Tête/cou';
+        qs('#injuryType').value = 'Musculaire';
+        qs('#injuryMechanism').value = 'Contact';
+        qs('#injuryStatus').value = 'En cours';
+        qs('#injuryExpectedReturn').value = '';
+        qs('#injuryActualReturn').value = '';
+        qs('#injuryNotes').value = '';
+        qs('#injuryStatusMsg').textContent = '';
+    }
+
+    function editInjury(id) {
+        const injury = state.injuries.find(x => x.id === id);
+        if (!injury)
+            return;
+
+        activateTab('blessures');
+        qs('#injuryEditId').value = injury.id;
+        qs('#injuryPlayer').value = injury.playerId;
+        qs('#injuryDate').value = injury.date || '';
+        qs('#injuryBodyPart').value = injury.bodyPart || 'Tête/cou';
+        qs('#injuryType').value = injury.type || 'Musculaire';
+        qs('#injuryMechanism').value = injury.mechanism || 'Contact';
+        qs('#injuryStatus').value = injury.status || 'En cours';
+        qs('#injuryExpectedReturn').value = injury.expectedReturn || '';
+        qs('#injuryActualReturn').value = injury.actualReturn || '';
+        qs('#injuryNotes').value = injury.notes || '';
+    }
+
+    async function saveInjury() {
+        const id = qs('#injuryEditId').value;
+        const playerId = qs('#injuryPlayer').value;
+        const date = qs('#injuryDate').value;
+        const status = qs('#injuryStatusMsg');
+
+        if (!playerId) {
+            status.textContent = 'Sélectionne un joueur.';
+            return;
+        }
+
+        if (!date) {
+            status.textContent = 'Sélectionne une date de survenue.';
+            return;
+        }
+
+        const payload = {
+            playerId,
+            date,
+            bodyPart: qs('#injuryBodyPart').value,
+            type: qs('#injuryType').value,
+            mechanism: qs('#injuryMechanism').value,
+            injuryStatus: qs('#injuryStatus').value,
+            expectedReturn: qs('#injuryExpectedReturn').value || null,
+            actualReturn: qs('#injuryActualReturn').value || null,
+            notes: qs('#injuryNotes').value.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        // Champ "status" du document distinct du mot-clé JS : on le pose à part
+        // pour éviter toute confusion avec les statuts RPE (Présent/Absent/Blessé...).
+        payload.status = payload.injuryStatus;
+        delete payload.injuryStatus;
+
+        try {
+            if (id) {
+                await db.collection('injuries').doc(id).set(payload, {
+                    merge: true
+                });
+                status.textContent = 'Blessure mise à jour.';
+            } else {
+                await db.collection('injuries').add({
+                    ...payload,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                status.textContent = 'Blessure enregistrée.';
+            }
+
+            resetInjuryForm();
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur enregistrement blessure', err);
+            status.textContent = 'Erreur lors de l\'enregistrement.';
+        }
+    }
+
+    async function deleteInjury(id) {
+        const injury = state.injuries.find(x => x.id === id);
+        if (!injury)
+            return;
+
+        const player = state.players.find(p => p.id === injury.playerId);
+        const label = player ? `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}` : '';
+
+        const confirmed = window.confirm(
+        `Supprimer définitivement cette blessure (${label}, ${injury.date}) ? Cette action est irréversible et fait perdre l'historique.`
+        );
+        if (!confirmed)
+            return;
+
+        try {
+            await db.collection('injuries').doc(id).delete();
+            state.injuries = state.injuries.filter(x => x.id !== id);
+
+            if (qs('#injuryEditId').value === id) {
+                resetInjuryForm();
+            }
+
+            await loadAllFromFirestore();
+        } catch (err) {
+            console.error('Erreur suppression blessure', err);
+            alert('Erreur lors de la suppression de la blessure.');
+        }
+    }
+
+    function renderInjuriesTable() {
+        const tbody = qs('#injuriesTable');
+        if (!tbody)
+            return;
+
+        const visibleIds = filteredPlayerIds();
+        const today = new Date(todayStr + 'T12:00:00');
+
+        const rows = [...state.injuries]
+        .filter(injury => visibleIds.has(injury.playerId))
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+        tbody.innerHTML = rows.map(injury => {
+            const player = state.players.find(p => p.id === injury.playerId);
+            const name = player
+            ? `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`
+            : 'Joueur introuvable';
+
+            const start = injury.date ? new Date(injury.date + 'T12:00:00') : null;
+            const end = injury.actualReturn ? new Date(injury.actualReturn + 'T12:00:00') : today;
+            const days = start ? Math.max(0, Math.round((end - start) / 86400000)) : null;
+
+            const statusPill = injury.status === 'Terminée' ? 'green' : 'red';
+
+            return `
+      <tr>
+        <td>${
+            name}</td>
+        <td>${injury.date || ''}</td>
+        <td>${injury.bodyPart || ''}</td>
+        <td>${injury.type || ''}</td>
+        <td>${injury.mechanism || ''}</td>
+        <td><span class="pill ${statusPill}">${injury.status || ''}</span></td>
+        <td>${injury.expectedReturn || '-'}</td>
+        <td>${days ?? '-'}</td>
+        <td class="mini">${injury.notes || ''}</td>
+        <td>
+          <div class="actions">
+            <button class="btn" data-edit-injury="${
+
+            injury.id}">Modifier</button>
+            <button class="btn" data-delete-injury="${injury.id}">Supprimer</button>
+          </div>
+        </td>
+      </tr>
+    `
+
+
+
+            ;
+        }).join('');
+
+        qsa('[data-edit-injury]').forEach(btn =>
+        btn.addEventListener('click', () => editInjury(btn.dataset.editInjury))
+        );
+
+        qsa('[data-delete-injury]').forEach(btn =>
+        btn.addEventListener('click', () => deleteInjury(btn.dataset.deleteInjury))
+        );
+    }
+
+    function renderSeasonReport() {
+        const kpiInjCount = qs('#bilanInjCount');
+        if (!kpiInjCount)
+            return;
+
+        const visiblePlayers = filteredPlayers();
+        const visibleIds = new Set(visiblePlayers.map(p => p.id));
+        const selectedPlayerId = qs('#searchFilter')?.value || '';
+        const selectedPlayer = state.players.find(p => p.id === selectedPlayerId);
+
+        const scopedInjuries = state.injuries.filter(inj => visibleIds.has(inj.playerId));
+        const today = new Date(todayStr + 'T12:00:00');
+
+        const daysLostFor = injury => {
+            if (!injury.date)
+                return 0;
+            const start = new Date(injury.date + 'T12:00:00');
+            const end = injury.actualReturn ? new Date(injury.actualReturn + 'T12:00:00') : today;
+            return Math.max(0, Math.round((end - start) / 86400000));
+        };
+
+        const totalDaysLost = scopedInjuries.reduce((s, inj) => s + daysLostFor(inj), 0);
+        const ongoingCount = scopedInjuries.filter(inj => inj.status !== 'Terminée').length;
+
+        // Exposition : heures réellement passées sur le terrain (Présent/Partiel
+        // uniquement), pour calculer un taux d'incidence standard en médecine du
+        // sport (blessures / 1000h d'exposition).
+        const exposureHours = state.rpeEntries
+        .filter(e => visibleIds.has(e.playerId))
+        .filter(e => e.status === 'Présent' || e.status === 'Partiel')
+        .reduce((s, e) => s + (Number(e.duration) || 0), 0) / 60;
+
+        const incidence = exposureHours > 0 ? (scopedInjuries.length / exposureHours) * 1000 : 0;
+
+        qs('#bilanInjCount').textContent = scopedInjuries.length;
+        qs('#bilanDaysLost').textContent = totalDaysLost;
+        qs('#bilanInjOngoing').textContent = ongoingCount;
+        qs('#bilanIncidence').textContent = incidence.toFixed(1);
+
+        const playerCard = qs('#bilanPlayerCard');
+        const teamBreakdowns = qs('#bilanTeamBreakdowns');
+        const chartCard = qs('#bilanChartCard');
+        const scopeNote = qs('#bilanScopeNote');
+
+        if (selectedPlayer) {
+            const playerLabel = `${(selectedPlayer.lastName || '').toUpperCase()} ${selectedPlayer.firstName || ''}`;
+            scopeNote.textContent = `Bilan individuel de ${playerLabel}.`;
+            playerCard.style.display = 'block';
+            teamBreakdowns.style.display = 'none';
+            chartCard.style.display = 'none';
+
+            qs('#bilanPlayerName').textContent = playerLabel;
+
+            const playerInjuries = [...scopedInjuries].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            const m = playerMetrics(selectedPlayer);
+
+            qs('#bilanPlayerDetail').innerHTML = `
+      <p class="mini muted">Disponibilité sur la période sélectionnée ci-dessus : ${fmt(m.dispo)}%</p>
+      ${playerInjuries.length ? `
+        <table class="table mini">
+          <thead><tr><th>Date</th><th>Zone</th><th>Type</th><th>Statut</th><th>Jours</th></tr></thead>
+          <tbody>
+            ${
+
+
+            playerInjuries.map(inj => `
+              <tr>
+                <td>${
+            inj.date || ''}</td>
+                <td>${inj.bodyPart || ''}</td>
+                <td>${inj.type || ''}</td>
+                <td>${inj.status || ''}</td>
+                <td>${daysLostFor(inj)}</td>
+              </tr>
+            `
+            ).join('')}
+          </tbody>
+        </table>
+      `
+
+            : '<p class="mini muted">Aucune blessure enregistrée pour ce joueur.</p>'}
+    `
+            ;
+        } else {
+            scopeNote.textContent = 'Vue d\'ensemble de l\'équipe. Sélectionnez un joueur dans le filtre "Joueur" ci-dessus pour voir son bilan individuel.';
+            playerCard.style.display = 'none';
+            teamBreakdowns.style.display = 'grid';
+            chartCard.style.display = 'block';
+
+            const byBodyPart = {};
+            const byPosition = {};
+
+            scopedInjuries.forEach(inj => {
+                const zone = inj.bodyPart || 'Non renseigné';
+                byBodyPart[zone] = (byBodyPart[zone] || 0) + 1;
+
+                const player = state.players.find(p => p.id === inj.playerId);
+                const pos = player ? (normalizePosition(player.position) || 'Non renseigné') : 'Non renseigné';
+                byPosition[pos] = (byPosition[pos] || 0) + 1;
+            });
+
+            qs('#bilanByBodyPart').innerHTML = Object.entries(byBodyPart)
+            .sort((a, b) => b[1] - a[1])
+            .map(([zone, count]) => `<tr><td>${zone}</td><td>${count}</td></tr>`)
+            .join('') || '<tr><td colspan="2" class="muted mini">Aucune blessure enregistrée.</td></tr>';
+
+            qs('#bilanByPosition').innerHTML = Object.entries(byPosition)
+            .sort((a, b) => b[1] - a[1])
+            .map(([pos, count]) => `<tr><td>${pos}</td><td>${count}</td></tr>`)
+            .join('') || '<tr><td colspan="2" class="muted mini">Aucune blessure enregistrée.</td></tr>';
+
+            renderSeasonLoadChart(visibleIds);
+        }
+    }
+
+    function renderSeasonLoadChart(visibleIds) {
+        const canvas = qs('#seasonLoadChart');
+        if (!canvas || typeof Chart === 'undefined')
+            return;
+        if (state.charts.seasonLoad)
+            state.charts.seasonLoad.destroy();
+
+        const entries = state.rpeEntries.filter(e => visibleIds.has(e.playerId));
+        const byWeek = {};
+
+        entries.forEach(e => {
+            const week = getWeekLabel(e.date);
+            byWeek[week] = (byWeek[week] || 0) + Number(e.load || 0);
+        });
+
+        const labels = Object.keys(byWeek).sort((a, b) => a.localeCompare(b));
+
+        state.charts.seasonLoad = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Charge totale équipe / semaine',
+                    data: labels.map(w => byWeek[w]),
+                    borderColor: '#0a3a86',
+                    backgroundColor: 'rgba(10,58,134,.12)',
+                    fill: true,
+                    tension: .2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Semaine (lundi)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Charge totale (RPE × durée)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const RPE_TARGET_TYPES = ['Mardi', 'Mercredi', 'Vendredi', 'Match'];
+
+    function fillRpeTargetInputs() {
+        RPE_TARGET_TYPES.forEach(type => {
+            const input = qs(`#rpeTarget${type}`);
+            if (input && document.activeElement !== input) {
+                input.value = state.rpeTargets[type] ?? '';
+            }
+        });
+    }
+
+    async function saveRpeTargets() {
+        const payload = {};
+        RPE_TARGET_TYPES.forEach(type => {
+            const raw=qs(`#rpeTarget${type}`)?.value;
+            payload[type] = raw === '' || raw === undefined ? null : Number(raw);
+        });
+
+        try {
+            await db.collection('settings').doc('rpeTargets').set(payload, {
+                merge: true
+            });
+            state.rpeTargets = {
+                ...state.rpeTargets,
+                ...payload
+            };
+            renderRpeTargetsComparison();
+        } catch (err) {
+            console.error('Erreur enregistrement objectifs RPE', err);
+            alert('Erreur lors de l\'enregistrement des objectifs RPE.');
+        }
+    }
+
+    function renderRpeTargetsComparison() {
+        const tbody = qs('#rpeTargetsComparison');
+        if (!tbody)
+            return;
+
+        const visibleIds = filteredPlayerIds();
+        const period = qs('#periodFilter')?.value || '28';
+        const status = qs('#statusFilter')?.value || 'all';
+
+        const entries = state.rpeEntries
+        .filter(e => visibleIds.has(e.playerId))
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => matchesStatus(e, status));
+
+        tbody.innerHTML = RPE_TARGET_TYPES.map(type => {
+            const typeEntries = entries.filter(e => e.type === type && (e.status === 'Présent' || e.status === 'Partiel'));
+            const avgRpe = typeEntries.length
+            ? typeEntries.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / typeEntries.length
+            : null;
+
+            const target = state.rpeTargets[type];
+            const hasTarget = target !== null && target !== undefined && target !== '';
+            const gap = (hasTarget && avgRpe !== null) ? avgRpe - target : null;
+
+            let gapLabel = '-';
+            let gapColor = '';
+            if (gap !== null) {
+                const sign = gap > 0 ? '+' : '';
+                gapLabel = `${sign}${gap.toFixed(1)}`;
+                if (Math.abs(gap) >= 1.5)
+                    gapColor = 'var(--danger)';
+                else if (Math.abs(gap) >= 0.7)
+                    gapColor = 'var(--warn)';
+                else
+                    gapColor = 'var(--success)';
+            }
+
+            return `
+      <tr>
+        <td>${
+            type}</td>
+        <td>${hasTarget ? target : '-'}</td>
+        <td>${avgRpe !== null ? avgRpe.toFixed(1) : '-'}</td>
+        <td style="${gapColor ? `color:${gapColor};font-weight:700` : ''}">${gapLabel}</td>
+      </tr>
+    `
+
+            ;
+        }).join('');
+    }
+
     function renderLoadChart(players) {
         const ctx = qs('#loadChart');
         if (!ctx || typeof Chart === 'undefined')
@@ -3160,6 +3844,8 @@
             joueurs: 'Joueurs',
             rpe: 'RPE',
             hooper: 'Hooper',
+            blessures: 'Blessures',
+            bilan: 'Bilan saison',
             'player-access': 'Interface joueurs'
         };
         const introMap = {
@@ -3169,6 +3855,8 @@
             joueurs: 'Création, modification et suppression des fiches joueurs.',
             rpe: 'Gestion des RPE par joueur.',
             hooper: 'Gestion des scores Hooper.',
+            blessures: 'Registre et historique des blessures.',
+            bilan: 'Synthèse de saison, équipe ou joueur par joueur.',
             'player-access': 'Interface dédiée aux joueurs.'
         };
         qs('#pageTitle').textContent = titleMap[id];
@@ -3181,14 +3869,20 @@
         renderRpeTable();
         renderHooperTable();
         renderPlayersAdmin();
+        renderInjuriesTable();
+        renderSeasonReport();
+        fillRpeTargetInputs();
+        renderRpeTargetsComparison();
     }
 
     async function loadAllFromFirestore() {
-        const [playersSnap, rpeSnap, hooperSnap, weightsSnap] = await Promise.all([
+        const [playersSnap, rpeSnap, hooperSnap, weightsSnap, injuriesSnap, rpeTargetsDoc] = await Promise.all([
         db.collection('players').get(),
         db.collection('rpeEntries').get(),
         db.collection('hooperEntries').get(),
-        db.collection('playerWeights').get()
+        db.collection('playerWeights').get(),
+        db.collection('injuries').get(),
+        db.collection('settings').doc('rpeTargets').get()
         ]);
         state.players = playersSnap.docs.map(doc => ({
             id: doc.id,
@@ -3206,6 +3900,11 @@
             id: doc.id,
             ...doc.data()
         }));
+        state.injuries = injuriesSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        state.rpeTargets = rpeTargetsDoc.exists ? rpeTargetsDoc.data() : {};
         setFilters();
         syncUI();
     }
@@ -3277,6 +3976,19 @@
     qs('#resetHooperBtn').addEventListener('click', resetHooperForm);
     qs('#savePlayerHooperBtn')?.addEventListener('click', savePlayerHooper);
 
+    qs('#saveRpeTargetsBtn')?.addEventListener('click', saveRpeTargets);
+
+    qs('#saveInjuryBtn').addEventListener('click', saveInjury);
+    qs('#resetInjuryBtn').addEventListener('click', resetInjuryForm);
+    qs('#deleteInjuryBtn').addEventListener('click', () => {
+        const id = qs('#injuryEditId').value;
+        if (!id) {
+            qs('#injuryStatusMsg').textContent = 'Sélectionne une blessure existante à supprimer (via Modifier dans le tableau).';
+            return;
+        }
+        deleteInjury(id);
+    });
+
     qs('#playerSelect').addEventListener('change', e => {
         const id = e.target.value;
 
@@ -3297,6 +4009,7 @@
     qs('#rpeDate').value = todayStr;
     qs('#hooperDate').value = todayStr;
     qs('#playerWeightDate').value = todayStr;
+    qs('#injuryDate').value = todayStr;
 
     const playerHooperDate = qs('#playerHooperDate');
     if (playerHooperDate) {
