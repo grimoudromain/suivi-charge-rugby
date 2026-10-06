@@ -6,43 +6,43 @@
     <title>App suivi charge rugby</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
     <style>
     :root, [data-theme="light"] {
-        --bg: #f7f6f2;
-        --surface: #fbfbf9;
-        --surface2: #f1eee9;
-        --border: #d8d4cc;
-        --text: #22201b;
-        --muted: #6e6b65;
-        --primary: #0f6c73;
-        --primary2: #d7ece9;
-        --success: #437a22;
-        --warn: #da7101;
-        --danger: #a13544;
-        --blue: #006494;
+        --bg: #f3f1e9;
+        --surface: #ffffff;
+        --surface2: #eae6d8;
+        --border: #d7d0bd;
+        --text: #15202e;
+        --muted: #5b6578;
+        --primary: #0a3a86;
+        --primary2: #dde6f4;
+        --success: #2f6e3f;
+        --warn: #b5720a;
+        --danger: #8f2b3a;
+        --blue: #c81f2e;
         --shadow: 0 10px 30px rgba(0, 0, 0, .08);
         --radius: 16px;
         --radius-sm: 10px
     }
 
     [data-theme="dark"] {
-        --bg: #171614;
-        --surface: #1d1b18;
-        --surface2: #26231f;
-        --border: #38342f;
-        --text: #ece7de;
-        --muted: #a09a92;
-        --primary: #59a7af;
-        --primary2: #243b3d;
-        --success: #6daa45;
-        --warn: #fdab43;
-        --danger: #dd6974;
-        --blue: #6ca7cf;
+        --bg: #0c1016;
+        --surface: #141922;
+        --surface2: #1a2029;
+        --border: #2b323e;
+        --text: #edf1f7;
+        --muted: #9aa3b5;
+        --primary: #6fa0e6;
+        --primary2: #1c2c4a;
+        --success: #7fc083;
+        --warn: #e3a94e;
+        --danger: #d98a93;
+        --blue: #ef5564;
         --shadow: none
     }
 
@@ -96,11 +96,11 @@
         width: 42px;
         height: 42px;
         border-radius: 12px;
-        background: linear-gradient(135deg, var(--primary), var(--blue));
+        background: #fff;
+        border: 1px solid var(--border);
         display: grid;
         place-items: center;
-        color: #fff;
-        font-weight:800
+        padding:3px
     }
 
     .brand h1 {
@@ -273,17 +273,17 @@
     }
 
     .good {
-        background: rgba(67, 122, 34, .14);
+        background: rgba(47, 110, 63, .14);
         color:var(--success)
     }
 
     .warn {
-        background: rgba(218, 113, 1, .16);
+        background: rgba(181, 114, 10, .16);
         color:var(--warn)
     }
 
     .danger {
-        background: rgba(161, 53, 68, .16);
+        background: rgba(143, 43, 58, .16);
         color:var(--danger)
     }
 
@@ -367,30 +367,34 @@
     }
 
     .pill.green {
-        background: rgba(67, 122, 34, .14);
+        background: rgba(47, 110, 63, .14);
         color: var(--success)
     }
 
     .pill.orange {
-        background: rgba(218, 113, 1, .16);
+        background: rgba(181, 114, 10, .16);
         color: var(--warn)
     }
 
     .pill.red {
-        background: rgba(161, 53, 68, .16);
+        background: rgba(143, 43, 58, .16);
         color: var(--danger)
     }
 
-    .row-green {
-        background: rgba(67, 122, 34, 0.06);
+    .table tbody tr td:first-child {
+        border-left: 3px solid transparent
     }
 
-    .row-orange {
-        background: rgba(218, 113, 1, 0.08);
+    .table tbody tr.row-green td:first-child {
+        border-left-color: var(--success)
     }
 
-    .row-red {
-        background: rgba(161, 53, 68, 0.08);
+    .table tbody tr.row-orange td:first-child {
+        border-left-color: var(--warn)
+    }
+
+    .table tbody tr.row-red td:first-child {
+        border-left-color:var(--danger)
     }
 
     .chart-wrap {
@@ -431,6 +435,30 @@
         .filters, .kpis, .grid-2, .split {
             grid-template-columns: 1fr
         }
+    }
+
+    h1, h2, h3, .brand h1 {
+        font-family: 'Archivo', Inter, system-ui, sans-serif;
+        font-weight: 600
+    }
+
+    .kpi .value, .num {
+        font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+        font-variant-numeric: tabular-nums
+    }
+
+    .kpis {
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden
+    }
+
+    .kpis .card.panel.kpi {
+        border: none;
+        box-shadow: none;
+        border-radius: 0
     }
     </style>
 </head>
@@ -1307,6 +1335,8 @@
         const daily = computePlayerDailyMetrics(player).slice(-90);
         const labels = daily.map(d => d.date);
 
+        const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
         state.charts.playerTrend = new Chart(canvas, {
             data: {
                 labels,
@@ -1315,35 +1345,17 @@
                     type: 'bar',
                     label: 'Charge aiguë (7j glissants)',
                     data: daily.map(d => d.acuteLoad),
-                    backgroundColor: 'rgba(15,108,115,.35)',
+                    backgroundColor: 'rgba(10,58,134,.35)',
                     yAxisID: 'y'
                 },
                 {
                     type: 'line',
                     label: 'ACWR',
                     data: daily.map(d => d.acwr),
-                    borderColor: '#a13544',
-                    backgroundColor: 'rgba(161,53,68,.08)',
+                    borderColor: '#8f2b3a',
+                    backgroundColor: 'rgba(143,43,58,.08)',
                     yAxisID: 'y1',
                     tension: .2,
-                    pointRadius: 0
-                },
-                {
-                    type: 'line',
-                    label: 'Seuil vigilance (1.3)',
-                    data: daily.map(() => 1.3),
-                    borderColor: 'rgba(218,113,1,.6)',
-                    borderDash: [6, 4],
-                    yAxisID: 'y1',
-                    pointRadius: 0
-                },
-                {
-                    type: 'line',
-                    label: 'Seuil élevé (1.6)',
-                    data: daily.map(() => 1.6),
-                    borderColor: 'rgba(161,53,68,.6)',
-                    borderDash: [6, 4],
-                    yAxisID: 'y1',
                     pointRadius: 0
                 }
                 ]
@@ -1377,14 +1389,43 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'ACWR'
+                            text: 'ACWR (zones : < 1.3 normal, 1.3-1.6 vigilance, > 1.6 élevé)'
                         },
                         grid: {
                             drawOnChartArea: false
                         }
                     }
                 }
-            }
+            },
+            plugins: [{
+                id: 'acwrZones',
+                beforeDraw(chart) {
+                    const {ctx, chartArea, scales} = chart;
+                    if (!chartArea)
+                        return;
+                    const axis = scales.y1;
+                    const top = chartArea.top;
+                    const bottom = chartArea.bottom;
+                    const yNormal = axis.getPixelForValue(1.3);
+                    const yVigilance = axis.getPixelForValue(1.6);
+                    const left = chartArea.left;
+                    const width = chartArea.right - left;
+
+                    ctx.save();
+                    ctx.fillStyle = cssVar('--success');
+                    ctx.globalAlpha = .07;
+                    ctx.fillRect(left, yNormal, width, bottom - yNormal);
+
+                    ctx.fillStyle = cssVar('--warn');
+                    ctx.globalAlpha = .1;
+                    ctx.fillRect(left, yVigilance, width, yNormal - yVigilance);
+
+                    ctx.fillStyle = cssVar('--danger');
+                    ctx.globalAlpha = .1;
+                    ctx.fillRect(left, top, width, yVigilance - top);
+                    ctx.restore();
+                }
+            }]
         });
     }
     async function seedDemoData() {
@@ -1782,15 +1823,15 @@
         <td>${p.group || ''}</td>
         <td>${m.inj ? 'Blessé' : 'Disponible'}</td>
         <td>${p.position || ''}</td>
-        <td>${fmt(m.load7)}</td>
-        <td>${fmt(m.ewma)}</td>
-        <td>${m.acwr.toFixed(2)}</td>
-        <td>${m.rpeAvg.toFixed(1)}</td>
-        <td>${fmt(m.dispo)}%</td>
+        <td class="num">${fmt(m.load7)}</td>
+        <td class="num">${fmt(m.ewma)}</td>
+        <td class="num">${m.acwr.toFixed(2)}</td>
+        <td class="num">${m.rpeAvg.toFixed(1)}</td>
+        <td class="num">${fmt(m.dispo)}%</td>
         <td>${m.inj ? 'Oui' : 'Non'}</td>
-        <td>${m.monotony.toFixed(2)}</td>
-        <td>${fmt(m.strain)}</td>
-        <td>${m.hooper ?? '-'}</td>
+        <td class="num">${m.monotony.toFixed(2)}</td>
+        <td class="num">${fmt(m.strain)}</td>
+        <td class="num">${m.hooper ?? '-'}</td>
                 <td>
           <span class="pill ${
             m.risk}">
@@ -2322,8 +2363,8 @@
                 datasets: [{
                     label: 'Poids (kg)',
                     data: rows.map(r => r.weight),
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37,99,235,.15)',
+                    borderColor: '#0a3a86',
+                    backgroundColor: 'rgba(10,58,134,.15)',
                     tension: .25,
                     pointRadius: 3,
                     fill: false
@@ -2894,11 +2935,11 @@
                 datasets: [{
                     label: 'Charge 7j',
                     data: players.map(p => playerMetrics(p).load7),
-                    backgroundColor: 'rgba(15,108,115,.55)'
+                    backgroundColor: 'rgba(10,58,134,.55)'
                 }, {
                     label: 'EWMA',
                     data: players.map(p => playerMetrics(p).ewma),
-                    backgroundColor: 'rgba(0,100,148,.45)'
+                    backgroundColor: 'rgba(200,31,46,.45)'
                 }]
             },
             options: {
@@ -2925,7 +2966,7 @@
                 labels: Object.keys(counts),
                 datasets: [{
                     data: Object.values(counts),
-                    backgroundColor: ['#437a22', '#da7101', '#a13544']
+                    backgroundColor: ['#2f6e3f', '#b5720a', '#8f2b3a']
                 }]
             },
             options: {
@@ -2986,27 +3027,27 @@
                 {
                     label: 'Mardi',
                     data: labels.map(w => byWeek[w].Mardi),
-                    backgroundColor: 'rgba(15,108,115,0.75)'
+                    backgroundColor: 'rgba(10,58,134,0.75)'
                 },
                 {
                     label: 'Mercredi',
                     data: labels.map(w => byWeek[w].Mercredi),
-                    backgroundColor: 'rgba(0,100,148,0.75)'
+                    backgroundColor: 'rgba(200,31,46,0.75)'
                 },
                 {
                     label: 'Vendredi',
                     data: labels.map(w => byWeek[w].Vendredi),
-                    backgroundColor: 'rgba(218,113,1,0.75)'
+                    backgroundColor: 'rgba(181,114,10,0.75)'
                 },
                 {
                     label: 'Match',
                     data: labels.map(w => byWeek[w].Match),
-                    backgroundColor: 'rgba(161,53,68,0.75)'
+                    backgroundColor: 'rgba(143,43,58,0.75)'
                 },
                 {
                     label: 'Autre',
                     data: labels.map(w => byWeek[w].Autre),
-                    backgroundColor: 'rgba(110,107,101,0.75)'
+                    backgroundColor: 'rgba(91,101,120,0.75)'
                 }
                 ]
             },
