@@ -81,13 +81,14 @@
         color:var(--muted)
     }
 
-    .field input, .field select {
+    .field input, .field select, .field textarea {
         padding: 9px 10px;
         border-radius: var(--radius-sm);
         border: 1px solid var(--border);
         background: var(--surface2);
         font: inherit;
-        color:var(--text)
+        color: var(--text);
+        resize:vertical
     }
 
     .row {
@@ -343,6 +344,10 @@
                     <input type="number" id="rpeDuration" min="0" step="5"/>
                 </div>
             </div>
+            <div class="field">
+                <label for="rpeComment">Commentaire (optionnel)</label>
+                <textarea id="rpeComment" rows="2" placeholder="Douleur, fatigue, ressenti particulier..."></textarea>
+            </div>
             <div class="actions">
                 <button class="primary" id="saveRpeBtn">Enregistrer RPE</button>
                 <button class="outline" id="resetRpeBtn">Réinitialiser</button>
@@ -379,6 +384,10 @@
             <div class="field">
                 <label for="wellbeing">Bien-être global (1–5)</label>
                 <input type="number" id="wellbeing" min="1" max="5" step="1"/>
+            </div>
+            <div class="field">
+                <label for="hooperComment">Commentaire (optionnel)</label>
+                <textarea id="hooperComment" rows="2" placeholder="Sommeil perturbé, stress, contexte particulier..."></textarea>
             </div>
             <div class="actions">
                 <button class="primary" id="saveHooperBtn">Enregistrer Hooper</button>
@@ -419,6 +428,7 @@
         document.getElementById("rpeStatus").value = "Présent";
         document.getElementById("rpeValue").value = "";
         document.getElementById("rpeDuration").value = "";
+        document.getElementById("rpeComment").value = "";
         const msg = document.getElementById("rpeStatusMsg");
         msg.textContent = "";
         msg.className = "status";
@@ -426,7 +436,7 @@
 
     function resetHooperForm() {
         setToday("hooperDate");
-        ["sleep", "mood", "energy", "soreness", "wellbeing"].forEach((id) => {
+        ["sleep", "mood", "energy", "soreness", "wellbeing", "hooperComment"].forEach((id) => {
             document.getElementById(id).value = "";
         });
         const msg = document.getElementById("hooperStatusMsg");
@@ -528,6 +538,7 @@
         const finalRpe = (status === "Absent" || status === "Blessé") ? 0 : rpe;
         const finalDuration = (status === "Absent" || status === "Blessé") ? 0 : duration;
         const load = finalRpe * finalDuration;
+        const comment = document.getElementById("rpeComment").value.trim();
 
         try {
             await db.collection("rpeEntries").add({
@@ -539,6 +550,7 @@
                 rpe: finalRpe,
                 duration: finalDuration,
                 load,
+                comment,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -604,6 +616,7 @@
             soreness: soreness,
             wellbeing: wellbeing,
             total: sleep + mood + energy + soreness + wellbeing,
+            comment: document.getElementById("hooperComment").value.trim(),
             source: "player",
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -692,6 +705,7 @@
             ${row.type || ''} · ${row.status || ''} ·
             RPE ${row.rpe ?? '-'} · ${row.duration ?? '-'} min ·
             Charge ${row.load ?? '-'}
+            ${row.comment ? `<br><span class="muted small">"${row.comment}"</span>` : ''}
           </div>
         `
 
@@ -708,6 +722,7 @@
           Courbatures ${row.soreness ?? '-'} ·
           Bien-être ${row.wellbeing ?? '-'} ·
           Total ${row.total ?? '-'}
+          ${row.comment ? `<br><span class="muted small">"${row.comment}"</span>` : ''}
         </div>
       `
 
