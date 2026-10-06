@@ -389,12 +389,27 @@
         border-left-color: var(--success)
     }
 
+    .table tbody tr.row-orange {
+        background: rgba(181, 114, 10, .10)
+    }
+
     .table tbody tr.row-orange td:first-child {
-        border-left-color: var(--warn)
+        border-left-color: var(--warn);
+        border-left-width: 5px
+    }
+
+    .table tbody tr.row-red {
+        background: rgba(143, 43, 58, .16)
     }
 
     .table tbody tr.row-red td:first-child {
-        border-left-color:var(--danger)
+        border-left-color: var(--danger);
+        border-left-width: 5px
+    }
+
+    .table tbody tr.row-red td:first-child {
+        font-weight: 700;
+        color:var(--danger)
     }
 
     .chart-wrap {
@@ -1869,9 +1884,8 @@
             const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
 
             return `
-      <tr>
-        <td>${
-            (p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+      <tr class="row-${m.risk}">
+        <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
         <td>${fmt(m.load7)}</td>
         <td>${m.acwr.toFixed(2)}</td>
         <td>${m.hooper ?? '-'}</td>
