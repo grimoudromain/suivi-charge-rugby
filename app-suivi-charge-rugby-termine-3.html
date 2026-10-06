@@ -30,7 +30,6 @@
         --radius-sm: 10px
     }
 
-        
     [data-theme="dark"] {
         --bg: #171614;
         --surface: #1d1b18;
@@ -350,6 +349,15 @@
         letter-spacing:.04em
     }
 
+    .table th[data-sort-key] {
+        cursor: pointer;
+        user-select:none
+    }
+
+    .table th[data-sort-key]:hover {
+        color:var(--primary)
+    }
+
     .pill {
         display: inline-block;
         padding: 4px 8px;
@@ -587,6 +595,14 @@
                     </div>
                 </div>
                 <div class="card panel">
+                    <h3>Évolution individuelle</h3>
+                    <p class="muted mini" id="playerTrendEmpty">Sélectionnez un joueur dans le filtre "Joueur" ci-dessus pour voir sa charge aiguë (7j) et son ACWR dans le temps.</p>
+                    <div class="chart-wrap" id="playerTrendWrap" style="display:none">
+                        <canvas id="playerTrendChart">
+                        </canvas>
+                    </div>
+                </div>
+                <div class="card panel">
                     <h3>Comparaison des semaines par type de séance</h3>
                     <div class="chart-wrap">
                         <canvas id="weeklyRpeChart">
@@ -597,24 +613,24 @@
                     <h3>Tableau récapitulatif joueurs</h3>
                     <div class="table-wrap">
                         <table class="table">
-                            <thead>
+                            <thead id="summaryThead">
                                 <tr>
-                                    <th>Joueur</th>
-                                    <th>Équipe</th>
-                                    <th>Groupe</th>
+                                    <th data-sort-key="name">Joueur</th>
+                                    <th data-sort-key="team">Équipe</th>
+                                    <th data-sort-key="group">Groupe</th>
                                     <th>Statut</th>
-                                    <th>Poste</th>
-                                    <th>Charge 7j</th>
-                                    <th title="Calculé sur les 28 derniers jours calendaires réels, indépendamment du filtre Période ci-dessus">EWMA</th>
-                                    <th title="Calculé sur les 7/28 derniers jours calendaires réels, indépendamment du filtre Période ci-dessus">ACWR</th>
-                                    <th>RPE moyen</th>
-                                    <th>Dispo</th>
-                                    <th>Blessés</th>
-                                    <th>Monotonie</th>
-                                    <th>Strain</th>
-                                    <th>Hooper</th>
-                                    <th>Risque</th>
-                                    <th>Alerte</th>
+                                    <th data-sort-key="position">Poste</th>
+                                    <th data-sort-key="load7">Charge 7j</th>
+                                    <th data-sort-key="ewma" title="Calculé sur les 28 derniers jours calendaires réels, indépendamment du filtre Période ci-dessus">EWMA</th>
+                                    <th data-sort-key="acwr" title="Calculé sur les 7/28 derniers jours calendaires réels, indépendamment du filtre Période ci-dessus">ACWR</th>
+                                    <th data-sort-key="rpeAvg">RPE moyen</th>
+                                    <th data-sort-key="dispo">Dispo</th>
+                                    <th data-sort-key="inj">Blessés</th>
+                                    <th data-sort-key="monotony">Monotonie</th>
+                                    <th data-sort-key="strain">Strain</th>
+                                    <th data-sort-key="hooper">Hooper</th>
+                                    <th data-sort-key="risk">Risque</th>
+                                    <th data-sort-key="alert">Alerte</th>
                                 </tr>
                             </thead>
                             <tbody id="summaryTable"></tbody>
@@ -1173,10 +1189,204 @@
         charts: {
             load: null,
             alerts: null,
-            weeklyRpe: null
+            weeklyRpe: null,
+            playerTrend: null
         }
     };
     let playerWeightChart = null;
+    let summarySort = {
+        key: null,
+        dir: 1
+    };
+    const RISK_ORDER = {
+        green: 0,
+        orange: 1,
+        red: 2
+    };
+    const ALERT_ORDER = {
+        'RAS': 0,
+        'Modérée': 1,
+        'Élevée': 2
+    };
+
+    function summarySortValue(row, key) {
+        switch (key) {
+        case 'name':
+            return `${row.player.lastName || ''} ${row.player.firstName || ''}`.toLowerCase();
+        case 'team':
+            return row.player.team || '';
+        case 'group':
+            return row.player.group || '';
+        case 'position':
+            return row.player.position || '';
+        case 'inj':
+            return row.m.inj ? 1 : 0;
+        case 'risk':
+            return RISK_ORDER[row.m.risk] ?? 0;
+        case 'alert':
+            return ALERT_ORDER[row.m.alert] ?? 0;
+        default:
+            return row.m[key] ?? 0;
+        }
+    }
+
+    function updateSummarySortIndicators() {
+        qsa('#summaryThead th[data-sort-key]').forEach(th => {
+            if (!th.dataset.label)
+                th.dataset.label = th.textContent.trim();
+            const isActive = summarySort.key === th.dataset.sortKey;
+            th.textContent = th.dataset.label + (isActive ? (summarySort.dir === 1 ? ' ▲' : ' ▼') : '');
+        });
+    }
+
+    // Même méthode que playerMetrics (EWMA couplée aiguë/chronique), mais calculée
+    // jour par jour sur tout l'historique pour tracer une courbe, pas juste la
+    // valeur du jour.
+    function computePlayerDailyMetrics(player) {
+        const entries = state.rpeEntries
+        .filter(e => e.playerId === player.id)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+        const dailySeries = buildZeroFilledDailySeries(entries);
+        if (!dailySeries.length)
+            return [];
+
+        const lambdaAcute = 2 / (7 + 1);
+        const lambdaChronic = 2 / (28 + 1);
+
+        let acuteEWMA = dailySeries[0].load;
+        let chronicEWMA = dailySeries[0].load;
+
+        return dailySeries.map((day, i) => {
+            if (i > 0) {
+                acuteEWMA = lambdaAcute * day.load + (1 - lambdaAcute) * acuteEWMA;
+                chronicEWMA = lambdaChronic * day.load + (1 - lambdaChronic) * chronicEWMA;
+            }
+
+            const windowStart = Math.max(0, i - 6);
+            const acuteLoad = dailySeries
+            .slice(windowStart, i + 1)
+            .reduce((s, d) => s + d.load, 0);
+
+            return {
+                date: day.date,
+                acuteLoad,
+                acwr: chronicEWMA ? acuteEWMA / chronicEWMA : 0
+            };
+        });
+    }
+
+    function renderPlayerTrendChart() {
+        const canvas = qs('#playerTrendChart');
+        const wrap = qs('#playerTrendWrap');
+        const empty = qs('#playerTrendEmpty');
+        if (!canvas || typeof Chart === 'undefined')
+            return;
+
+        if (state.charts.playerTrend) {
+            state.charts.playerTrend.destroy();
+            state.charts.playerTrend = null;
+        }
+
+        const playerId = qs('#searchFilter')?.value || '';
+        const player = state.players.find(p => p.id === playerId);
+
+        if (!player) {
+            if (wrap)
+                wrap.style.display = 'none';
+            if (empty)
+                empty.style.display = 'block';
+            return;
+        }
+
+        if (wrap)
+            wrap.style.display = 'block';
+        if (empty)
+            empty.style.display = 'none';
+
+        const daily = computePlayerDailyMetrics(player).slice(-90);
+        const labels = daily.map(d => d.date);
+
+        state.charts.playerTrend = new Chart(canvas, {
+            data: {
+                labels,
+                datasets: [
+                {
+                    type: 'bar',
+                    label: 'Charge aiguë (7j glissants)',
+                    data: daily.map(d => d.acuteLoad),
+                    backgroundColor: 'rgba(15,108,115,.35)',
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'line',
+                    label: 'ACWR',
+                    data: daily.map(d => d.acwr),
+                    borderColor: '#a13544',
+                    backgroundColor: 'rgba(161,53,68,.08)',
+                    yAxisID: 'y1',
+                    tension: .2,
+                    pointRadius: 0
+                },
+                {
+                    type: 'line',
+                    label: 'Seuil vigilance (1.3)',
+                    data: daily.map(() => 1.3),
+                    borderColor: 'rgba(218,113,1,.6)',
+                    borderDash: [6, 4],
+                    yAxisID: 'y1',
+                    pointRadius: 0
+                },
+                {
+                    type: 'line',
+                    label: 'Seuil élevé (1.6)',
+                    data: daily.map(() => 1.6),
+                    borderColor: 'rgba(161,53,68,.6)',
+                    borderDash: [6, 4],
+                    yAxisID: 'y1',
+                    pointRadius: 0
+                }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${(player.lastName || '').toUpperCase()} ${player.firstName || ''}`
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Charge aiguë (7j)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'ACWR'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+    }
     async function seedDemoData() {
         const players = [{
             firstName: 'Arthur',
@@ -1530,22 +1740,39 @@
 
         qs('#kpiAlerts').textContent = metrics.filter(m => m.alert !== 'RAS').length;
 
-        const summaryPlayers = [...players].sort((a, b) => {
-            const positionDiff = sortByRugbyPosition(a.position, b.position);
-            if (positionDiff !== 0)
-                return positionDiff;
+        const summaryRows = players.map(p => ({
+            player: p,
+            m: playerMetrics(p)
+        }));
 
-            return `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
-            `${b.lastName || ''} ${b.firstName || ''}`,
-            'fr',
-            {
-                sensitivity: 'base'
-            }
-            );
-        });
+        if (summarySort.key) {
+            summaryRows.sort((a, b) => {
+                const va = summarySortValue(a, summarySort.key);
+                const vb = summarySortValue(b, summarySort.key);
+                if (typeof va === 'string' || typeof vb === 'string') {
+                    return String(va).localeCompare(String(vb), 'fr', {
+                        sensitivity: 'base'
+                    }) * summarySort.dir;
+                }
+                return (va - vb) * summarySort.dir;
+            });
+        } else {
+            summaryRows.sort((a, b) => {
+                const positionDiff = sortByRugbyPosition(a.player.position, b.player.position);
+                if (positionDiff !== 0)
+                    return positionDiff;
 
-        qs('#summaryTable').innerHTML = summaryPlayers.map(p => {
-            const m = playerMetrics(p);
+                return `${a.player.lastName || ''} ${a.player.firstName || ''}`.localeCompare(
+                `${b.player.lastName || ''} ${b.player.firstName || ''}`,
+                'fr',
+                {
+                    sensitivity: 'base'
+                }
+                );
+            });
+        }
+
+        qs('#summaryTable').innerHTML = summaryRows.map(({player: p, m}) => {
             const pill = m.alert === 'Élevée' ? 'red' : m.alert === 'Modérée' ? 'orange' : 'green';
 
             return `
@@ -1579,6 +1806,8 @@
 
             ;
         }).join('');
+
+        updateSummarySortIndicators();
 
         const coachPlayers = [...players].sort((a, b) => {
             const positionDiff = sortByRugbyPosition(a.position, b.position);
@@ -1615,6 +1844,7 @@
         renderLoadChart(players);
         renderAlertsChart(players);
         renderWeeklyRpeChart(players);
+        renderPlayerTrendChart();
     }
 
     function renderPositionComparison() {
@@ -2922,6 +3152,19 @@
     qs('#searchFilter').addEventListener('change', syncUI);
     qs('#availabilitySort')?.addEventListener('change', renderAvailability);
 
+    qsa('#summaryThead th[data-sort-key]').forEach(th => {
+        th.addEventListener('click', () => {
+            const key = th.dataset.sortKey;
+            if (summarySort.key === key) {
+                summarySort.dir *= -1;
+            } else {
+                summarySort.key = key;
+                summarySort.dir = 1;
+            }
+            renderDashboard();
+        });
+    });
+
     qs('#saveRpeBtn').addEventListener('click', saveRpe);
     qs('#resetRpeBtn').addEventListener('click', resetRpeForm);
 
@@ -3032,4 +3275,3 @@ th { background: #f2f2f2; }
     </script>
 </body>
 </html>
-
