@@ -754,6 +754,7 @@
                                     <th>Hooper</th>
                                     <th>Alerte</th>
                                     <th>Pourquoi</th>
+                                    <th>Action recommandée</th>
                                 </tr>
                             </thead>
                             <tbody id="coachTable"></tbody>
@@ -1605,31 +1606,36 @@
         if (inj) {
             riskFactors.push({
                 severity: 'red',
-                text: 'Blessure en cours'
+                text: 'Blessure en cours',
+                advice: 'Reprise encadrée uniquement après feu vert du staff médical'
             });
         }
 
         if (acwr > 1.6) {
             riskFactors.push({
                 severity: 'red',
-                text: `ACWR élevé (${acwr.toFixed(2)}, seuil 1.6)`
+                text: `ACWR élevé (${acwr.toFixed(2)}, seuil 1.6)`,
+                advice: 'Réduire la charge aiguë (séance allégée ou repos) et prioriser la récupération'
             });
         } else if (acwr > 1.3) {
             riskFactors.push({
                 severity: 'orange',
-                text: `ACWR en vigilance (${acwr.toFixed(2)}, seuil 1.3)`
+                text: `ACWR en vigilance (${acwr.toFixed(2)}, seuil 1.3)`,
+                advice: "Éviter d'augmenter la charge cette semaine, surveiller l'évolution"
             });
         }
 
         if (hooper !== null && hooper < 13) {
             riskFactors.push({
                 severity: 'red',
-                text: `Hooper bas (${hooper}, seuil 13)`
+                text: `Hooper bas (${hooper}, seuil 13)`,
+                advice: 'Entretien individuel conseillé (sommeil, fatigue, stress) et charge allégée'
             });
         } else if (hooper !== null && hooper < 16) {
             riskFactors.push({
                 severity: 'orange',
-                text: `Hooper en vigilance (${hooper}, seuil 16)`
+                text: `Hooper en vigilance (${hooper}, seuil 16)`,
+                advice: 'Surveiller l\'évolution du bien-être sur les prochains jours'
             });
         }
 
@@ -1644,6 +1650,13 @@
         ? riskFactors.map(f => f.text).join(' · ')
         : 'RAS';
 
+        // Conseils génériques, pas un diagnostic : à valider par le staff/médical,
+        // seulement proposés pour l'onglet Vue coach, pas dans le tableau dense du
+        // Dashboard.
+        const riskAdvice = riskFactors.length
+        ? riskFactors.map(f => f.advice).join(' · ')
+        : 'Aucune action particulière';
+
         return {
             load7: acuteLoad,
             ewma: chronicEWMA,
@@ -1656,7 +1669,8 @@
             monotony,
             strain,
             risk,
-            riskReason
+            riskReason,
+            riskAdvice
         };
     }
 
@@ -1925,6 +1939,7 @@
         <td>${m.hooper ?? '-'}</td>
         <td><span class="pill ${pill}">${m.alert}</span></td>
         <td class="mini">${m.riskReason}</td>
+        <td class="mini muted">${m.riskAdvice}</td>
       </tr>
     `
 
