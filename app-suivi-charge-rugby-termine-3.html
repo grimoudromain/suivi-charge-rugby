@@ -245,7 +245,7 @@
 
     .kpis {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 12px;
         margin-bottom:18px
     }
@@ -634,6 +634,14 @@
                         <div class="label">Alertes</div>
                         <div class="value" id="kpiAlerts">0</div>
                     </div>
+                    <div class="card panel kpi">
+                        <div class="label">RPE moyen</div>
+                        <div class="value" id="kpiRpeAvg">-</div>
+                    </div>
+                    <div class="card panel kpi">
+                        <div class="label">Hooper moyen</div>
+                        <div class="value" id="kpiHooperAvg">-</div>
+                    </div>
                 </div>
                 <div class="grid-2">
                     <div class="card panel">
@@ -878,7 +886,20 @@
             </section>
 
             <section class="section" id="rpe">
-                <div class="split">
+                <div class="card panel">
+                    <h3>Moyenne RPE sur une sélection de joueurs</h3>
+                    <p class="muted mini">Coche les joueurs à inclure. Seules les séances "Présent" ou "Partiel" comptent (les joueurs au repos, absents ou blessés sont exclus de la moyenne). Respecte le filtre "Période" en haut de page.</p>
+                    <div class="actions" style="margin-bottom:10px">
+                        <button class="btn" id="rpeSelectAllBtn">Tout cocher</button>
+                        <button class="btn" id="rpeSelectNoneBtn">Tout décocher</button>
+                    </div>
+                    <div id="rpeSelectionList" style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px"></div>
+                    <div class="kpi" style="margin-top:14px">
+                        <div class="label">RPE moyen (sélection)</div>
+                        <div class="value" id="rpeSelectionAverage">-</div>
+                    </div>
+                </div>
+                <div class="split" style="margin-top:18px">
                     <div class="card panel">
                         <h3>Ajouter / modifier un RPE</h3>
                         <div class="stack">
@@ -987,7 +1008,20 @@
             </section>
 
             <section class="section" id="hooper">
-                <div class="split">
+                <div class="card panel">
+                    <h3>Moyenne Hooper sur une sélection de joueurs</h3>
+                    <p class="muted mini">Coche les joueurs à inclure. Respecte le filtre "Période" en haut de page.</p>
+                    <div class="actions" style="margin-bottom:10px">
+                        <button class="btn" id="hooperSelectAllBtn">Tout cocher</button>
+                        <button class="btn" id="hooperSelectNoneBtn">Tout décocher</button>
+                    </div>
+                    <div id="hooperSelectionList" style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px"></div>
+                    <div class="kpi" style="margin-top:14px">
+                        <div class="label">Hooper moyen (sélection)</div>
+                        <div class="value" id="hooperSelectionAverage">-</div>
+                    </div>
+                </div>
+                <div class="split" style="margin-top:18px">
                     <div class="card panel">
                         <h3>Ajouter / modifier un Hooper</h3>
                         <div class="stack">
@@ -1450,6 +1484,8 @@
         injuries: [],
         playerWeights: [],
         rpeTargets: {},
+        rpeSelection: new Set(),
+        hooperSelection: new Set(),
         charts: {
             load: null,
             alerts: null,
@@ -2005,6 +2041,89 @@
             : '';
         }
 
+        renderSelectionList('#rpeSelectionList', state.rpeSelection, updateRpeSelectionAverage);
+        renderSelectionList('#hooperSelectionList', state.hooperSelection, updateHooperSelectionAverage);
+
+    }
+
+    // Sélecteur multi-joueurs réutilisé par les cartes "Moyenne RPE" / "Moyenne
+    // Hooper" des onglets RPE et Hooper. Reconstruit la liste de cases à cocher
+    // à partir de l'effectif courant, en conservant les cases déjà cochées.
+    function renderSelectionList(containerId, selectionSet, onToggle) {
+        const container = qs(containerId);
+        if (!container)
+            return;
+
+        const playersSorted = [...state.players].sort((a, b) =>
+        `${a.lastName || ''} ${a.firstName || ''}`.localeCompare(
+        `${b.lastName || ''} ${b.firstName || ''}`,
+        'fr',
+        {
+            sensitivity: 'base'
+        }
+        )
+        );
+
+        const validIds = new Set(playersSorted.map(p => p.id));
+        [...selectionSet].forEach(id => {
+            if (!validIds.has(id))
+                selectionSet.delete(id);
+        });
+
+        container.innerHTML = playersSorted.map(p => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+      <input type="checkbox" data-player-id="${
+        p.id}" ${selectionSet.has(p.id) ? 'checked' : ''}>
+      ${(p.lastName || '').toUpperCase()} ${p.firstName || ''}
+    </label>
+  `
+
+        ).join('');
+
+        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked)
+                    selectionSet.add(cb.dataset.playerId);
+                else
+                    selectionSet.delete(cb.dataset.playerId);
+                onToggle();
+            });
+        });
+    }
+
+    function updateRpeSelectionAverage() {
+        const period = qs('#periodFilter')?.value || '28';
+        const status = qs('#statusFilter')?.value || 'all';
+
+        const entries = state.rpeEntries
+        .filter(e => state.rpeSelection.has(e.playerId))
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => matchesStatus(e, status))
+        .filter(e => e.status === 'Présent' || e.status === 'Partiel');
+
+        const avg = entries.length
+        ? entries.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / entries.length
+        : null;
+
+        const el = qs('#rpeSelectionAverage');
+        if (el)
+            el.textContent = avg !== null ? avg.toFixed(1) : '-';
+    }
+
+    function updateHooperSelectionAverage() {
+        const period = qs('#periodFilter')?.value || '28';
+
+        const entries = state.hooperEntries
+        .filter(e => state.hooperSelection.has(e.playerId))
+        .filter(e => matchesPeriod(e, period));
+
+        const avg = entries.length
+        ? entries.reduce((s, e) => s + (Number(e.total) || 0), 0) / entries.length
+        : null;
+
+        const el = qs('#hooperSelectionAverage');
+        if (el)
+            el.textContent = avg !== null ? avg.toFixed(1) : '-';
     }
 
     function matchesPeriod(entry, period) {
@@ -2073,6 +2192,42 @@
         return !isRestStatus(status) && status !== 'Blessé';
     }
 
+    // RPE moyen et Hooper moyen pour l'ensemble actuellement filtré (équipe,
+    // groupe, poste, joueur) et la période/date sélectionnée (y compris une
+    // date précise via "Plage personnalisée" avec Du = Au).
+    function renderAverageKpis(players) {
+        const playerIds = new Set(players.map(p => p.id));
+        const period = qs('#periodFilter')?.value || '28';
+        const status = qs('#statusFilter')?.value || 'all';
+
+        // RPE moyen : uniquement les séances réellement faites (le RPE n'a pas de
+        // sens pour un joueur absent ou blessé ce jour-là).
+        const rpeEntries = state.rpeEntries
+        .filter(e => playerIds.has(e.playerId))
+        .filter(e => matchesPeriod(e, period))
+        .filter(e => matchesStatus(e, status))
+        .filter(e => e.status === 'Présent' || e.status === 'Partiel');
+
+        const avgRpe = rpeEntries.length
+        ? rpeEntries.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / rpeEntries.length
+        : null;
+
+        qs('#kpiRpeAvg').textContent = avgRpe !== null ? avgRpe.toFixed(1) : '-';
+
+        // Hooper moyen : toutes les saisies de la période (pas uniquement la
+        // dernière de chaque joueur), pour une vraie moyenne sur la fenêtre
+        // choisie plutôt qu'un instantané.
+        const hooperEntries = state.hooperEntries
+        .filter(e => playerIds.has(e.playerId))
+        .filter(e => matchesPeriod(e, period));
+
+        const avgHooper = hooperEntries.length
+        ? hooperEntries.reduce((s, e) => s + (Number(e.total) || 0), 0) / hooperEntries.length
+        : null;
+
+        qs('#kpiHooperAvg').textContent = avgHooper !== null ? avgHooper.toFixed(1) : '-';
+    }
+
     function renderDashboard() {
         const players = filteredPlayers();
 
@@ -2089,6 +2244,8 @@
         fmt(metrics.reduce((s, m) => s + m.dispo, 0) / Math.max(1, metrics.length)) + '%';
 
         qs('#kpiAlerts').textContent = metrics.filter(m => m.alert !== 'RAS').length;
+
+        renderAverageKpis(players);
 
         const summaryRows = players.map(p => ({
             player: p,
@@ -2382,7 +2539,15 @@
         if (!tbody)
             return;
 
-        const entries = [...state.hooperEntries].sort((a, b) => {
+        const visibleIds = filteredPlayerIds();
+        const period = qs('#periodFilter')?.value || '28';
+
+        // Pas de matchesStatus ici : les entrées Hooper n'ont pas de statut
+        // Présent/Absent/Blessé comme le RPE, ce filtre ne leur correspond pas.
+        const entries = state.hooperEntries
+        .filter(e => visibleIds.has(e.playerId))
+        .filter(e => matchesPeriod(e, period))
+        .sort((a, b) => {
             // Date la plus récente en premier
             const dateCompare = (b.date || '').localeCompare(a.date || '');
             if (dateCompare !== 0)
@@ -3873,6 +4038,8 @@
         renderSeasonReport();
         fillRpeTargetInputs();
         renderRpeTargetsComparison();
+        updateRpeSelectionAverage();
+        updateHooperSelectionAverage();
     }
 
     async function loadAllFromFirestore() {
@@ -3977,6 +4144,27 @@
     qs('#savePlayerHooperBtn')?.addEventListener('click', savePlayerHooper);
 
     qs('#saveRpeTargetsBtn')?.addEventListener('click', saveRpeTargets);
+
+    qs('#rpeSelectAllBtn')?.addEventListener('click', () => {
+        state.players.forEach(p => state.rpeSelection.add(p.id));
+        renderSelectionList('#rpeSelectionList', state.rpeSelection, updateRpeSelectionAverage);
+        updateRpeSelectionAverage();
+    });
+    qs('#rpeSelectNoneBtn')?.addEventListener('click', () => {
+        state.rpeSelection.clear();
+        renderSelectionList('#rpeSelectionList', state.rpeSelection, updateRpeSelectionAverage);
+        updateRpeSelectionAverage();
+    });
+    qs('#hooperSelectAllBtn')?.addEventListener('click', () => {
+        state.players.forEach(p => state.hooperSelection.add(p.id));
+        renderSelectionList('#hooperSelectionList', state.hooperSelection, updateHooperSelectionAverage);
+        updateHooperSelectionAverage();
+    });
+    qs('#hooperSelectNoneBtn')?.addEventListener('click', () => {
+        state.hooperSelection.clear();
+        renderSelectionList('#hooperSelectionList', state.hooperSelection, updateHooperSelectionAverage);
+        updateHooperSelectionAverage();
+    });
 
     qs('#saveInjuryBtn').addEventListener('click', saveInjury);
     qs('#resetInjuryBtn').addEventListener('click', resetInjuryForm);
