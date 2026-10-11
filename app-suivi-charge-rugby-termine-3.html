@@ -669,6 +669,7 @@
                 </div>
                 <div class="card panel">
                     <h3>Comparaison des semaines par type de séance</h3>
+                    <p class="muted mini">Cliquez sur le nom d'une semaine en bas du graphique pour la renommer (ex : l'adversaire joué). Laissez vide pour revenir à la date.</p>
                     <div class="chart-wrap">
                         <canvas id="weeklyRpeChart">
                         </canvas>
@@ -1486,6 +1487,7 @@
         rpeTargets: {},
         rpeSelection: new Set(),
         hooperSelection: new Set(),
+        weekLabels: {},
         charts: {
             load: null,
             alerts: null,
@@ -3896,6 +3898,49 @@
         monday.setDate(d.getDate() + diff);
         return monday.toISOString().slice(0, 10); // YYYY-MM-DD du lundi
     }
+    // Clic sur un nom de semaine en bas du graphique "Comparaison des semaines" :
+    // ouvre une boîte de saisie directement, sans tableau séparé.
+    async function promptWeekLabel(week) {
+        const d = new Date(week + 'T12:00:00');
+        const formatted = d.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        const current = state.weekLabels[week] || '';
+
+        const value = window.prompt(
+        `Nom pour la semaine du ${formatted} (ex: vs Rennes). Laisser vide pour revenir à la date :`,
+        current
+        );
+        if (value === null)
+            return;
+
+        const trimmed = value.trim();
+
+        try {
+            await db.collection('settings').doc('weekLabels').set(
+            {
+                [week]: trimmed || firebase.firestore.FieldValue.delete()
+            },
+            {
+                merge: true
+            }
+            );
+
+            if (trimmed) {
+                state.weekLabels[week] = trimmed;
+            } else {
+                delete state.weekLabels[week];
+            }
+
+            renderWeeklyRpeChart(filteredPlayers());
+        } catch (err) {
+            console.error('Erreur enregistrement nom de semaine', err);
+            alert('Erreur lors de l\'enregistrement du nom de semaine.');
+        }
+    }
+
     function renderWeeklyRpeChart(players) {
         const ctx = qs('#weeklyRpeChart');
         if (!ctx || typeof Chart === 'undefined')
@@ -3930,36 +3975,40 @@
             byWeek[week][e.type] += Number(e.load || 0);
         });
 
-        const labels = Object.keys(byWeek).sort((a, b) => a.localeCompare(b));
+        const weekKeys = Object.keys(byWeek).sort((a, b) => a.localeCompare(b));
+
+        // Affiche le nom personnalisé de la semaine (ex. "vs Rennes") quand il
+        // existe, sinon la date du lundi par défaut.
+        const displayLabels = weekKeys.map(w => state.weekLabels[w] || w);
 
         state.charts.weeklyRpe = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels,
+                labels: displayLabels,
                 datasets: [
                 {
                     label: 'Mardi',
-                    data: labels.map(w => byWeek[w].Mardi),
+                    data: weekKeys.map(w => byWeek[w].Mardi),
                     backgroundColor: 'rgba(10,58,134,0.75)'
                 },
                 {
                     label: 'Mercredi',
-                    data: labels.map(w => byWeek[w].Mercredi),
+                    data: weekKeys.map(w => byWeek[w].Mercredi),
                     backgroundColor: 'rgba(200,31,46,0.75)'
                 },
                 {
                     label: 'Vendredi',
-                    data: labels.map(w => byWeek[w].Vendredi),
+                    data: weekKeys.map(w => byWeek[w].Vendredi),
                     backgroundColor: 'rgba(181,114,10,0.75)'
                 },
                 {
                     label: 'Match',
-                    data: labels.map(w => byWeek[w].Match),
+                    data: weekKeys.map(w => byWeek[w].Match),
                     backgroundColor: 'rgba(143,43,58,0.75)'
                 },
                 {
                     label: 'Autre',
-                    data: labels.map(w => byWeek[w].Autre),
+                    data: weekKeys.map(w => byWeek[w].Autre),
                     backgroundColor: 'rgba(91,101,120,0.75)'
                 }
                 ]
@@ -3984,7 +4033,7 @@
                         stacked: true,
                         title: {
                             display: true,
-                            text: 'Semaine (lundi)'
+                            text: 'Semaine (lundi) — cliquez un nom pour le modifier'
                         }
                     },
                     y: {
@@ -3996,7 +4045,37 @@
                         }
                     }
                 }
-            }
+            },
+            plugins: [{
+                // Chart.js n'appelle options.onClick / onHover que pour les événements
+                // à l'intérieur de la zone de tracé (chartArea) : les libellés d'axe,
+                // en dessous, ne la déclenchent jamais. afterEvent(), lui, reçoit tous
+                // les événements (y compris hors chartArea), donc on l'utilise ici
+                // pour rendre les noms de semaine cliquables.
+                id: 'weekLabelClick',
+                afterEvent(chart, args) {
+                    const event = args.event;
+                    const xScale = chart.scales.x;
+
+                    if (event.y === undefined || event.y < xScale.top || event.y > xScale.bottom) {
+                        if (chart.canvas.style.cursor === 'pointer')
+                            chart.canvas.style.cursor = 'default';
+                        return;
+                    }
+
+                    if (event.type === 'mousemove') {
+                        chart.canvas.style.cursor = 'pointer';
+                        return;
+                    }
+
+                    if (event.type === 'click') {
+                        const index = Math.round(xScale.getValueForPixel(event.x));
+                        const week = weekKeys[index];
+                        if (week)
+                            promptWeekLabel(week);
+                    }
+                }
+            }]
         });
     }
     function activateTab(id) {
@@ -4043,13 +4122,14 @@
     }
 
     async function loadAllFromFirestore() {
-        const [playersSnap, rpeSnap, hooperSnap, weightsSnap, injuriesSnap, rpeTargetsDoc] = await Promise.all([
+        const [playersSnap, rpeSnap, hooperSnap, weightsSnap, injuriesSnap, rpeTargetsDoc, weekLabelsDoc] = await Promise.all([
         db.collection('players').get(),
         db.collection('rpeEntries').get(),
         db.collection('hooperEntries').get(),
         db.collection('playerWeights').get(),
         db.collection('injuries').get(),
-        db.collection('settings').doc('rpeTargets').get()
+        db.collection('settings').doc('rpeTargets').get(),
+        db.collection('settings').doc('weekLabels').get()
         ]);
         state.players = playersSnap.docs.map(doc => ({
             id: doc.id,
@@ -4072,6 +4152,7 @@
             ...doc.data()
         }));
         state.rpeTargets = rpeTargetsDoc.exists ? rpeTargetsDoc.data() : {};
+        state.weekLabels = weekLabelsDoc.exists ? weekLabelsDoc.data() : {};
         setFilters();
         syncUI();
     }
