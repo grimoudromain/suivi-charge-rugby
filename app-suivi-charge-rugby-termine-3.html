@@ -578,6 +578,7 @@
                         <option value="Mardi">Mardi</option>
                         <option value="Mercredi">Mercredi</option>
                         <option value="Vendredi">Vendredi</option>
+                        <option value="Match">Match</option>
                         <option value="custom">Plage personnalisée</option>
                     </select>
                 </div>
@@ -2150,7 +2151,8 @@
         if (
         period === 'Mardi' ||
         period === 'Mercredi' ||
-        period === 'Vendredi'
+        period === 'Vendredi' ||
+        period === 'Match'
         ) {
             return entry.type === period;
         }
