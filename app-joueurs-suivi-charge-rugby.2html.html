@@ -212,6 +212,54 @@
         font-style: normal;
         text-align: right
     }
+
+    .rpe-scale {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        margin: -4px 0 12px;
+        overflow: hidden;
+        background: var(--surface2);
+    }
+    .rpe-scale summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 11px;
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+    .rpe-scale summary::-webkit-details-marker {
+        display: none;
+    }
+    .rpe-scale summary .chev {
+        transition: transform .15s ease;
+        font-size: .75rem;
+        color: var(--muted);
+    }
+    .rpe-scale[open] summary .chev {
+        transform: rotate(180deg);
+    }
+    .rpe-scale-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .rpe-scale-table td {
+        padding: 7px 11px;
+        font-size: .82rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    .rpe-scale-table td:first-child {
+        width: 30px;
+        text-align: center;
+        font-size: .9rem;
+    }
+    .rpe-scale-table tr + tr td {
+        border-top: 1px solid rgba(255,255,255,.18);
+    }
     </style>
 </head>
 <body>
@@ -344,6 +392,21 @@
                     <input type="number" id="rpeDuration" min="0" step="5"/>
                 </div>
             </div>
+            <details class="rpe-scale">
+                <summary>Voir l'échelle RPE <span class="chev">▾</span></summary>
+                <table class="rpe-scale-table">
+                    <tr style="background:#7a1414"><td>10</td><td>Difficulté Maximale</td></tr>
+                    <tr style="background:#c22a2a"><td>9</td><td>Extrêmement Difficile</td></tr>
+                    <tr style="background:#e05a2e"><td>8</td><td>Vraiment Difficile</td></tr>
+                    <tr style="background:#ef9233"><td>7</td><td>Très Difficile</td></tr>
+                    <tr style="background:#e8d234"><td>6</td><td>Difficile</td></tr>
+                    <tr style="background:#aed146"><td>5</td><td>Moyen Normal</td></tr>
+                    <tr style="background:#74c168"><td>4</td><td>Modéré</td></tr>
+                    <tr style="background:#3fae63"><td>3</td><td>Facile</td></tr>
+                    <tr style="background:#2f9e78"><td>2</td><td>Très Facile</td></tr>
+                    <tr style="background:#5fa9d6"><td>1</td><td>Récupération / Jour Off</td></tr>
+                </table>
+            </details>
             <div class="field">
                 <label for="rpeComment">Commentaire (optionnel)</label>
                 <textarea id="rpeComment" rows="2" placeholder="Douleur, fatigue, ressenti particulier..."></textarea>
