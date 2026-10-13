@@ -260,6 +260,16 @@
     .rpe-scale-table tr + tr td {
         border-top: 1px solid rgba(255,255,255,.18);
     }
+
+    .hooper-scale-note {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 11px;
+        font-size: .8rem;
+        color: var(--text);
+        margin: 4px 0 14px;
+    }
     </style>
 </head>
 <body>
@@ -420,6 +430,10 @@
         <div class="card" id="hooperCard">
             <h2>Hooper (bien-être)</h2>
             <p class="muted small">2 fois par semaine : note ton sommeil, ton humeur, ton énergie, tes courbatures et ton bien-être.</p>
+            <p class="hooper-scale-note">
+                Échelle de 1 à 5 : <strong>1 = le plus bas</strong>, <strong>5 = le plus haut</strong>.
+                Exemple pour les courbatures : 1 = très courbaturé / blessé, 5 = aucune douleur.
+            </p>
             <div class="field">
                 <label for="hooperDate">Date</label>
                 <input type="date" id="hooperDate"/>
