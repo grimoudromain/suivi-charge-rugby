@@ -819,54 +819,107 @@
         author: "Juma Ikangaa"
     },
     {
-        text: "Ce n'est pas parce que les choses sont difficiles que nous n'osons pas, c'est parce que nous n'osons pas qu'elles sont difficiles.",
-        author: "Sénèque"
+        text: "Le talent gagne des matchs, mais le travail d'équipe et l'intelligence gagnent des championnats.",
+        author: "Michael Jordan"
+    },
+    {
+        text: "Le succès n'est pas un accident. C'est du travail acharné, de la persévérance, de l'apprentissage, du sacrifice et de l'amour de ce que vous faites.",
+        author: "Pelé"
+    },
+    {
+        text: "Je ne pense jamais à l'échec. Pour moi, perdre fait juste partie de l'apprentissage. Et quand on se concentre sur la réussite, on grandit.",
+        author: "Serena Williams"
     },
     {
         text: "Le succès, c'est tomber sept fois, se relever huit.",
         author: "Proverbe japonais"
     },
     {
-        text: "Je ne perds jamais. Soit je gagne, soit j'apprends.",
-        author: "Nelson Mandela"
+        text: "Un champion, c'est quelqu'un qui se relève même quand il ne peut pas.",
+        author: "Jack Dempsey"
     },
     {
-        text: "Le seul endroit où le succès précède le travail, c'est dans le dictionnaire.",
-        author: "Vince Lombardi"
+        text: "On rate 100% des tirs que l'on ne tente pas.",
+        author: "Wayne Gretzky"
+    },
+    {
+        text: "Je peux accepter l'échec, tout le monde échoue à quelque chose. Mais je ne peux pas accepter de ne pas essayer.",
+        author: "Michael Jordan"
+    },
+    {
+        text: "Notre plus grande gloire n'est pas de ne jamais tomber, mais de nous relever à chaque chute.",
+        author: "Confucius"
+    },
+    {
+        text: "Ne crains pas l'adversaire qui a pratiqué 10 000 coups une fois, mais crains celui qui a pratiqué un coup 10 000 fois.",
+        author: "Bruce Lee"
+    },
+    {
+        text: "Ce n'est pas parce que les choses sont difficiles que nous n'osons pas, c'est parce que nous n'osons pas qu'elles sont difficiles.",
+        author: "Sénèque"
+    },
+    {
+        text: "Au milieu de la difficulté se trouve l'opportunité.",
+        author: "Albert Einstein"
+    },
+    {
+        text: "Le succès, c'est d'aller d'échec en échec sans perdre son enthousiasme.",
+        author: "Winston Churchill"
+    },
+    {
+        text: "Un voyage de mille lieues commence toujours par un premier pas.",
+        author: "Lao Tseu"
     },
     {
         text: "La discipline est le pont entre les objectifs et les accomplissements.",
         author: "Jim Rohn"
     },
     {
-        text: "Le talent gagne des matchs, mais le travail d'équipe et l'intelligence gagnent des championnats.",
-        author: "Michael Jordan"
-    },
-    {
-        text: "La résilience, c'est accepter sa nouvelle réalité, même si elle est moins bonne que celle d'avant.",
-        author: "Boris Cyrulnik"
-    },
-    {
         text: "Ce qui ne tue pas rend plus fort.",
         author: "Friedrich Nietzsche"
     },
     {
-        text: "La grandeur d'un métier est peut-être, avant tout, d'unir des hommes.",
-        author: "Antoine de Saint-Exupéry"
+        text: "Les champions ne se fabriquent pas dans une salle de sport. Les champions sont faits de quelque chose qu'ils ont au fond d'eux : un désir, un rêve, une vision.",
+        author: "Mohamed Ali"
     },
     {
-        text: "L'important, c'est de participer.",
-        author: "Pierre de Coubertin"
+        text: "Que vous pensiez pouvoir le faire, ou que vous pensiez ne pas pouvoir le faire, vous avez raison.",
+        author: "Henry Ford"
+    },
+    {
+        text: "Le seul endroit où le succès précède le travail, c'est dans le dictionnaire.",
+        author: "Vince Lombardi"
     }
     ];
 
+    // Défilement séquentiel : chaque nouvelle ouverture de l'app montre la
+    // citation suivante (pas un tirage au hasard qui peut répéter la même),
+    // mémorisé dans ce navigateur via localStorage.
     function showRandomQuote() {
         const quoteTextEl = document.getElementById("quoteText");
         const quoteAuthorEl = document.getElementById("quoteAuthor");
         if (!quoteTextEl || !quoteAuthorEl)
             return;
 
-        const pick = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+        const STORAGE_KEY = "rugbyQuoteIndex";
+        let index = 0;
+
+        try {
+            const stored = Number(localStorage.getItem(STORAGE_KEY));
+            if (Number.isFinite(stored)) {
+                index = (stored + 1) % MOTIVATIONAL_QUOTES.length;
+            }
+        } catch (err) {
+            index = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+        }
+
+        try {
+            localStorage.setItem(STORAGE_KEY, String(index));
+        } catch (err) {
+            // Stockage indisponible (navigation privée, etc.) : tant pis, pas bloquant.
+        }
+
+        const pick = MOTIVATIONAL_QUOTES[index];
         quoteTextEl.textContent = `“${pick.text}”`;
         quoteAuthorEl.textContent = `— ${pick.author}`;
     }
