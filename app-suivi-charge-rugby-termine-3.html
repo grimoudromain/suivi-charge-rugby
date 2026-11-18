@@ -1243,6 +1243,25 @@
                         </div>
                     </div>
                 </div>
+                <div class="card panel" id="bilanPlayingTimeCard">
+                    <h3>Temps de jeu (saison)</h3>
+                    <p class="muted mini">Cumulé depuis le début de la saison. Cliquez un en-tête pour trier — triez sur "Min. match" pour voir les joueurs les plus utilisés en match.</p>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead id="bilanPlayingTimeThead">
+                                <tr>
+                                    <th data-sort-key="name">Joueur</th>
+                                    <th data-sort-key="position">Poste</th>
+                                    <th data-sort-key="matchCount">Nb matchs</th>
+                                    <th data-sort-key="matchMinutes">Min. match</th>
+                                    <th data-sort-key="totalMinutes">Min. match + entraînement</th>
+                                    <th data-sort-key="avgPerMatch">Moy. min/match</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bilanPlayingTimeTable"></tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="card panel" id="bilanChartCard">
                     <h3>Évolution de la charge moyenne d'équipe</h3>
                     <div class="chart-wrap">
@@ -3583,6 +3602,74 @@
         );
     }
 
+    // Temps de jeu cumulé sur la saison : minutes en match, et minutes
+    // match + entraînement, pour repérer les joueurs les plus utilisés.
+    // Reprend simplement la durée déjà saisie sur chaque entrée RPE, sur
+    // les séances réellement faites (Présent/Partiel).
+    function computePlayingTime(player) {
+        const entries = state.rpeEntries.filter(e =>
+            e.playerId === player.id && (e.status === 'Présent' || e.status === 'Partiel')
+        );
+        const matchEntries = entries.filter(e => e.type === 'Match');
+        const matchMinutes = matchEntries.reduce((s, e) => s + (Number(e.duration) || 0), 0);
+        const totalMinutes = entries.reduce((s, e) => s + (Number(e.duration) || 0), 0);
+        const matchCount = matchEntries.length;
+
+        return {
+            matchCount,
+            matchMinutes,
+            totalMinutes,
+            avgPerMatch: matchCount ? matchMinutes / matchCount : 0
+        };
+    }
+
+    let playingTimeSort = { key: 'matchMinutes', dir: -1 };
+
+    function updatePlayingTimeSortIndicators() {
+        qsa('#bilanPlayingTimeThead th[data-sort-key]').forEach(th => {
+            if (!th.dataset.label) th.dataset.label = th.textContent.trim();
+            const isActive = playingTimeSort.key === th.dataset.sortKey;
+            th.textContent = th.dataset.label + (isActive ? (playingTimeSort.dir === 1 ? ' ▲' : ' ▼') : '');
+        });
+    }
+
+    function renderPlayingTimeTable(players) {
+        const tbody = qs('#bilanPlayingTimeTable');
+        if (!tbody) return;
+
+        const rows = players.map(p => ({ player: p, pt: computePlayingTime(p) }));
+
+        const sortValue = (row, key) => {
+            if (key === 'name') return `${row.player.lastName || ''} ${row.player.firstName || ''}`.toLowerCase();
+            if (key === 'position') return row.player.position || '';
+            return row.pt[key] ?? 0;
+        };
+
+        if (playingTimeSort.key) {
+            rows.sort((a, b) => {
+                const va = sortValue(a, playingTimeSort.key);
+                const vb = sortValue(b, playingTimeSort.key);
+                if (typeof va === 'string' || typeof vb === 'string') {
+                    return String(va).localeCompare(String(vb), 'fr', { sensitivity: 'base' }) * playingTimeSort.dir;
+                }
+                return (va - vb) * playingTimeSort.dir;
+            });
+        }
+
+        tbody.innerHTML = rows.map(({ player: p, pt }) => `
+      <tr>
+        <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+        <td>${p.position || ''}</td>
+        <td class="num">${pt.matchCount}</td>
+        <td class="num">${pt.matchMinutes}</td>
+        <td class="num">${pt.totalMinutes}</td>
+        <td class="num">${pt.avgPerMatch.toFixed(0)}</td>
+      </tr>
+    `).join('');
+
+        updatePlayingTimeSortIndicators();
+    }
+
     function renderSeasonReport() {
         const kpiInjCount = qs('#bilanInjCount');
         if (!kpiInjCount)
@@ -3625,6 +3712,7 @@
         const playerCard = qs('#bilanPlayerCard');
         const teamBreakdowns = qs('#bilanTeamBreakdowns');
         const chartCard = qs('#bilanChartCard');
+        const playingTimeCard = qs('#bilanPlayingTimeCard');
         const scopeNote = qs('#bilanScopeNote');
 
         if (selectedPlayer) {
@@ -3633,13 +3721,16 @@
             playerCard.style.display = 'block';
             teamBreakdowns.style.display = 'none';
             chartCard.style.display = 'none';
+            if (playingTimeCard) playingTimeCard.style.display = 'none';
 
             qs('#bilanPlayerName').textContent = playerLabel;
 
             const playerInjuries = [...scopedInjuries].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
             const m = playerMetrics(selectedPlayer);
+            const pt = computePlayingTime(selectedPlayer);
 
             qs('#bilanPlayerDetail').innerHTML = `
+      <p class="mini muted">Temps de jeu saison : <strong>${pt.matchMinutes} min en match</strong> (${pt.matchCount} match${pt.matchCount > 1 ? 's' : ''}, ${pt.avgPerMatch.toFixed(0)} min/match en moyenne) · ${pt.totalMinutes} min au total (match + entraînement).</p>
       <p class="mini muted">Disponibilité sur la période sélectionnée ci-dessus : ${fmt(m.dispo)}%</p>
       ${playerInjuries.length ? `
         <table class="table mini">
@@ -3671,6 +3762,7 @@
             playerCard.style.display = 'none';
             teamBreakdowns.style.display = 'grid';
             chartCard.style.display = 'block';
+            if (playingTimeCard) playingTimeCard.style.display = 'block';
 
             const byBodyPart = {};
             const byPosition = {};
@@ -3695,6 +3787,7 @@
             .join('') || '<tr><td colspan="2" class="muted mini">Aucune blessure enregistrée.</td></tr>';
 
             renderSeasonLoadChart(visibleIds);
+            renderPlayingTimeTable(visiblePlayers);
         }
     }
 
@@ -4216,6 +4309,19 @@
                 summarySort.dir = 1;
             }
             renderDashboard();
+        });
+    });
+
+    qsa('#bilanPlayingTimeThead th[data-sort-key]').forEach(th => {
+        th.addEventListener('click', () => {
+            const key = th.dataset.sortKey;
+            if (playingTimeSort.key === key) {
+                playingTimeSort.dir *= -1;
+            } else {
+                playingTimeSort.key = key;
+                playingTimeSort.dir = (key === 'name' || key === 'position') ? 1 : -1;
+            }
+            renderPlayingTimeTable(filteredPlayers());
         });
     });
 
