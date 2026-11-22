@@ -678,6 +678,18 @@
                 </div>
                 <div class="card panel">
                     <h3>Tableau récapitulatif joueurs</h3>
+                    <p class="muted mini">L'export PDF ci-dessous reprend les joueurs actuellement filtrés (équipe/groupe/poste/joueur en haut de page).</p>
+                    <div class="actions" style="margin-bottom:12px;align-items:center">
+                        <label for="exportSortBy" class="mini muted" style="align-self:center">Trier la fiche par :</label>
+                        <select id="exportSortBy" class="btn">
+                            <option value="name">Nom (alphabétique)</option>
+                            <option value="team">Équipe</option>
+                            <option value="group">Groupe</option>
+                            <option value="position">Poste</option>
+                            <option value="risk">Risque (le plus urgent en premier)</option>
+                        </select>
+                        <button class="btn primary" id="exportTeamStatePdfBtn">Exporter la fiche PDF (état de forme)</button>
+                    </div>
                     <div class="table-wrap">
                         <table class="table">
                             <thead id="summaryThead">
@@ -4382,6 +4394,7 @@
     qs('#addWeightMeasureBtn').addEventListener('click', addWeightMeasureFromForm);
     qs('#cancelWeightEditBtn')?.addEventListener('click', cancelWeightEdit);
     qs('#exportAvailabilityPdfBtn')?.addEventListener('click', exportAvailabilityPDF);
+    qs('#exportTeamStatePdfBtn')?.addEventListener('click', exportTeamStatePDF);
 
     qs('#rpeDate').value = todayStr;
     qs('#hooperDate').value = todayStr;
@@ -4464,6 +4477,117 @@ th { background: #f2f2f2; }
 
 
 
+        );
+        w.document.close();
+    }
+
+    function exportTeamStatePDF() {
+        const players = filteredPlayers();
+        const metrics = players.map(p => ({ p, m: playerMetrics(p) }));
+
+        const nameCompare = (a, b) => `${a.p.lastName || ''} ${a.p.firstName || ''}`.localeCompare(
+            `${b.p.lastName || ''} ${b.p.firstName || ''}`, 'fr', { sensitivity: 'base' }
+        );
+
+        const sortBy = qs('#exportSortBy')?.value || 'name';
+        const riskOrder = { red: 0, orange: 1, green: 2 };
+
+        metrics.sort((a, b) => {
+            let diff = 0;
+            if (sortBy === 'team') diff = (a.p.team || '').localeCompare(b.p.team || '', 'fr');
+            else if (sortBy === 'group') diff = (a.p.group || '').localeCompare(b.p.group || '', 'fr');
+            else if (sortBy === 'position') diff = sortByRugbyPosition(a.p.position, b.p.position);
+            else if (sortBy === 'risk') diff = (riskOrder[a.m.risk] ?? 3) - (riskOrder[b.m.risk] ?? 3);
+            return diff !== 0 ? diff : nameCompare(a, b);
+        });
+
+        const teamLabel = qs('#teamFilter')?.value === 'all' || !qs('#teamFilter')?.value ? 'Toutes équipes' : qs('#teamFilter').value;
+        const groupLabel = qs('#groupFilter')?.value === 'all' || !qs('#groupFilter')?.value ? 'Tous groupes' : qs('#groupFilter').value;
+        const positionLabel = qs('#positionFilter')?.value === 'all' || !qs('#positionFilter')?.value ? 'Tous postes' : qs('#positionFilter').value;
+        const searchVal = qs('#searchFilter')?.value || '';
+        const selectedPlayer = state.players.find(p => p.id === searchVal);
+        const playerLabel = selectedPlayer ? `${(selectedPlayer.lastName || '').toUpperCase()} ${selectedPlayer.firstName || ''}` : 'Tous les joueurs';
+
+        const avgLoad = metrics.length ? fmt(metrics.reduce((s, { m }) => s + m.load7, 0) / metrics.length) : 0;
+        const avgRpe = metrics.length ? (metrics.reduce((s, { m }) => s + m.rpeAvg, 0) / metrics.length).toFixed(1) : '-';
+        const avgHooperValues = metrics.filter(({ m }) => m.hooper !== null);
+        const avgHooper = avgHooperValues.length ? (avgHooperValues.reduce((s, { m }) => s + m.hooper, 0) / avgHooperValues.length).toFixed(1) : '-';
+        const avgDispo = metrics.length ? fmt(metrics.reduce((s, { m }) => s + m.dispo, 0) / metrics.length) : 0;
+        const alertsCount = metrics.filter(({ m }) => m.alert !== 'RAS').length;
+
+        const dateLabel = new Date(todayStr + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        const rows = metrics.map(({ p, m }) => {
+            const pt = computePlayingTime(p);
+            const ongoingInjury = state.injuries.find(inj => inj.playerId === p.id && inj.status !== 'Terminée');
+            const bg = positionColor(p.position);
+            const fg = positionTextColor(p.position);
+            const riskColor = m.risk === 'red' ? '#a13544' : m.risk === 'orange' ? '#da7101' : '#437a22';
+
+            return `
+        <tr>
+          <td>${(p.lastName || '').toUpperCase()} ${p.firstName || ''}</td>
+          <td><span class="badge" style="background:${bg};color:${fg}">${p.position || ''}</span></td>
+          <td>${m.acwr.toFixed(2)}</td>
+          <td>${fmt(m.ewma)}</td>
+          <td>${m.rpeAvg.toFixed(1)}</td>
+          <td>${m.hooper ?? '-'}</td>
+          <td>${fmt(m.dispo)}%</td>
+          <td><span class="badge" style="background:${riskColor}22;color:${riskColor}">${m.alert}</span></td>
+          <td style="font-size:11px">${m.riskReason}</td>
+          <td>${pt.matchMinutes} min</td>
+          <td style="font-size:11px">${ongoingInjury ? `${ongoingInjury.bodyPart} (${ongoingInjury.date})` : ''}</td>
+        </tr>`;
+        }).join('');
+
+        const w = window.open('', '_blank');
+        w.document.write(`
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Fiche état de forme</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color:#22201b; }
+        h1 { font-size: 20px; margin-bottom: 4px; }
+        p.context { font-size: 12px; color: #6e6b65; margin: 0 0 18px; }
+        .kpis { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; }
+        .kpi { border:1px solid #ccc; border-radius:8px; padding:10px 14px; min-width:110px; }
+        .kpi .label { font-size:11px; color:#6e6b65; text-transform:uppercase; }
+        .kpi .value { font-size:20px; font-weight:700; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 11px; text-align: left; }
+        th { background: #f2f2f2; }
+        .badge { display:inline-block; padding:3px 7px; border-radius:999px; font-weight:700; font-size:10px; white-space:nowrap; }
+      </style>
+    </head>
+    <body>
+      <h1>Fiche d'état de forme — ${dateLabel}</h1>
+      <p class="context">Filtres actifs : ${teamLabel} · ${groupLabel} · ${positionLabel} · ${playerLabel}</p>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Joueurs</div><div class="value">${metrics.length}</div></div>
+        <div class="kpi"><div class="label">Charge moy. 7j</div><div class="value">${avgLoad}</div></div>
+        <div class="kpi"><div class="label">RPE moyen</div><div class="value">${avgRpe}</div></div>
+        <div class="kpi"><div class="label">Hooper moyen</div><div class="value">${avgHooper}</div></div>
+        <div class="kpi"><div class="label">Présence moy.</div><div class="value">${avgDispo}%</div></div>
+        <div class="kpi"><div class="label">Alertes</div><div class="value">${alertsCount}</div></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Joueur</th><th>Poste</th><th>ACWR</th><th>EWMA</th><th>RPE moyen</th><th>Hooper</th>
+            <th>Dispo</th><th>Alerte</th><th>Pourquoi</th><th>Min. match (saison)</th><th>Blessure en cours</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <script>
+        window.onload = () => { window.print(); };
+      <\/script>
+    </body>
+    </html>
+  `
         );
         w.document.close();
     }
