@@ -913,6 +913,14 @@
                         <div class="value" id="rpeSelectionAverage">-</div>
                     </div>
                 </div>
+                <div class="card panel" style="margin-top:18px">
+                    <h3>Historique du RPE — tendance de fatigue</h3>
+                    <p class="muted mini">RPE moyen par semaine pour la sélection ci-dessus (tout l'effectif si rien n'est coché), sur toute la saison. Une tendance à la hausse pour un type de séance comparable peut signaler une fatigue qui s'accumule.</p>
+                    <div style="height:280px;position:relative">
+                        <canvas id="rpeTrendChart"></canvas>
+                        <p class="muted mini" id="rpeTrendEmpty" style="display:none">Pas assez de données RPE pour cette sélection.</p>
+                    </div>
+                </div>
                 <div class="split" style="margin-top:18px">
                     <div class="card panel">
                         <h3>Ajouter / modifier un RPE</h3>
@@ -1525,7 +1533,8 @@
             alerts: null,
             weeklyRpe: null,
             playerTrend: null,
-            seasonLoad: null
+            seasonLoad: null,
+            rpeTrend: null
         }
     };
     let playerWeightChart = null;
@@ -1836,9 +1845,14 @@
         const chronicEWMA = calcEWMA(dailySeries, lambdaChronic);
         const acwr = chronicEWMA ? acuteEWMA / chronicEWMA : 0;
 
-        // RPE moyen sur les entrées filtrées (période/statut)
-        const rpeAvg = periodEntries.length
-        ? periodEntries.reduce((s, e) => s + (e.rpe || 0), 0) / periodEntries.length
+        // RPE moyen : uniquement les séances où le joueur a réellement saisi un RPE
+        // (Présent/Partiel avec RPE > 0) — un "Repos"/"Absent"/"Blessé" a un RPE à 0
+        // qui ne doit pas tirer la moyenne du joueur vers le bas.
+        const rpeEntriesForAvg = periodEntries.filter(e =>
+            (e.status === 'Présent' || e.status === 'Partiel') && Number(e.rpe) > 0
+        );
+        const rpeAvg = rpeEntriesForAvg.length
+        ? rpeEntriesForAvg.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / rpeEntriesForAvg.length
         : 0;
 
         // Disponibilité (% présent) sur la période sélectionnée
@@ -2075,7 +2089,7 @@
             : '';
         }
 
-        renderSelectionList('#rpeSelectionList', state.rpeSelection, updateRpeSelectionAverage);
+        renderSelectionList('#rpeSelectionList', state.rpeSelection, () => { updateRpeSelectionAverage(); updateRpeTrendChart(); });
         renderSelectionList('#hooperSelectionList', state.hooperSelection, updateHooperSelectionAverage);
 
     }
@@ -2133,7 +2147,7 @@
         .filter(e => state.rpeSelection.has(e.playerId))
         .filter(e => matchesPeriod(e, period))
         .filter(e => matchesStatus(e, status))
-        .filter(e => e.status === 'Présent' || e.status === 'Partiel');
+        .filter(e => (e.status === 'Présent' || e.status === 'Partiel') && Number(e.rpe) > 0);
 
         const avg = entries.length
         ? entries.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / entries.length
@@ -2142,6 +2156,64 @@
         const el = qs('#rpeSelectionAverage');
         if (el)
             el.textContent = avg !== null ? avg.toFixed(1) : '-';
+    }
+
+    // Historique du RPE moyen par semaine pour la sélection courante (ou tout
+    // l'effectif si rien n'est coché), pour repérer visuellement une tendance
+    // de fatigue (RPE qui grimpe pour une charge d'entraînement comparable).
+    function updateRpeTrendChart() {
+        const canvas = qs('#rpeTrendChart');
+        if (!canvas || typeof Chart === 'undefined')
+            return;
+
+        const scopePlayers = state.rpeSelection.size
+        ? state.players.filter(p => state.rpeSelection.has(p.id))
+        : state.players;
+
+        const series = computeWeeklyRpeSeries(scopePlayers);
+
+        if (state.charts.rpeTrend) {
+            state.charts.rpeTrend.destroy();
+            state.charts.rpeTrend = null;
+        }
+
+        const empty = qs('#rpeTrendEmpty');
+        if (!series.length) {
+            if (empty)
+                empty.style.display = 'block';
+            canvas.style.display = 'none';
+            return;
+        }
+        if (empty)
+            empty.style.display = 'none';
+        canvas.style.display = 'block';
+
+        state.charts.rpeTrend = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: series.map(s => s.label),
+                datasets: [{
+                    label: 'RPE moyen',
+                    data: series.map(s => s.avg),
+                    borderColor: '#0a3a86',
+                    backgroundColor: 'rgba(10,58,134,.12)',
+                    fill: true,
+                    tension: .25,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#0a3a86'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { min: 0, max: 10, title: { display: true, text: 'RPE moyen' } }
+                }
+            }
+        });
     }
 
     function updateHooperSelectionAverage() {
@@ -2241,7 +2313,7 @@
         .filter(e => playerIds.has(e.playerId))
         .filter(e => matchesPeriod(e, period))
         .filter(e => matchesStatus(e, status))
-        .filter(e => e.status === 'Présent' || e.status === 'Partiel');
+        .filter(e => (e.status === 'Présent' || e.status === 'Partiel') && Number(e.rpe) > 0);
 
         const avgRpe = rpeEntries.length
         ? rpeEntries.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / rpeEntries.length
@@ -3908,7 +3980,7 @@
         .filter(e => matchesStatus(e, status));
 
         tbody.innerHTML = RPE_TARGET_TYPES.map(type => {
-            const typeEntries = entries.filter(e => e.type === type && (e.status === 'Présent' || e.status === 'Partiel'));
+            const typeEntries = entries.filter(e => e.type === type && (e.status === 'Présent' || e.status === 'Partiel') && Number(e.rpe) > 0);
             const avgRpe = typeEntries.length
             ? typeEntries.reduce((s, e) => s + (Number(e.rpe) || 0), 0) / typeEntries.length
             : null;
@@ -4225,6 +4297,7 @@
         fillRpeTargetInputs();
         renderRpeTargetsComparison();
         updateRpeSelectionAverage();
+        updateRpeTrendChart();
         updateHooperSelectionAverage();
     }
 
@@ -4348,13 +4421,15 @@
 
     qs('#rpeSelectAllBtn')?.addEventListener('click', () => {
         state.players.forEach(p => state.rpeSelection.add(p.id));
-        renderSelectionList('#rpeSelectionList', state.rpeSelection, updateRpeSelectionAverage);
+        renderSelectionList('#rpeSelectionList', state.rpeSelection, () => { updateRpeSelectionAverage(); updateRpeTrendChart(); });
         updateRpeSelectionAverage();
+        updateRpeTrendChart();
     });
     qs('#rpeSelectNoneBtn')?.addEventListener('click', () => {
         state.rpeSelection.clear();
-        renderSelectionList('#rpeSelectionList', state.rpeSelection, updateRpeSelectionAverage);
+        renderSelectionList('#rpeSelectionList', state.rpeSelection, () => { updateRpeSelectionAverage(); updateRpeTrendChart(); });
         updateRpeSelectionAverage();
+        updateRpeTrendChart();
     });
     qs('#hooperSelectAllBtn')?.addEventListener('click', () => {
         state.players.forEach(p => state.hooperSelection.add(p.id));
@@ -4481,6 +4556,90 @@ th { background: #f2f2f2; }
         w.document.close();
     }
 
+    function chartConfigToImage(config, width, height) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const chart = new Chart(canvas, {
+            ...config,
+            options: { ...(config.options || {}), responsive: false, animation: false }
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        chart.destroy();
+        return dataUrl;
+    }
+
+    function computeWeeklyRpeSeries(players) {
+        const ids = new Set(players.map(p => p.id));
+        const entries = state.rpeEntries.filter(e =>
+            ids.has(e.playerId) && (e.status === 'Présent' || e.status === 'Partiel') && Number(e.rpe) > 0
+        );
+        const byWeek = {};
+        entries.forEach(e => {
+            const week = getWeekLabel(e.date);
+            (byWeek[week] = byWeek[week] || []).push(Number(e.rpe));
+        });
+        return Object.keys(byWeek).sort().map(w => ({
+            label: state.weekLabels[w] || new Date(w + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+            avg: byWeek[w].reduce((s, v) => s + v, 0) / byWeek[w].length
+        }));
+    }
+
+    function buildRpeTrendImage(players, titleText) {
+        const series = computeWeeklyRpeSeries(players);
+        if (!series.length)
+            return null;
+        return chartConfigToImage({
+            type: 'line',
+            data: {
+                labels: series.map(s => s.label),
+                datasets: [{
+                    label: 'RPE moyen',
+                    data: series.map(s => s.avg),
+                    borderColor: '#0a3a86',
+                    backgroundColor: 'rgba(10,58,134,.12)',
+                    fill: true,
+                    tension: .25,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#0a3a86'
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: titleText }
+                },
+                scales: {
+                    y: { min: 0, max: 10, title: { display: true, text: 'RPE moyen' } }
+                }
+            }
+        }, 760, 280);
+    }
+
+    function buildAcwrTrendImage(player) {
+        const daily = computePlayerDailyMetrics(player).slice(-90);
+        if (!daily.length)
+            return null;
+        return chartConfigToImage({
+            data: {
+                labels: daily.map(d => d.date),
+                datasets: [
+                    { type: 'bar', label: 'Charge aiguë (7j glissants)', data: daily.map(d => d.acuteLoad), backgroundColor: 'rgba(10,58,134,.35)', yAxisID: 'y' },
+                    { type: 'line', label: 'ACWR', data: daily.map(d => d.acwr), borderColor: '#8f2b3a', backgroundColor: 'rgba(143,43,58,.08)', yAxisID: 'y1', tension: .2, pointRadius: 0 }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: { display: true, text: `Évolution charge / ACWR — ${(player.lastName || '').toUpperCase()} ${player.firstName || ''}` }
+                },
+                scales: {
+                    y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Charge aiguë (7j)' } },
+                    y1: { type: 'linear', position: 'right', beginAtZero: true, title: { display: true, text: 'ACWR (< 1.3 normal, 1.3-1.6 vigilance, > 1.6 élevé)' }, grid: { drawOnChartArea: false } }
+                }
+            }
+        }, 760, 280);
+    }
+
     function exportTeamStatePDF() {
         const players = filteredPlayers();
         const metrics = players.map(p => ({ p, m: playerMetrics(p) }));
@@ -4516,6 +4675,9 @@ th { background: #f2f2f2; }
         const alertsCount = metrics.filter(({ m }) => m.alert !== 'RAS').length;
 
         const dateLabel = new Date(todayStr + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        const rpeTrendImg = buildRpeTrendImage(players, `Évolution du RPE moyen — ${selectedPlayer ? playerLabel : teamLabel}`);
+        const acwrTrendImg = selectedPlayer ? buildAcwrTrendImage(selectedPlayer) : null;
 
         const rows = metrics.map(({ p, m }) => {
             const pt = computePlayingTime(p);
@@ -4558,6 +4720,8 @@ th { background: #f2f2f2; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 11px; text-align: left; }
         th { background: #f2f2f2; }
         .badge { display:inline-block; padding:3px 7px; border-radius:999px; font-weight:700; font-size:10px; white-space:nowrap; }
+        .chart-block { page-break-inside: avoid; margin-bottom: 20px; text-align: center; }
+        .chart-block img { width: 100%; max-width: 760px; }
       </style>
     </head>
     <body>
@@ -4571,6 +4735,8 @@ th { background: #f2f2f2; }
         <div class="kpi"><div class="label">Présence moy.</div><div class="value">${avgDispo}%</div></div>
         <div class="kpi"><div class="label">Alertes</div><div class="value">${alertsCount}</div></div>
       </div>
+      ${rpeTrendImg ? `<div class="chart-block"><img src="${rpeTrendImg}"></div>` : ''}
+      ${acwrTrendImg ? `<div class="chart-block"><img src="${acwrTrendImg}"></div>` : ''}
       <table>
         <thead>
           <tr>
